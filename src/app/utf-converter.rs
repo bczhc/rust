@@ -4,13 +4,13 @@ use std::env::args;
 use std::error::Error;
 use std::fs::File;
 use std::io::{Read, stdin, stdout, Write};
-
-use rust::byteorder::{Endianness, get_endianness};
+use rust::lib::byteorder::*;
+use rust::lib::utf8;
+use rust::lib::utf8::solve_utf8_bytes;
 
 fn main() -> Result<(), String> {
     let mut input_stream: &dyn Read = &stdin();
     let mut output_stream: &dyn Write = &stdout();
-    return Ok(());
 
     let args: Vec<String> = std::env::args().collect();
     let call_cmd = &args[0];
@@ -85,15 +85,6 @@ fn main() -> Result<(), String> {
     let mut converter: fn(u32, &mut [u8]);
     let mut to_endianness: Endianness;
 
-    #[derive(Debug)]
-    struct Args<'a> {
-        from: &'a String,
-        to: &'a String,
-    }
-
-    let infos = Args { from, to };
-    println!("{:?}", infos);
-
     if to.eq_ignore_ascii_case("utf8") || to.eq_ignore_ascii_case("utf-8") {
         converter = unicode_to_utf8;
     } else if to.eq_ignore_ascii_case("utf16be") || to.eq_ignore_ascii_case("utf-16be") {
@@ -101,16 +92,23 @@ fn main() -> Result<(), String> {
     }
     match to.as_str() {
         "utf8" => converter = unicode_to_utf8,
-        "utf16be" => converter = unicode_to_utf16_big_endian,
-        "utf-16be" => converter = unicode_to_utf16_big_endian,
-        "utf16le" => converter = unicode_to_utf16_little_endian,
-        "utf-16le" => converter = unicode_to_utf16_little_endian,
-        "utf32be" => converter = unicode_to_utf32_big_endian,
-        "utf-32be" => converter = unicode_to_utf32_big_endian,
-        "utf32le" => converter = unicode_to_utf32_little_endian,
-        "utf-32le" => converter = unicode_to_utf32_little_endian,
+        "utf16be" | "utf-16be" => converter = unicode_to_utf16_big_endian,
+        "utf16le" | "utf-16le" => converter = unicode_to_utf16_little_endian,
+        "utf32be" | "utf-32be" => converter = unicode_to_utf32_big_endian,
+        "utf32le" | "utf-32le" => converter = unicode_to_utf32_little_endian,
         _ => {
             return Err(format!("Unknown <to> encode: {}", to));
+        }
+    }
+
+    match from.as_str() {
+        "utf8" => process_utf8_input(&converter),
+        "utf16be" | "utf-16be" => process_utf16_input(&converter, Endianness::BigEndian),
+        "utf16le" | "utf-16le" => process_utf16_input(&converter, Endianness::LittleEndian),
+        "utf32be" | "utf-32be" => process_utf32_input(&converter, Endianness::BigEndian),
+        "utf32le" | "utf-32le" => process_utf32_input(&converter, Endianness::LittleEndian),
+        _ => {
+            return Err(format!("Unknown <from> encode: {}", from));
         }
     }
 
@@ -137,8 +135,8 @@ fn print_help_msg(help_msg: &str) {
     println!("{}", help_msg);
 }
 
-fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) {}
-
+fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) {
+}
 fn unicode_to_utf16_big_endian(codepoint: u32, dest: &mut [u8]) {}
 
 fn unicode_to_utf16_little_endian(codepoint: u32, dest: &mut [u8]) {}
@@ -147,4 +145,8 @@ fn unicode_to_utf32_big_endian(codepoint: u32, dest: &mut [u8]) {}
 
 fn unicode_to_utf32_little_endian(codepoint: u32, dest: &mut [u8]) {}
 
-fn process_utf8_input(unicode_converter: &fn(u32)) {}
+fn process_utf8_input(unicode_converter: &fn(u32, &mut [u8])) {}
+
+fn process_utf16_input(unicode_converter: &fn(u32, &mut [u8]), to_endianness: Endianness) {}
+
+fn process_utf32_input(unicode_converter: &fn(u32, &mut [u8]), to_endianness: Endianness) {}
