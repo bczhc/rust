@@ -1,14 +1,30 @@
 fn main() {
-    let a: i32 = 2;
+    struct A {}
+    struct B {}
+    trait I {
+        fn f(&self);
+    }
 
-    if a == 2 {
-        for _i in 0..100 {
-            f();
+    impl I for A {
+        fn f(&self) {
+            println!("A");
         }
     }
-}
+    impl I for B {
+        fn f(&self) {
+            println!("B");
+        }
+    }
 
-fn f() {
-    let s: &str = "hello, world";
-    println!("{}, {}", s, s);
+    let o: &I;
+    let a = A {};
+    let b = B {};
+
+    if 1 == 1 {
+        o = &a;
+    } else {
+        o = &b;
+    }
+
+    o.f();
 }
