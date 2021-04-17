@@ -1,11 +1,16 @@
+extern crate rust;
+
 use std::env::args;
 use std::error::Error;
 use std::fs::File;
 use std::io::{Read, stdin, stdout, Write};
 
-fn main() -> Result<(), ()> {
+use rust::byteorder::{Endianness, get_endianness};
+
+fn main() -> Result<(), String> {
     let mut input_stream: &dyn Read = &stdin();
     let mut output_stream: &dyn Write = &stdout();
+    return Ok(());
 
     let args: Vec<String> = std::env::args().collect();
     let call_cmd = &args[0];
@@ -17,17 +22,20 @@ fn main() -> Result<(), ()> {
 
     let help_msg = get_help_msg(file_name);
 
-    if arg_count == 0 { print_help_msg(&help_msg); }
+    if arg_count == 0 {
+        print_help_msg(&help_msg);
+        return Ok(());
+    }
     if arg_count == 1 {
         let argv1 = &args[0];
         if argv1.eq_ignore_ascii_case("-h") || argv1.eq_ignore_ascii_case("--help") {
             print_help_msg(&help_msg);
-            return Err(());
-        } else if argv1.eq_ignore_ascii_case("--info") {
+        } else if argv1.eq_ignore_ascii_case("--about") {
             println!("Written by bczhc (https://github.com/bczhc).\n...");
         } else {
-            println!("Unknown option: {}", argv1);
+            return Err(format!("Unknown option: {}", argv1));
         }
+        return Ok(());
     }
 
     let mut buffer_size: i64 = 8192;
@@ -39,12 +47,10 @@ fn main() -> Result<(), ()> {
             let option = &args[i];
             let option_bytes = option.as_bytes();
             if option_bytes[0] != b'-' && !option[0..2].eq("--") {
-                eprintln!("Unknown option: {}", option);
-                return Err(());
+                return Err(format!("Unknown option: {}", option));
             }
             if i > arg_count {
-                eprintln!("Invalid arguments count.");
-                return Err(());
+                return Err(String::from("Invalid arguments count."));
             }
             let arg = &args[i + 1];
 
@@ -53,16 +59,14 @@ fn main() -> Result<(), ()> {
                 if let Ok(v) = parsed {
                     buffer_size = v;
                 } else if let Err(e) = parsed {
-                    eprintln!("{}", e.to_string());
-                    return Err(());
+                    return Err(e.to_string());
                 }
             } else if option.eq("-i") || option.eq("--input") {
                 input_file_path = Some(arg);
             } else if option.eq("-o") || option.eq("--output") {
                 output_file_path = Some(arg);
             } else {
-                eprintln!("Unknown option: {}", option);
-                return Err(());
+                return Err(format!("Unknown option: {}", option));
             }
         }
     }
@@ -78,8 +82,38 @@ fn main() -> Result<(), ()> {
 
     let from = &args[arg_count - 2];
     let to = &args[arg_count - 1];
+    let mut converter: fn(u32, &mut [u8]);
+    let mut to_endianness: Endianness;
 
-    
+    #[derive(Debug)]
+    struct Args<'a> {
+        from: &'a String,
+        to: &'a String,
+    }
+
+    let infos = Args { from, to };
+    println!("{:?}", infos);
+
+    if to.eq_ignore_ascii_case("utf8") || to.eq_ignore_ascii_case("utf-8") {
+        converter = unicode_to_utf8;
+    } else if to.eq_ignore_ascii_case("utf16be") || to.eq_ignore_ascii_case("utf-16be") {
+        converter = unicode_to_utf16_big_endian;
+    }
+    match to.as_str() {
+        "utf8" => converter = unicode_to_utf8,
+        "utf16be" => converter = unicode_to_utf16_big_endian,
+        "utf-16be" => converter = unicode_to_utf16_big_endian,
+        "utf16le" => converter = unicode_to_utf16_little_endian,
+        "utf-16le" => converter = unicode_to_utf16_little_endian,
+        "utf32be" => converter = unicode_to_utf32_big_endian,
+        "utf-32be" => converter = unicode_to_utf32_big_endian,
+        "utf32le" => converter = unicode_to_utf32_little_endian,
+        "utf-32le" => converter = unicode_to_utf32_little_endian,
+        _ => {
+            return Err(format!("Unknown <to> encode: {}", to));
+        }
+    }
+
     return Ok(());
 }
 
@@ -87,7 +121,7 @@ fn get_help_msg(file_name: &str) -> String {
     return format!("A from-stdin-to-stdout UTF converter.
 Usage: {0} [option] <from> <to>
        {0} (--help | -h)
-       {0} --info
+       {0} --about
 
 Options:
   -b <size>, --buffer-size <size>  IO buffer size, in bytes.
@@ -102,3 +136,15 @@ from, to: [utf[-]](8|16be|16le|32be|32le)", file_name);
 fn print_help_msg(help_msg: &str) {
     println!("{}", help_msg);
 }
+
+fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) {}
+
+fn unicode_to_utf16_big_endian(codepoint: u32, dest: &mut [u8]) {}
+
+fn unicode_to_utf16_little_endian(codepoint: u32, dest: &mut [u8]) {}
+
+fn unicode_to_utf32_big_endian(codepoint: u32, dest: &mut [u8]) {}
+
+fn unicode_to_utf32_little_endian(codepoint: u32, dest: &mut [u8]) {}
+
+fn process_utf8_input(unicode_converter: &fn(u32)) {}

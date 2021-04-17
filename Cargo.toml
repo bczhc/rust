@@ -1,6 +1,6 @@
 [package]
 default-run = "main"
-name = "main"
+name = "rust"
 version = "1.0.0"
 authors = ["bczhc <bczhc0@126.com>"]
 
