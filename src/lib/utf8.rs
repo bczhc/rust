@@ -63,39 +63,32 @@ pub fn solve_utf8_bytes(bytes: &[u8]) -> SolvedUtf8Properties {
     return SolvedUtf8Properties { codepoint, bytes_length };
 }
 
-pub fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) {
-    //  int utf8Size = bczhc::getUTF8Size(codepoint);
-    //     switch (utf8Size) {
-    //         case 1:
-    //             dest[0] = (uchar) (codepoint & 0b01111111U);
-    //             break;
-    //         case 2:
-    //             dest[1] = (uchar) (0b10000000U | (codepoint & 0b00111111U));
-    //             dest[0] = (uchar) (0b11000000U | ((codepoint >> 6U) & 0b00111111U));
-    //             break;
-    //         case 3:
-    //             dest[2] = (uchar) (0b10000000U | (codepoint & 0b00111111U));
-    //             dest[1] = (uchar) (0b10000000U | ((codepoint >> 6U) & 0b00111111U));
-    //             dest[0] = (uchar) (0b11100000U | ((codepoint >> 12U) & 0b00111111U));
-    //             break;
-    //         case 4:
-    //             dest[3] = (uchar) (0b10000000U | (codepoint & 0b00111111U));
-    //             dest[2] = (uchar) (0b10000000U | ((codepoint >> 6U) & 0b00111111U));
-    //             dest[1] = (uchar) (0b10000000U | ((codepoint >> 12U) & 0b00111111U));
-    //             dest[0] = (uchar) (0b11110000U | ((codepoint >> 18U) & 0b00111111U));
-    //             break;
-    //         default:
-    //             break;
-    //     }
-    //     return utf8Size;
-
+pub fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
     let utf8_size = get_utf8_size(codepoint);
     match utf8_size {
         1 => {
-            dest[0] = 2;
+            dest[0] = (codepoint & 0b01111111_u32) as u8;
         }
-        _ => {}
+        2 => {
+            dest[1] = (0b10000000_u32 | (codepoint & 0b00111111_u32)) as u8;
+            dest[0] = (0b11000000_u32 | ((codepoint >> 6_u32) & 0b00111111_u32)) as u8;
+        }
+        3 => {
+            dest[2] = (0b10000000_u32 | (codepoint & 0b00111111_u32)) as u8;
+            dest[1] = (0b10000000_u32 | ((codepoint >> 6_u32) & 0b00111111_u32)) as u8;
+            dest[0] = (0b11100000_u32 | ((codepoint >> 12_u32) & 0b00111111_u32)) as u8;
+        }
+        4 => {
+            dest[3] = (0b10000000_u32 | (codepoint & 0b00111111_u32)) as u8;
+            dest[2] = (0b10000000_u32 | ((codepoint >> 6_u32) & 0b00111111_u32)) as u8;
+            dest[1] = (0b10000000_u32 | ((codepoint >> 12_u32) & 0b00111111_u32)) as u8;
+            dest[0] = (0b11110000_u32 | ((codepoint >> 18_u32) & 0b00111111_u32)) as u8;
+        }
+        _ => {
+            panic!();
+        }
     }
+    return utf8_size;
 }
 
 /// lead: the high surrogate
