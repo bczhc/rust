@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Endianness {
     BigEndian,
     LittleEndian,

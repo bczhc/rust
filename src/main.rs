@@ -1,15 +1,14 @@
 extern crate rust;
 
 use rust::lib::i32::ToStringRadix;
+use std::cell::RefCell;
+use std::sync::Mutex;
 
 fn main() {
-    let a = [1, 2];
-
-    let mut p = &a as *const i32;
-
-    unsafe {
-        println!("{}", *p);
-        p = ((p as usize) + 4) as *const i32;
-        println!("{}", *p);
+    #[derive(Eq, PartialEq)]
+    enum A {
+        A, B
     }
+
+    println!("{}", A::A == A::A);
 }
