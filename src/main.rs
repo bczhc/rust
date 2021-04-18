@@ -1,14 +1,11 @@
 extern crate rust;
 
 use rust::lib::i32::ToStringRadix;
-use std::cell::RefCell;
-use std::sync::Mutex;
 
 fn main() {
-    #[derive(Eq, PartialEq)]
-    enum A {
-        A, B
-    }
+    let mut a = 2;
+    { let b = &mut a; }
+    { let c = &mut a; }
 
-    println!("{}", A::A == A::A);
+    println!("{:?}", 1123123213.to_string_radix(12).unwrap());
 }

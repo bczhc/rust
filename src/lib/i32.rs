@@ -44,7 +44,12 @@ impl ToStringRadix for i32 {
             buf[char_pos] = b'-';
         }
 
-        let result = String::from_utf8(buf);
+        let size = 33 - char_pos;
+        let mut c = vec![0_u8; size];
+        for i in 0..size {
+            c[i] = buf[char_pos + i];
+        }
+        let result = String::from_utf8(c);
         return if let Ok(v) = result {
             Ok(v)
         } else if let Err(e) = result {

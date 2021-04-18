@@ -5,6 +5,7 @@ use std::env::args;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufReader, Read, stdin, stdout, Write};
+use std::mem::swap;
 use std::sync::Mutex;
 
 use rust::lib::byteorder::*;
@@ -87,37 +88,36 @@ fn main() -> Result<(), String> {
 
     let from = &args[arg_count - 2];
     let to = &args[arg_count - 1];
-    let mut to_endianness: Endianness;
     let converter: fn(u32, &mut [u8]) -> u32;
 
-    match to.as_str() {
+    match to.to_ascii_lowercase().as_str() {
         "utf8" => converter = unicode_to_utf8,
         "utf16be" | "utf-16be" => {
             converter = if self_endianness == Endianness::BigEndian {
-                unicode_to_utf16_machine_byteorder
+                unicode_to_utf16_machine_endianness
             } else {
-                unicode_to_utf16_reversed_machine_byteorder
+                unicode_to_utf16_reversed_machine_endianness
             }
         }
         "utf16le" | "utf-16le" => {
             converter = if self_endianness == Endianness::LittleEndian {
-                unicode_to_utf16_machine_byteorder
+                unicode_to_utf16_machine_endianness
             } else {
-                unicode_to_utf16_reversed_machine_byteorder
+                unicode_to_utf16_reversed_machine_endianness
             }
         }
         "utf32be" | "utf-32be" => {
             converter = if self_endianness == Endianness::BigEndian {
-                unicode_to_utf32_machine_byteorder
+                unicode_to_utf32_machine_endianness
             } else {
-                unicode_to_utf32_reversed_machine_byteorder
+                unicode_to_utf32_reversed_machine_endianness
             }
         }
         "utf32le" | "utf-32le" => {
             converter = if self_endianness == Endianness::LittleEndian {
-                unicode_to_utf32_machine_byteorder
+                unicode_to_utf32_machine_endianness
             } else {
-                unicode_to_utf32_reversed_machine_byteorder
+                unicode_to_utf32_reversed_machine_endianness
             }
         }
         _ => {
@@ -125,12 +125,37 @@ fn main() -> Result<(), String> {
         }
     }
 
-    match from.as_str() {
+    match from.to_ascii_lowercase().as_str() {
         "utf8" => process_utf8_input(&converter),
-        "utf16be" | "utf-16be" => process_utf16_input(&converter, Endianness::BigEndian),
-        "utf16le" | "utf-16le" => process_utf16_input(&converter, Endianness::LittleEndian),
-        "utf32be" | "utf-32be" => process_utf32_input(&converter, Endianness::BigEndian),
-        "utf32le" | "utf-32le" => process_utf32_input(&converter, Endianness::LittleEndian),
+
+        "utf16be" | "utf-16be" => {
+            if self_endianness == Endianness::BigEndian {
+                process_utf16_input_machine_endianness(&converter);
+            } else {
+                process_utf16_input_reversed_machine_endianness(&converter);
+            }
+        }
+        "utf16le" | "utf-16le" => {
+            if self_endianness == Endianness::LittleEndian {
+                process_utf16_input_machine_endianness(&converter);
+            } else {
+                process_utf16_input_reversed_machine_endianness(&converter);
+            }
+        }
+        "utf32be" | "utf-32be" => {
+            if self_endianness == Endianness::BigEndian {
+                process_utf32_input_machine_endianness(&converter);
+            } else {
+                process_utf32_input_reversed_machine_endianness(&converter);
+            }
+        }
+        "utf32le" | "utf-32le" => {
+            if self_endianness == Endianness::LittleEndian {
+                process_utf32_input_machine_endianness(&converter);
+            } else {
+                process_utf32_input_reversed_machine_endianness(&converter);
+            }
+        }
         _ => {
             return Err(format!("Unknown <from> encode: {}", from));
         }
@@ -167,7 +192,7 @@ fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
 
 /// returns: bytes size
 #[inline]
-fn unicode_to_utf16_machine_byteorder(codepoint: u32, dest: &mut [u8]) -> u32 {
+fn unicode_to_utf16_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
     return if codepoint <= 0xffff {
         let codepoint = (codepoint | 0b1111_1111_1111_1111__u32) as u16;
         unsafe {
@@ -196,9 +221,9 @@ fn unicode_to_utf16_machine_byteorder(codepoint: u32, dest: &mut [u8]) -> u32 {
 
 /// returns: bytes size
 #[inline]
-fn unicode_to_utf16_reversed_machine_byteorder(codepoint: u32, dest: &mut [u8]) -> u32 {
+fn unicode_to_utf16_reversed_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
     let mut t: [u8; 4] = [0, 0, 0, 0];
-    let r = unicode_to_utf16_machine_byteorder(codepoint, &mut t);
+    let r = unicode_to_utf16_machine_endianness(codepoint, &mut t);
     if r == 2 {
         dest[0] = t[2];
         dest[1] = t[1];
@@ -213,7 +238,7 @@ fn unicode_to_utf16_reversed_machine_byteorder(codepoint: u32, dest: &mut [u8]) 
 }
 
 #[inline]
-fn unicode_to_utf32_machine_byteorder(codepoint: u32, dest: &mut [u8]) -> u32 {
+fn unicode_to_utf32_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
     unsafe {
         let p = &codepoint as *const u32 as *const u8;
         dest[0] = *(((p as usize) + 0) as *const u8);
@@ -225,9 +250,9 @@ fn unicode_to_utf32_machine_byteorder(codepoint: u32, dest: &mut [u8]) -> u32 {
 }
 
 #[inline]
-fn unicode_to_utf32_reversed_machine_byteorder(codepoint: u32, dest: &mut [u8]) -> u32 {
+fn unicode_to_utf32_reversed_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
     let mut t: [u8; 4] = [0, 0, 0, 0];
-    let r = unicode_to_utf16_machine_byteorder(codepoint, &mut t);
+    let _ = unicode_to_utf32_machine_endianness(codepoint, &mut t);
     dest[0] = t[0];
     dest[1] = t[1];
     dest[2] = t[2];
@@ -255,35 +280,91 @@ fn process_utf8_input(unicode_converter: &fn(u32, &mut [u8]) -> u32) {
     }
 }
 
-fn process_utf16_input(unicode_converter: &fn(u32, &mut [u8]) -> u32, from_endianness: Endianness) {
-    let mut out_buf: [u8; 4] = [0, 0, 0, 0];
-    let mut read: [u8; 4] = [0, 0, 0, 0];
+fn process_utf16_input_machine_endianness(unicode_converter: &fn(u32, &mut [u8]) -> u32) {
+    let mut buf: [u8; 4] = [0, 0, 0, 0];
     let mut br = BufReader::new(stdin());
     loop {
-        let r = br.read(&mut read[0..2]);
+        let r = br.read(&mut buf[0..2]);
         if let Err(_) = r { break; }
         unsafe {
-            let p = &read as *const u8 as *const u16;
+            let p = &buf as *const u8 as *const u16;
             if *p >= 0xd800 && *p <= 0xdb7f {
                 // use surrogate pair, need to read rwo more bytes
-                let r = br.read(&mut read[2..]);
+                let r = br.read(&mut buf[2..]);
                 assert_eq!(r.unwrap(), 2);
-                let p = &read as *const u8 as *const u16;
+                let p = &buf as *const u8 as *const u16;
                 let lead = *p;
                 let p = ((p as usize) + 16) as *const u16;
                 let trail = *p;
                 let unicode = utf8::surrogate_pair_to_unicode(lead, trail);
-                let size = unicode_converter(unicode, &mut out_buf);
-                stdout().write(&out_buf[0..size as usize]);
+                let size = unicode_converter(unicode, &mut buf);
+                stdout().write(&buf[0..size as usize]);
             }
         }
     }
 }
 
-fn process_utf32_input(unicode_converter: &fn(u32, &mut [u8]) -> u32, from_endianness: Endianness) {
-    let br = BufReader::new(stdin());
-    let read: [u8; 4] = [0, 0, 0, 0];
+fn process_utf16_input_reversed_machine_endianness(unicode_converter: &fn(u32, &mut [u8]) -> u32) {
+    let mut buf: [u8; 4] = [0, 0, 0, 0];
+    let mut br = BufReader::new(stdin());
     loop {
+        let r = br.read(&mut buf[0..2]);
+        if let Err(_) = r { break; }
+        unsafe {
+            swap(&mut buf[0], &mut buf[1]);
+            let p = &buf as *const u8 as *const u16;
+            if *p >= 0xd800 && *p <= 0xdb7f {
+                // use surrogate pair, need to read rwo more bytes
+                let r = br.read(&mut buf[2..]);
+                swap(&mut buf[2], &mut buf[3]);
+                assert_eq!(r.unwrap(), 2);
+                let p = &buf as *const u8 as *const u16;
+                let lead = *p;
+                let p = ((p as usize) + 16) as *const u16;
+                let trail = *p;
+                let unicode = utf8::surrogate_pair_to_unicode(lead, trail);
+                let size = unicode_converter(unicode, &mut buf);
+                stdout().write(&buf[0..size as usize]);
+            }
+        }
+    }
+}
 
+fn process_utf32_input_machine_endianness(unicode_converter: &fn(u32, &mut [u8]) -> u32) {
+    let mut br = BufReader::new(stdin());
+    let mut buf: [u8; 4] = [0, 0, 0, 0];
+    loop {
+        let r = br.read(&mut buf);
+        if let Ok(v) = r {
+            assert_eq!(v, 4_usize);
+        } else if let Err(_) = r { break; }
+        let unicode;
+        unsafe {
+            unicode = *(&buf as *const u8 as *const u32)
+        }
+        let _size = unicode_converter(unicode, &mut buf);
+        stdout().write(&buf);
+    }
+}
+
+fn process_utf32_input_reversed_machine_endianness(unicode_converter: &fn(u32, &mut [u8]) -> u32) {
+    let mut br = BufReader::new(stdin());
+    let mut buf: [u8; 4] = [0, 0, 0, 0];
+    let mut t: [u8; 4] = [0, 0, 0, 0];
+    loop {
+        let r = br.read(&mut t);
+        if let Ok(v) = r {
+            assert_eq!(v, 4_usize);
+        } else if let Err(_) = r { break; }
+        let unicode;
+        unsafe {
+            buf[0] = t[3];
+            buf[1] = t[2];
+            buf[2] = t[1];
+            buf[3] = t[0];
+            unicode = *(&buf as *const u8 as *const u32)
+        }
+        let _size = unicode_converter(unicode, &mut buf);
+        stdout().write(&buf);
     }
 }
