@@ -266,13 +266,17 @@ fn process_utf8_input(unicode_converter: &fn(u32, &mut [u8]) -> u32) {
     let mut read: [u8; 4] = [0, 0, 0, 0];
     let mut out_buf: [u8; 4] = [0, 0, 0, 0];
     loop {
-        let r = br.read(&mut read[0..1]);
-        if let Err(_) = r { break; }
+        let r = br.read(&mut read[0..1]).unwrap();
+        if r == 0 { break; }
         let utf8_bytes_length = get_utf8_bytes_length(read[0]);
         if utf8_bytes_length > 1 {
             // read the left bytes the current character needed
-            let r = br.read(&mut read[1_usize..(utf8_bytes_length - 1) as usize]);
-            assert_eq!(r.unwrap() as u32, utf8_bytes_length - 1);
+            let r = br.read(&mut read[1_usize..(utf8_bytes_length as usize)]).unwrap();
+            if r != (utf8_bytes_length - 1) as usize {
+                println!("{}", br.read(&mut read[1_usize..(utf8_bytes_length as usize)]).unwrap());
+                panic!();
+            }
+            assert_eq!(r as u32, utf8_bytes_length - 1);
         }
         let solved = solve_utf8_bytes(&read);
         let size = unicode_converter(solved.codepoint, &mut out_buf);
@@ -284,14 +288,14 @@ fn process_utf16_input_machine_endianness(unicode_converter: &fn(u32, &mut [u8])
     let mut buf: [u8; 4] = [0, 0, 0, 0];
     let mut br = BufReader::new(stdin());
     loop {
-        let r = br.read(&mut buf[0..2]);
-        if let Err(_) = r { break; }
+        let r = br.read(&mut buf[0..2]).unwrap();
+        if r == 0 { break; }
         unsafe {
             let p = &buf as *const u8 as *const u16;
             if *p >= 0xd800 && *p <= 0xdb7f {
                 // use surrogate pair, need to read rwo more bytes
-                let r = br.read(&mut buf[2..]);
-                assert_eq!(r.unwrap(), 2);
+                let r = br.read(&mut buf[2..]).unwrap();
+                assert_eq!(r, 2);
                 let p = &buf as *const u8 as *const u16;
                 let lead = *p;
                 let p = ((p as usize) + 16) as *const u16;
@@ -308,16 +312,20 @@ fn process_utf16_input_reversed_machine_endianness(unicode_converter: &fn(u32, &
     let mut buf: [u8; 4] = [0, 0, 0, 0];
     let mut br = BufReader::new(stdin());
     loop {
-        let r = br.read(&mut buf[0..2]);
-        if let Err(_) = r { break; }
+        let r = br.read(&mut buf[0..2]).unwrap();
+        if r == 0 { break; }
         unsafe {
-            swap(&mut buf[0], &mut buf[1]);
+            let t = buf[0];
+            buf[0] = buf[1];
+            buf[1] = t;
             let p = &buf as *const u8 as *const u16;
             if *p >= 0xd800 && *p <= 0xdb7f {
                 // use surrogate pair, need to read rwo more bytes
-                let r = br.read(&mut buf[2..]);
-                swap(&mut buf[2], &mut buf[3]);
-                assert_eq!(r.unwrap(), 2);
+                let r = br.read(&mut buf[2..]).unwrap();
+                let t = buf[2];
+                buf[2] = buf[3];
+                buf[3] = t;
+                assert_eq!(r, 2);
                 let p = &buf as *const u8 as *const u16;
                 let lead = *p;
                 let p = ((p as usize) + 16) as *const u16;
@@ -334,10 +342,8 @@ fn process_utf32_input_machine_endianness(unicode_converter: &fn(u32, &mut [u8])
     let mut br = BufReader::new(stdin());
     let mut buf: [u8; 4] = [0, 0, 0, 0];
     loop {
-        let r = br.read(&mut buf);
-        if let Ok(v) = r {
-            assert_eq!(v, 4_usize);
-        } else if let Err(_) = r { break; }
+        let r = br.read(&mut buf).unwrap();
+        assert_eq!(r, 4_usize);
         let unicode;
         unsafe {
             unicode = *(&buf as *const u8 as *const u32)

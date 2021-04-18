@@ -34,7 +34,7 @@ pub fn get_utf8_bytes_length(first_byte: u8) -> u32 {
     } else if first_byte >> 4_u8 == 0b1110_u8 {
         3
     } else if first_byte >> 3_u8 == 0b11110_u8 {
-        3
+        4
     } else {
         0
     };
