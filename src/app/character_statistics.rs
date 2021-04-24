@@ -24,7 +24,7 @@ fn main() {
         let c = std::char::from_u32(solved.codepoint).unwrap();
 
         if !map.contains_key(&c) {
-            map.insert(c, 0);
+            map.insert(c, 1);
         } else {
             *map.get_mut(&c).unwrap() += 1;
         }
