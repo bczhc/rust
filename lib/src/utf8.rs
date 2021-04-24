@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct SolvedUtf8Properties {
     pub bytes_length: u32,
     pub codepoint: u32,
@@ -27,16 +28,16 @@ pub fn get_utf8_size(codepoint: u32) -> u32 {
 }
 
 pub fn get_utf8_bytes_length(first_byte: u8) -> u32 {
-    return if first_byte >> 7_u8 == 0 {
+    return if first_byte & 0b1000_0000__u8 == 0b0000_0000__u8 {
         1
-    } else if first_byte >> 5_u8 == 0b110_u8 {
+    } else if first_byte & 0b1110_0000__u8 == 0b1100_0000__u8 {
         2
-    } else if first_byte >> 4_u8 == 0b1110_u8 {
+    } else if first_byte & 0b1111_0000__u8 == 0b1110_0000__u8 {
         3
-    } else if first_byte >> 3_u8 == 0b11110_u8 {
+    } else if first_byte & 0b1111_1000__u8 == 0b1111_0000__u8 {
         4
     } else {
-        0
+        panic!("Invalid first byte");
     };
 }
 
@@ -71,22 +72,22 @@ pub fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
     let utf8_size = get_utf8_size(codepoint);
     match utf8_size {
         1 => {
-            dest[0] = (codepoint & 0b01111111_u32) as u8;
+            dest[0] = codepoint as u8;
         }
         2 => {
-            dest[1] = (0b10000000_u32 | (codepoint & 0b00111111_u32)) as u8;
-            dest[0] = (0b11000000_u32 | ((codepoint >> 6_u32) & 0b00111111_u32)) as u8;
+            dest[1] = 0b1000_0000__u8 | ((codepoint & 0b0011_1111__u32) as u8);
+            dest[0] = 0b1100_0000__u8 | (((codepoint >> 6) & 0b0001_1111__u32) as u8);
         }
         3 => {
-            dest[2] = (0b10000000_u32 | (codepoint & 0b00111111_u32)) as u8;
-            dest[1] = (0b10000000_u32 | ((codepoint >> 6_u32) & 0b00111111_u32)) as u8;
-            dest[0] = (0b11100000_u32 | ((codepoint >> 12_u32) & 0b00111111_u32)) as u8;
+            dest[2] = 0b1000_0000__u8 | ((codepoint & 0b0011_1111__u32) as u8);
+            dest[1] = 0b1000_0000__u8 | (((codepoint >> 6) & 0b0011_1111__u32) as u8);
+            dest[0] = 0b1110_0000__u8 | (((codepoint >> 12) & 0b0000_1111__u32) as u8);
         }
         4 => {
-            dest[3] = (0b10000000_u32 | (codepoint & 0b00111111_u32)) as u8;
-            dest[2] = (0b10000000_u32 | ((codepoint >> 6_u32) & 0b00111111_u32)) as u8;
-            dest[1] = (0b10000000_u32 | ((codepoint >> 12_u32) & 0b00111111_u32)) as u8;
-            dest[0] = (0b11110000_u32 | ((codepoint >> 18_u32) & 0b00111111_u32)) as u8;
+            dest[3] = 0b1000_0000__u8 | ((codepoint & 0b0011_1111__u32) as u8);
+            dest[2] = 0b1000_0000__u8 | (((codepoint >> 6) & 0b0011_1111__u32) as u8);
+            dest[1] = 0b1000_0000__u8 | (((codepoint >> 12) & 0b0011_1111__u32) as u8);
+            dest[0] = 0b1111_0000__u8 | (((codepoint >> 18) & 0b0000_0111__u32) as u8);
         }
         _ => {
             panic!();
