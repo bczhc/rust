@@ -1,9 +1,12 @@
 extern crate lib;
 
-use lib::complex_num::ComplexValue;
+use lib::complex_num::{ComplexValue, ComplexIntegral};
+use std::f64::consts::PI;
 
 fn main() {
-    let mut value = ComplexValue::new(1.0, 2.0);
-    value /= ComplexValue { re: 1.0, im: 3.0 };
-    println!("{:?}", value);
+    let r = ComplexValue::get_definite_integral_by_trapezium(0.0, PI, 100000, |t| {
+        return ComplexValue::new(t.cos(), t.sin());
+    });
+
+    println!("{:?}", r);
 }

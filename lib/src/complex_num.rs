@@ -18,6 +18,11 @@ impl ComplexValue<f64> {
     pub fn module(&self) -> f64 {
         return f64::sqrt(f64::powi(self.re, 2) + self.im.powi(2));
     }
+
+    pub fn set(&mut self, re: f64, im: f64) {
+        self.re = re;
+        self.im = im;
+    }
 }
 
 impl Add<&Self> for ComplexValue<f64> {
@@ -163,3 +168,25 @@ impl DivAssign<&Self> for ComplexValue<f64> {
         self.im = im1;
     }
 }
+
+pub trait ComplexIntegral {
+    fn get_definite_integral_by_trapezium<T>(x0: f64, xn: f64, integral_n: i32, func: T) -> ComplexValue<f64>
+        where T: Fn(f64) -> ComplexValue<f64> {
+        let d = (xn - x0) / integral_n as f64;
+        let cv_d = ComplexValue::new(d, 0_f64);
+        let cv_2 = ComplexValue::new(2_f64, 0_f64);
+        let mut sum = ComplexValue::new(0_f64, 0_f64);
+        let mut left = ComplexValue::new(0_f64, 0_f64);
+        let mut right = ComplexValue::new(0_f64, 0_f64);
+        let mut t = 0_f64;
+        while t <= xn {
+            left = func(t);
+            right = func(t + d);
+            sum += ((left + right).mul(&cv_d).div(&cv_2));
+            t += d;
+        }
+        return sum;
+    }
+}
+
+impl ComplexIntegral for ComplexValue<f64> {}
