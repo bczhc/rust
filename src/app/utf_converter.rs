@@ -191,7 +191,7 @@ fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
 #[inline]
 fn unicode_to_utf16_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
     return if codepoint <= 0xffff {
-        let codepoint = (codepoint | 0b1111_1111_1111_1111__u32) as u16;
+        let codepoint = (codepoint & 0b1111_1111_1111_1111__u32) as u16;
         unsafe {
             let mut p = &codepoint as *const u16 as *const u8;
             dest[0] = *p;
@@ -222,14 +222,14 @@ fn unicode_to_utf16_reversed_machine_endianness(codepoint: u32, dest: &mut [u8])
     let mut t: [u8; 4] = [0, 0, 0, 0];
     let r = unicode_to_utf16_machine_endianness(codepoint, &mut t);
     if r == 2 {
-        dest[0] = t[2];
-        dest[1] = t[1];
+        dest[0] = t[1];
+        dest[1] = t[0];
     } else {
         // r == 4
-        dest[0] = t[3];
-        dest[1] = t[2];
-        dest[2] = t[1];
-        dest[3] = t[0];
+        dest[0] = t[1];
+        dest[1] = t[0];
+        dest[2] = t[3];
+        dest[3] = t[2];
     }
     return r;
 }
@@ -239,9 +239,9 @@ fn unicode_to_utf32_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
     unsafe {
         let p = &codepoint as *const u32 as *const u8;
         dest[0] = *(((p as usize) + 0) as *const u8);
-        dest[1] = *(((p as usize) + 4) as *const u8);
-        dest[2] = *(((p as usize) + 8) as *const u8);
-        dest[3] = *(((p as usize) + 12) as *const u8);
+        dest[1] = *(((p as usize) + 1) as *const u8);
+        dest[2] = *(((p as usize) + 2) as *const u8);
+        dest[3] = *(((p as usize) + 3) as *const u8);
     }
     return 4;
 }
@@ -250,10 +250,10 @@ fn unicode_to_utf32_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
 fn unicode_to_utf32_reversed_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
     let mut t: [u8; 4] = [0, 0, 0, 0];
     let _ = unicode_to_utf32_machine_endianness(codepoint, &mut t);
-    dest[0] = t[0];
-    dest[1] = t[1];
-    dest[2] = t[2];
-    dest[3] = t[3];
+    dest[0] = t[3];
+    dest[1] = t[2];
+    dest[2] = t[1];
+    dest[3] = t[0];
     return 4;
 }
 
@@ -277,8 +277,8 @@ fn process_utf8_input(unicode_converter: &fn(u32, &mut [u8]) -> u32) {
                 .unwrap();
         }
         let solved = solve_utf8_bytes(&read);
-        let size = unicode_converter(solved.codepoint, &mut out_buf);
-        stdout().write(&out_buf[..size as usize]).unwrap();
+        let size = unicode_converter(solved.codepoint, &mut out_buf) as usize;
+        stdout().write(&out_buf[..size]).unwrap();
     }
 }
 
@@ -302,12 +302,12 @@ fn process_utf16_input_machine_endianness(unicode_converter: &fn(u32, &mut [u8])
                 let lead = *p;
                 let trail = *(((p as usize) + 2) as *const u16);
                 let unicode = utf8::surrogate_pair_to_unicode(lead, trail);
-                let _ = unicode_converter(unicode, &mut buf);
-                stdout().write(&buf[..]).unwrap();
+                let size = unicode_converter(unicode, &mut buf) as usize;
+                stdout().write(&buf[..size]).unwrap();
             } else {
                 let unicode = *p as u32;
-                let _ = unicode_converter(unicode, &mut buf);
-                stdout().write(&buf[..2]);
+                let size = unicode_converter(unicode, &mut buf) as usize;
+                stdout().write(&buf[..size]).unwrap();
             }
         }
     }
@@ -339,12 +339,12 @@ fn process_utf16_input_reversed_machine_endianness(unicode_converter: &fn(u32, &
                 let lead = *p;
                 let trail = *(((p as usize) + 2) as *const u16);
                 let unicode = utf8::surrogate_pair_to_unicode(lead, trail);
-                let _ = unicode_converter(unicode, &mut buf);
-                stdout().write(&buf[..]).unwrap();
+                let size = unicode_converter(unicode, &mut buf) as usize;
+                stdout().write(&buf[..size]).unwrap();
             } else {
                 let unicode = *p as u32;
-                let _ = unicode_converter(unicode, &mut buf);
-                stdout().write(&buf[..2]);
+                let size = unicode_converter(unicode, &mut buf) as usize;
+                stdout().write(&buf[..size]).unwrap();
             }
         }
     }
@@ -364,8 +364,8 @@ fn process_utf32_input_machine_endianness(unicode_converter: &fn(u32, &mut [u8])
         }
         let unicode;
         unsafe { unicode = *(&buf as *const u8 as *const u32) }
-        let _size = unicode_converter(unicode, &mut buf);
-        stdout().write(&buf).unwrap();
+        let size = unicode_converter(unicode, &mut buf) as usize;
+        stdout().write(&buf[..size]).unwrap();
     }
 }
 
@@ -390,7 +390,7 @@ fn process_utf32_input_reversed_machine_endianness(unicode_converter: &fn(u32, &
             buf[3] = t[0];
             unicode = *(&buf as *const u8 as *const u32)
         }
-        let _size = unicode_converter(unicode, &mut buf);
-        stdout().write(&buf).unwrap();
+        let size = unicode_converter(unicode, &mut buf) as usize;
+        stdout().write(&buf[..size]).unwrap();
     }
 }
