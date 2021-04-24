@@ -1,11 +1,10 @@
-extern crate rust;
+extern crate lib;
 
 use std::fs::File;
 use std::io::{BufReader, ErrorKind, Read, stdin, stdout, Write};
-
-use rust::lib::byteorder::*;
-use rust::lib::utf8;
-use rust::lib::utf8::{get_utf8_bytes_length, solve_utf8_bytes};
+use lib::byteorder::{get_endianness, Endianness};
+use lib::utf8;
+use lib::utf8::{get_utf8_bytes_length, solve_utf8_bytes};
 
 fn main() -> Result<(), String> {
     let mut input_stream: &dyn Read = &stdin();

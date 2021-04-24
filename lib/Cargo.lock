@@ -3,10 +3,3 @@
 [[package]]
 name = "lib"
 version = "1.0.0"
-
-[[package]]
-name = "rust"
-version = "1.0.0"
-dependencies = [
- "lib",
-]

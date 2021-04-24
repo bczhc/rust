@@ -5,9 +5,19 @@ version = "1.0.0"
 authors = ["bczhc <bczhc0@126.com>"]
 
 [[bin]]
-name = "utf-converter"
-path = "src/app/utf-converter.rs"
-
-[[bin]]
 name = "main"
 path = "src/main.rs"
+
+[[bin]]
+name = "utf-converter"
+path = "src/app/utf_converter.rs"
+
+[[bin]]
+name = "character-statistics"
+path = "src/app/character_statistics.rs"
+
+[dependencies]
+#rand = "0.8.3"
+#rusqlite = "0.25.1"
+#libc = "0.2.93"
+lib = {path = "lib", version = "1.0.0"}
