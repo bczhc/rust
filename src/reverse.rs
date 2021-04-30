@@ -3,7 +3,6 @@ extern crate lib;
 use std::env::args;
 use std::path::Path;
 use std::io::{Read, ErrorKind, stdin};
-use std::panic::panic_any;
 use lib::io::ReadLine;
 
 fn main() -> Result<(), String> {

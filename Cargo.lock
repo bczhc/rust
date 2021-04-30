@@ -157,6 +157,7 @@ name = "rust"
 version = "1.0.0"
 dependencies = [
  "lib",
+ "libc",
  "rand",
  "size_format",
 ]

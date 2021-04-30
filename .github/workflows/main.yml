@@ -25,4 +25,4 @@ jobs:
       - name: install Rust
         run: sudo apt install rustc -y
       - name: build
-        run: cargo build
+        run: cargo build -j4
