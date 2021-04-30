@@ -14,16 +14,16 @@ impl SolvedUtf8Properties {
 }
 
 pub fn get_utf8_size(codepoint: u32) -> u32 {
-    return if codepoint >= 0x0_u32 && codepoint <= 0x7f_u32 {
+    return if codepoint <= 0x7f_u32 {
         1
-    } else if codepoint > 0x80_u32 && codepoint <= 0x7ff_u32 {
+    } else if codepoint <= 0x7ff_u32 {
         2
-    } else if codepoint >= 0x800_u32 && codepoint <= 0xffff_u32 {
+    } else if codepoint <= 0xffff_u32 {
         3
-    } else if codepoint >= 0x10000_u32 && codepoint <= 0x10ffff_u32 {
+    } else if codepoint <= 0x10ffff_u32 {
         4
     } else {
-        0
+        panic!("codepoint range error");
     };
 }
 

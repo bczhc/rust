@@ -16,9 +16,22 @@ path = "src/utf_converter.rs"
 name = "character-statistics"
 path = "src/character_statistics.rs"
 
+[[bin]]
+name = "shuffle-string"
+path = "src/shuffle_string.rs"
+
+[[bin]]
+name = "reverse"
+path = "src/reverse.rs"
+
+[[bin]]
+name = "stdin-size"
+path = "src/stdin_size.rs"
+
 [dependencies]
-#rand = "0.8.3"
+rand = "0.8.3"
 #rusqlite = "0.25.1"
 #libc = "0.2.93"
 lib = {path = "lib", version = "1.0.0"}
 #num-complex = "0.4.0"
+size_format = "1.0.2"
