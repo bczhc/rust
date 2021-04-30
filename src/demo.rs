@@ -1,12 +1,19 @@
 extern crate lib;
 
-use lib::complex_num::{ComplexValue, ComplexIntegral};
 use std::f64::consts::PI;
+use lib::complex_num::ComplexValueF64;
+use lib::complex_num::complex_integral::{IntegralCalculator, ComplexFunction};
 
 fn main() {
-    let r = ComplexValue::get_definite_integral_by_trapezium(0.0, PI, 100000, |t| {
-        return ComplexValue::new(t.cos(), t.sin());
-    });
+    struct Function {
+    }
+    impl ComplexFunction for Function {
+        fn x(&self, t: f64) -> ComplexValueF64 {
+            ComplexValueF64::new(f64::sin(t), f64::sin(t))
+        }
+    }
 
-    println!("{:?}", r);
+    let integral_calculator = IntegralCalculator::new(10000, Function {});
+    let value = integral_calculator.calc(0.0, 2.0 * PI);
+    println!("{:?}", value);
 }

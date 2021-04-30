@@ -1,5 +1,7 @@
 use std::ops::{Add, Sub, Mul, Div, AddAssign, ShlAssign, SubAssign, MulAssign, DivAssign};
 
+pub type ComplexValueF64 = ComplexValue<f64>;
+
 #[derive(PartialEq, Copy, Debug, Clone, Hash)]
 pub struct ComplexValue<T> {
     pub re: T,
@@ -107,7 +109,7 @@ impl Mul<&Self> for ComplexValue<f64> {
     fn mul(self, rhs: &ComplexValue<f64>) -> Self::Output {
         return Self {
             re: self.re * rhs.re - self.im * rhs.im,
-            im: self.re * self.im + self.im * rhs.re,
+            im: self.re * rhs.im + self.im * rhs.re,
         };
     }
 }
@@ -169,24 +171,40 @@ impl DivAssign<&Self> for ComplexValue<f64> {
     }
 }
 
-pub trait ComplexIntegral {
-    fn get_definite_integral_by_trapezium<T>(x0: f64, xn: f64, integral_n: i32, func: T) -> ComplexValue<f64>
-        where T: Fn(f64) -> ComplexValue<f64> {
-        let d = (xn - x0) / integral_n as f64;
-        let cv_d = ComplexValue::new(d, 0_f64);
-        let cv_2 = ComplexValue::new(2_f64, 0_f64);
-        let mut sum = ComplexValue::new(0_f64, 0_f64);
-        let mut left = ComplexValue::new(0_f64, 0_f64);
-        let mut right = ComplexValue::new(0_f64, 0_f64);
-        let mut t = 0_f64;
-        while t <= xn {
-            left = func(t);
-            right = func(t + d);
-            sum += ((left + right).mul(&cv_d).div(&cv_2));
-            t += d;
+pub mod complex_integral {
+    use crate::complex_num::ComplexValueF64;
+
+    pub struct IntegralCalculator<T> where T: ComplexFunction {
+        n: i32,
+        function: T,
+    }
+
+    pub trait ComplexFunction {
+        fn x(&self, t: f64) -> ComplexValueF64;
+    }
+
+    impl<T> IntegralCalculator<T> where T: ComplexFunction {
+        #[inline]
+        pub fn new(integral_separate_n: i32, function: T) -> IntegralCalculator<T> {
+            Self {
+                function,
+                n: integral_separate_n,
+            }
         }
-        return sum;
+
+        pub fn calc(&self, x0: f64, xn: f64) -> ComplexValueF64 {
+            let d = (xn - x0) / self.n as f64;
+            let mut i = x0;
+            let mut i2: f64;
+            let mut sum = ComplexValueF64::new(0.0, 0.0);
+            let c2 = ComplexValueF64::new(2.0, 0.0);
+            let c_d = ComplexValueF64::new(d, 0.0);
+            while i < xn {
+                i2 = i + d;
+                sum += (self.function.x(i) + self.function.x(i2)) * c_d / c2;
+                i = i2;
+            }
+            sum
+        }
     }
 }
-
-impl ComplexIntegral for ComplexValue<f64> {}
