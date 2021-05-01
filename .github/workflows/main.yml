@@ -21,6 +21,9 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
 
       - name: Install Rust
         run: sudo apt install rustc -y
@@ -41,7 +44,7 @@ jobs:
           echo "**My rust library doc**" > ./README.md
           git add README.md
           git commit -m 'add README.md'
-      - name: Push at rust-lib-doc repo
+      - name: Push to rust-lib-doc repo
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
