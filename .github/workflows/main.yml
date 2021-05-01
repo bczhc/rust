@@ -21,12 +21,16 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-        with:
-          persist-credentials: false
-          fetch-depth: 0
 
       - name: Install Rust
         run: sudo apt install rustc -y
+      - name: Clone rust-lib-doc
+        uses: actions/checkout@master
+        with:
+          repository: bczhc/rust-lib-doc
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./rust-lib-doc
+
       - name: build
         run: cargo build -j4
       - name: Test lib
@@ -39,16 +43,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ACCESSABLE_REMOTE="https://bczhc:$GITHUB_TOKEN@github.com/bczhc/rust-lib-doc"
-          git clone "$ACCESSABLE_REMOTE"
           cd rust-lib-doc
-          git config user.name "bczhc"
-          git config user.email "bczhc0@126.com"
-          cp -r ../target/doc/* .
-          cp -vr ./lib/index.html .
-          git add --all
-          git commit -m 'update'
-          git remote set-url origin "$ACCESSABLE_REMOTE"
+          touch test
+          git add test
+          git commit -m test
           git push origin gh-pages
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
