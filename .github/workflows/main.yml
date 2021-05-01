@@ -35,20 +35,20 @@ jobs:
         run: |
           cargo doc -j4
           tar -cvzf documentation.tgz target/doc/*
-      - name: Deploy documentation and commit
+      - name: Deploy documentation and push to rust-lib-doc repository
         run: |
-          git clone https://github.com/bczhc/rust-lib-doc.git
+          # set ssh
+          mkdir ~/.ssh 2> /dev/null
+          echo "${{ GITHUB_TOKEN }}" > ~/.ssh/id_rsa
+          # do changes and push
+          git clone git@github.com/bczhc/rust-lib-doc
           cd rust-lib-doc
           git config user.name "bczhc"
           git config user.email "bczhc0@126.com"
           echo "**My rust library doc**" > ./README.md
           git add README.md
           git commit -m 'add README.md'
-      - name: Push to rust-lib-doc repo
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: gh-pages
+          git push origin gh-pages
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
