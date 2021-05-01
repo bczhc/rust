@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: bczhc/rust-lib-doc
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ACTIONS_TOKEN }}
           path: ./rust-lib-doc
 
 #      - name: Install Rust
@@ -36,8 +36,6 @@ jobs:
 #      - name: Test lib
 #        run: cargo test -p lib
       - name: Deploy documentation and push to rust-lib-doc repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd rust-lib-doc
           touch test
