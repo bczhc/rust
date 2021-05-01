@@ -22,27 +22,29 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Clone rust-lib-doc
-        uses: actions/checkout@master
-        with:
-          repository: bczhc/rust-lib-doc
-          token: ${{ secrets.ACTION_PAT }}
-          path: ./rust-lib-doc
-
-#      - name: Install Rust
-#        run: sudo apt install rustc -y
-#      - name: build
-#        run: cargo build -j4
-#      - name: Test lib
-#        run: cargo test -p lib
-      - name: Deploy documentation and push to rust-lib-doc repository
+      - name: Install Rust
+        run: sudo apt install rustc -y
+      - name: build
+        run: cargo build -j4
+      - name: Test lib
+        run: cargo test -p lib
+      - name: Generate documentation
         run: |
+          cargo doc -j4
+          tar -cvzf documentation.tgz target/doc/*
+      - name: Deploy documentation and push to rust-lib-doc repository
+        env:
+          ACTION_PAT: ${{ secrets.ACTION_PAT }}
+        run: |
+          ACCESSABLE_REMOTE="https://bczhc:$ACTION_PAT@github.com/bczhc/rust-lib-doc"
+          git clone "$ACCESSABLE_REMOTE"
           cd rust-lib-doc
-          touch test
-          git config user.name 'bczhc'
-          git config user.email 'bczhc0@126.com'
-          git add test
-          git commit -m test
+          git config user.name "bczhc"
+          git config user.email "bczhc0@126.com"
+          cp -r ../target/doc/* .
+          cp -vr ./lib/index.html .
+          git add --all
+          git commit -m 'update'
           git push origin gh-pages
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
