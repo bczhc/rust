@@ -28,4 +28,11 @@ jobs:
         run: cargo build -j4
       - name: Test lib
         run: cargo test -p lib
+      - name: Generate documentation
+        run: cargo doc -j4
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: documentation
+          path: target/doc
 
