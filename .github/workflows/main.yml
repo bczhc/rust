@@ -44,9 +44,11 @@ jobs:
           cd rust-lib-doc
           git config user.name "bczhc"
           git config user.email "bczhc0@126.com"
-          echo "**My rust library doc**" > ./README.md
-          git add README.md
-          git commit -m 'add README.md'
+          cp -r ../target/doc/* .
+          cp -vr ./lib/index.html .
+          git add --all
+          git commit -m 'update'
+          git remote set-url origin "$ACCESSABLE_REMOTE"
           git push origin gh-pages
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
