@@ -22,7 +22,10 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: install Rust
+      - name: Install Rust
         run: sudo apt install rustc -y
       - name: build
         run: cargo build -j4
+      - name: Test lib
+        run: cargo test -p lib
+

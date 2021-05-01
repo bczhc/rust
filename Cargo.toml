@@ -4,7 +4,6 @@ name = "rust"
 version = "1.0.0"
 authors = ["bczhc <bczhc0@126.com>"]
 license = "MIT"
-license-file = "LICENSE.md"
 
 [[bin]]
 name = "main"

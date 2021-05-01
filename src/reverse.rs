@@ -101,7 +101,7 @@ fn reverse_string(s: &String) -> String {
         return String::from("");
     }
     let chars: Vec<char> = s.chars().collect();
-    let mut i = (chars.len() - 1);
+    let mut i = chars.len() - 1;
     let mut r = String::new();
     loop {
         if i == 0 {
