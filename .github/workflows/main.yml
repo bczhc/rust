@@ -41,7 +41,7 @@ jobs:
           mkdir ~/.ssh 2> /dev/null
           echo ${{ secrets.GITHUB_TOKEN }} > ~/.ssh/id_rsa
           # do changes and push
-          git clone git@github.com/bczhc/rust-lib-doc
+          git clone git@github.com:bczhc/rust-lib-doc
           cd rust-lib-doc
           git config user.name "bczhc"
           git config user.email "bczhc0@126.com"
