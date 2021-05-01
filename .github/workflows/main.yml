@@ -37,7 +37,7 @@ jobs:
           tar -cvzf documentation.tgz target/doc/*
       - name: Deploy documentation and push to rust-lib-doc repository
         run: |
-          ACCESSABLE_REMOTE="https://bczhc:${{ #secrets.GITHUB_TOKEN }}@github.com/bczhc/rust-lib-doc"
+          ACCESSABLE_REMOTE="https://bczhc:${{ $secrets.GITHUB_TOKEN }}@github.com/bczhc/rust-lib-doc"
           git clone "$ACCESSABLE_REMOTE"
           cd rust-lib-doc
           git config user.name "bczhc"
