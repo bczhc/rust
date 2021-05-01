@@ -34,14 +34,17 @@ jobs:
           tar -cvzf documentation.tgz target/doc/*
       - name: Deploy documentation at rust-lib-doc repo
         run: |
-          git clone $GITHUB_TOKEN@github.com:bczhc/rust-lib-doc.git
+          git clone git@github.com:bczhc/rust-lib-doc.git
           cd rust-lib-doc
           git config user.name "bczhc"
           git config user.email "bczhc0@126.com"
           echo "**My rust library doc**" > ./README.md
           git add README.md
           git commit -m 'add README.md'
-          git push origin gh-pages
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
