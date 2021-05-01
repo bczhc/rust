@@ -32,7 +32,7 @@ jobs:
         run: |
           cargo doc -j4
           tar -cvzf documentation.tgz target/doc/*
-      - name: Deploy documentation at rust-lib-doc repo
+      - name: Deploy documentation and commit
         run: |
           git clone git@github.com:bczhc/rust-lib-doc.git
           cd rust-lib-doc
@@ -41,6 +41,7 @@ jobs:
           echo "**My rust library doc**" > ./README.md
           git add README.md
           git commit -m 'add README.md'
+      - name: Push at rust-lib-doc repo
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
