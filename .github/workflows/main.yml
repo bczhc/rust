@@ -29,10 +29,12 @@ jobs:
       - name: Test lib
         run: cargo test -p lib
       - name: Generate documentation
-        run: cargo doc -j4
+        run: |
+          cargo doc -j4
+          tar -cvzf documentation.tgz target/doc/*
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: documentation
-          path: target/doc
+          path: documentation.tgz
 
