@@ -41,6 +41,8 @@ jobs:
         run: |
           cd rust-lib-doc
           touch test
+          git config user.name 'bczhc'
+          git config user.email 'bczhc0@126.com'
           git add test
           git commit -m test
           git push origin gh-pages
