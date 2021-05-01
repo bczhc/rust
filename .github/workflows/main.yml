@@ -22,8 +22,6 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Install Rust
-        run: sudo apt install rustc -y
       - name: Clone rust-lib-doc
         uses: actions/checkout@master
         with:
@@ -31,14 +29,12 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           path: ./rust-lib-doc
 
-      - name: build
-        run: cargo build -j4
-      - name: Test lib
-        run: cargo test -p lib
-      - name: Generate documentation
-        run: |
-          cargo doc -j4
-          tar -cvzf documentation.tgz target/doc/*
+#      - name: Install Rust
+#        run: sudo apt install rustc -y
+#      - name: build
+#        run: cargo build -j4
+#      - name: Test lib
+#        run: cargo test -p lib
       - name: Deploy documentation and push to rust-lib-doc repository
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
