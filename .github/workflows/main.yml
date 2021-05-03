@@ -42,7 +42,6 @@ jobs:
           git config user.name "bczhc"
           git config user.email "bczhc0@126.com"
           cp -r ../target/doc/* .
-          cp -vr ./lib/index.html .
           git add --all
           git commit -m 'update'
           git push origin gh-pages

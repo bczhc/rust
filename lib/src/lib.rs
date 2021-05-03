@@ -1,3 +1,4 @@
+//! My library...
 pub mod byteorder;
 
 pub mod i32;

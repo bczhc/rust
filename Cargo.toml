@@ -29,6 +29,10 @@ path = "src/reverse.rs"
 name = "stdin-size"
 path = "src/stdin_size.rs"
 
+[[bin]]
+name = "file-size"
+path = "src/file_size.rs"
+
 [dependencies]
 rand = "0.8.3"
 libc = "0.2.93"
@@ -37,3 +41,4 @@ size_format = "1.0.2"
 curl = "0.4.36"
 serde_json = "1.0.64"
 json = "0.12.4"
+errno = "0.2.7"
