@@ -19,17 +19,15 @@ Options:
     let args = get_args_without_self_path();
 
     if args.len() == 0 {
-        msg_printer.show_msg(MsgType::Help);
-        return Ok(());
+        return msg_printer.show_msg(MsgType::Help);
     }
 
     if args.len() >= 4 {
-        msg_printer.show_msg(MsgType::InvalidArgumentCount(args.len()));
+        return msg_printer.show_msg(MsgType::InvalidArgumentCount(args.len()));
     }
 
     let mut arguments = Arguments {
         human_readable: false,
-        file_path: None,
     };
 
     if args.len() == 1 {
@@ -115,9 +113,7 @@ fn print_file_size(file_path: &String, human_readable: bool) -> Result<(), Strin
 }
 
 fn str_to_c_str(s: &str) -> *const libc::c_char {
-    unsafe {
-        return s.as_bytes().as_ptr() as *const libc::c_char;
-    }
+    return s.as_bytes().as_ptr() as *const libc::c_char;
 }
 
 fn string_to_c_str(s: &String) -> *const i8 {
@@ -126,5 +122,4 @@ fn string_to_c_str(s: &String) -> *const i8 {
 
 struct Arguments {
     human_readable: bool,
-    file_path: Option<String>,
 }

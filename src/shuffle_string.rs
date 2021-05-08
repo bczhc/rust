@@ -4,7 +4,7 @@ extern crate rand;
 use lib::io::ReadLine;
 use rand::{thread_rng, Rng};
 use std::env::args;
-use std::io::{stdin, BufReader, ErrorKind, Read};
+use std::io::{stdin, Read};
 use std::path::Path;
 
 fn main() -> Result<(), String> {
