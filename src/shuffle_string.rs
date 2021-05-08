@@ -1,11 +1,11 @@
-extern crate rand;
 extern crate lib;
+extern crate rand;
 
-use std::io::{stdin, BufReader, Read, ErrorKind};
-use std::path::Path;
-use std::env::args;
-use rand::{thread_rng, Rng};
 use lib::io::ReadLine;
+use rand::{thread_rng, Rng};
+use std::env::args;
+use std::io::{stdin, BufReader, ErrorKind, Read};
+use std::path::Path;
 
 fn main() -> Result<(), String> {
     let mut args: Vec<String> = args().collect();
@@ -38,7 +38,7 @@ fn main() -> Result<(), String> {
     match shuffle_mode {
         ShuffleMode::Line => {
             let mut stdin = stdin();
-            let mut stdin = &mut stdin as &mut dyn Read;
+            let stdin = &mut stdin as &mut dyn Read;
             loop {
                 let read = stdin.read_line();
                 if let Some(line) = read {
@@ -87,12 +87,15 @@ fn show_msg(msg_type: MsgType) -> Result<(), String> {
         MsgType::Help => {
             let file_path = args().nth(0).unwrap();
             let file_name = Path::new(&file_path).file_name().unwrap().to_str().unwrap();
-            let help_msg = format!("Shuffle string read from stdin.
+            let help_msg = format!(
+                "Shuffle string read from stdin.
 Usage: {} [option]
 Options:
   -l, --line  Shuffle string by each line.
   -a, --all  Shuffle all string read from stdin; it's the default mode.
-  -h, --help  Show this help.", file_name);
+  -h, --help  Show this help.",
+                file_name
+            );
             println!("{}", help_msg);
             Ok(())
         }

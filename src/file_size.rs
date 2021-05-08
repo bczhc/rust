@@ -1,19 +1,20 @@
 extern crate size_format;
 
-use std::env::args;
-use std::path::Path;
-use utils::{MsgPrinter, get_file_name, get_args_without_self_path, MsgType};
 use size_format::SizeFormatterBinary;
+use utils::{get_args_without_self_path, get_file_name, MsgPrinter, MsgType};
 
 mod utils;
 
 fn main() -> Result<(), String> {
-    let msg_printer = MsgPrinter::new(format!("Get file size.
+    let msg_printer = MsgPrinter::new(format!(
+        "Get file size.
 Usage: {} [option] [--] <file-path>
 
 Options:
 -h, --human-readable  Print size as human-readable format.
---help  Show this help.", get_file_name()));
+--help  Show this help.",
+        get_file_name()
+    ));
 
     let args = get_args_without_self_path();
 
@@ -38,7 +39,7 @@ Options:
             match_option(&msg_printer, &mut arguments, argv)?;
         } else {
             // interpreted as file path positional argument
-            return print_file_size(argv, arguments.human_readable)
+            return print_file_size(argv, arguments.human_readable);
         }
     }
 
@@ -52,7 +53,7 @@ Options:
             let option = &args[0];
             match_option(&msg_printer, &mut arguments, option)?;
             print_file_size(&args[1], arguments.human_readable)
-        }
+        };
     }
 
     if args.len() == 3 {
@@ -70,7 +71,11 @@ Options:
     return Ok(());
 }
 
-fn match_option(msg_printer: &MsgPrinter, arguments: &mut Arguments, option: &String) -> Result<(), String> {
+fn match_option(
+    msg_printer: &MsgPrinter,
+    arguments: &mut Arguments,
+    option: &String,
+) -> Result<(), String> {
     match option.as_str() {
         "-h" | "--human-readable" => {
             arguments.human_readable = true;

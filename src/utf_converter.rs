@@ -1,10 +1,10 @@
 extern crate lib;
 
-use std::fs::File;
-use std::io::{BufReader, ErrorKind, Read, stdin, stdout, Write};
 use lib::byteorder::{get_endianness, Endianness};
 use lib::utf8;
 use lib::utf8::{get_utf8_bytes_length, solve_utf8_bytes};
+use std::fs::File;
+use std::io::{stdin, stdout, BufReader, ErrorKind, Read, Write};
 
 fn main() -> Result<(), String> {
     let mut input_stream: &dyn Read = &stdin();

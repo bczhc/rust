@@ -1,8 +1,8 @@
 extern crate size_format;
 
-use std::io::{stdin, Read};
-use size_format::{SizeFormatter, SizeFormatterBinary};
+use size_format::SizeFormatterBinary;
 use std::env::args;
+use std::io::{stdin, Read};
 use std::path::Path;
 
 fn main() -> Result<(), String> {
@@ -16,7 +16,9 @@ fn main() -> Result<(), String> {
     struct Arguments {
         human_readable: bool,
     }
-    let mut arguments = Arguments { human_readable: false };
+    let mut arguments = Arguments {
+        human_readable: false,
+    };
 
     if args.len() == 1 {
         let option = &args[0];
@@ -66,18 +68,17 @@ fn show_msg(msg_type: MsgType) -> Result<(), String> {
             let file_path = args.nth(0).unwrap();
             let file_name = Path::new(&file_path).file_name().unwrap().to_str().unwrap();
 
-            println!("Print the size of all data read from stdin.
+            println!(
+                "Print the size of all data read from stdin.
 Usage: {0} [option]
 Options:
   -h, --human-readable  Print human-readable size format.
-  --help  Show this help.", file_name);
+  --help  Show this help.",
+                file_name
+            );
             Ok(())
         }
-        MsgType::InvalidArgumentCount(c) => {
-            Err(format!("Invalid argument count: {}", c))
-        }
-        MsgType::UnknownOption(o) => {
-            Err(format!("Unknown option: {}", o))
-        }
+        MsgType::InvalidArgumentCount(c) => Err(format!("Invalid argument count: {}", c)),
+        MsgType::UnknownOption(o) => Err(format!("Unknown option: {}", o)),
     };
 }

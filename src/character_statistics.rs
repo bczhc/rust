@@ -1,11 +1,11 @@
 extern crate lib;
 
+use lib::utf8::{get_utf8_bytes_length, solve_utf8_bytes};
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::io::{stdin, BufReader, Read};
-use lib::utf8::{solve_utf8_bytes, get_utf8_bytes_length};
-use std::cmp::Ordering;
-use utils::{MsgPrinter, get_file_name, MsgType, get_args_without_self_path};
-use std::mem::size_of;
+use utils::{get_args_without_self_path, get_file_name, MsgPrinter, MsgType};
+
 use lib::char::han_char_range;
 
 mod utils;
@@ -27,17 +27,18 @@ struct Main {
 impl Main {
     #[inline]
     fn new() -> Self {
-        let help_msg = format!("Count characters read from stdin.
+        let help_msg = format!(
+            "Count characters read from stdin.
 Usage: {} [option]
 Options:
   --han  Count Han characters.
-  -h, --help  Show this help.", get_file_name());
+  -h, --help  Show this help.",
+            get_file_name()
+        );
 
         return Self {
             msg_printer: MsgPrinter::new(help_msg),
-            argument: Argument {
-                han_mode: false
-            },
+            argument: Argument { han_mode: false },
         };
     }
 
@@ -45,7 +46,9 @@ Options:
         let args = get_args_without_self_path();
 
         if args.len() >= 2 {
-            return self.msg_printer.show_msg(MsgType::InvalidArgumentCount(args.len()));
+            return self
+                .msg_printer
+                .show_msg(MsgType::InvalidArgumentCount(args.len()));
         }
 
         if args.len() == 1 {

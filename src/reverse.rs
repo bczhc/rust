@@ -1,9 +1,9 @@
 extern crate lib;
 
-use std::env::args;
-use std::path::Path;
-use std::io::{Read, ErrorKind, stdin};
 use lib::io::ReadLine;
+use std::env::args;
+use std::io::{stdin, Read};
+use std::path::Path;
 
 fn main() -> Result<(), String> {
     let mut args: Vec<String> = args().collect();
@@ -21,7 +21,9 @@ fn main() -> Result<(), String> {
     struct Arguments {
         reverse_mode: ReverseMode,
     }
-    let mut arguments = Arguments { reverse_mode: ReverseMode::All };
+    let mut arguments = Arguments {
+        reverse_mode: ReverseMode::All,
+    };
 
     if args.len() == 1 {
         let option = &args[0];
@@ -44,7 +46,7 @@ fn main() -> Result<(), String> {
     match arguments.reverse_mode {
         ReverseMode::Line => {
             let mut stdin = stdin();
-            let mut stdin = &mut stdin as &mut dyn Read;
+            let stdin = &mut stdin as &mut dyn Read;
             loop {
                 let read = stdin.read_line();
                 if let Some(line) = read {
@@ -79,20 +81,19 @@ fn show_msg(msg_type: MsgType) -> Result<(), String> {
         MsgType::Help => {
             let file_path = args().nth(0).unwrap();
             let file_name = Path::new(&file_path).file_name().unwrap().to_str().unwrap();
-            println!("Reverse string read from stdin.
+            println!(
+                "Reverse string read from stdin.
 Usage: {} [option]
 Options:
   -l, --line  Reverse string by each line.
   -a, --all  Reverse all string read from stdin; this is the default mode.
-  -h, --help  Show this help.", file_name);
+  -h, --help  Show this help.",
+                file_name
+            );
             Ok(())
         }
-        MsgType::InvalidArgumentCount(c) => {
-            Err(format!("Invalid argument count: {}", c))
-        }
-        MsgType::UnknownOption(o) => {
-            Err(format!("Unknown option: {}", o))
-        }
+        MsgType::InvalidArgumentCount(c) => Err(format!("Invalid argument count: {}", c)),
+        MsgType::UnknownOption(o) => Err(format!("Unknown option: {}", o)),
     };
 }
 
