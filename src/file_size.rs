@@ -87,16 +87,16 @@ fn match_option(msg_printer: &MsgPrinter, arguments: &mut Arguments, option: &St
 
 fn print_file_size(file_path: &String, human_readable: bool) -> Result<(), String> {
     unsafe {
-        let fp = libc::fopen64(string_to_c_str(file_path), str_to_c_str("rb"));
+        let fp = libc::fopen(string_to_c_str(file_path), str_to_c_str("rb"));
         if fp.is_null() {
             return Err(String::from("Failed to open file"));
         }
-        if libc::fseeko64(fp, 0, libc::SEEK_END) != 0 {
+        if libc::fseeko(fp, 0, libc::SEEK_END) != 0 {
             return Err(String::from("Failed to seek file"));
         }
-        let size = libc::ftello64(fp);
+        let size = libc::ftello(fp);
         if size < 0 {
-            return Err(format!("ftello64(...) error, errno: {}", errno::errno().0));
+            return Err(format!("ftello(...) error, errno: {}", errno::errno().0));
         }
         let size = size as u64;
         if human_readable {

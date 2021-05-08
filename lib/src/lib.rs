@@ -12,3 +12,5 @@ pub mod complex_num;
 pub mod epicycle;
 
 pub mod io;
+
+pub mod char;

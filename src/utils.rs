@@ -1,5 +1,6 @@
 use std::env::args;
 use std::path::Path;
+use std::ffi::OsString;
 
 pub enum MsgType<'a> {
     Help,
@@ -34,7 +35,7 @@ impl MsgPrinter {
 
 pub fn get_file_name() -> String {
     let file_path = args().nth(0).unwrap();
-    let file_name = Path::new(&file_path).file_name().unwrap().to_str().unwrap();
+    let file_name = OsString::from(Path::new(&file_path).file_name().unwrap()).into_string().unwrap();
     return String::from(file_name);
 }
 

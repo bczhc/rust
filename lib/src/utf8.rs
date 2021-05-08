@@ -171,6 +171,7 @@ pub fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
 }
 
 /// lead: the high surrogate
+///
 /// trail: the low surrogate
 #[derive(Debug)]
 pub struct Surrogate {
