@@ -14,3 +14,7 @@ pub mod epicycle;
 pub mod io;
 
 pub mod char;
+
+pub mod fourier_series;
+
+pub mod point;

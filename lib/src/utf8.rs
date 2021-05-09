@@ -15,21 +15,21 @@ impl SolvedUtf8Properties {
 
 /// # Examples
 /// ```
-/// use lib::utf8::get_utf8_size;
+/// use lib::utf8::utf8_size;
 ///
-/// let  r = get_utf8_size('a' as u32);
+/// let  r = utf8_size('a' as u32);
 /// assert_eq!(r, 1);
 ///
-/// let r = get_utf8_size('©' as u32);
+/// let r = utf8_size('©' as u32);
 /// assert_eq!(r, 2);
 ///
-/// let r = get_utf8_size('好' as u32);
+/// let r = utf8_size('好' as u32);
 /// assert_eq!(r, 3);
 ///
-/// let r = get_utf8_size('🍎' as u32);
+/// let r = utf8_size('🍎' as u32);
 /// assert_eq!(r, 4);
 /// ```
-pub fn get_utf8_size(codepoint: u32) -> u32 {
+pub fn utf8_size(codepoint: u32) -> u32 {
     return if codepoint <= 0x7f_u32 {
         1
     } else if codepoint <= 0x7ff_u32 {
@@ -45,17 +45,17 @@ pub fn get_utf8_size(codepoint: u32) -> u32 {
 
 /// # Examples
 /// ```
-/// use lib::utf8::get_utf8_bytes_length;
+/// use lib::utf8::utf8_bytes_length;
 ///
-/// assert_eq!(get_utf8_bytes_length("a".as_bytes()[0]), 1);
+/// assert_eq!(utf8_bytes_length("a".as_bytes()[0]), 1);
 ///
-/// assert_eq!(get_utf8_bytes_length("©".as_bytes()[0]), 2);
+/// assert_eq!(utf8_bytes_length("©".as_bytes()[0]), 2);
 ///
-/// assert_eq!(get_utf8_bytes_length("好".as_bytes()[0]), 3);
+/// assert_eq!(utf8_bytes_length("好".as_bytes()[0]), 3);
 ///
-/// assert_eq!(get_utf8_bytes_length("🍎".as_bytes()[0]), 4);
+/// assert_eq!(utf8_bytes_length("🍎".as_bytes()[0]), 4);
 /// ```
-pub fn get_utf8_bytes_length(first_byte: u8) -> u32 {
+pub fn utf8_bytes_length(first_byte: u8) -> u32 {
     return if first_byte & 0b1000_0000__u8 == 0b0000_0000__u8 {
         1
     } else if first_byte & 0b1110_0000__u8 == 0b1100_0000__u8 {
@@ -71,30 +71,30 @@ pub fn get_utf8_bytes_length(first_byte: u8) -> u32 {
 
 /// # Examples
 /// ```
-/// use lib::utf8::solve_utf8_bytes;
+/// use lib::utf8::decode_utf8;
 ///
 /// let b = "a".as_bytes();
-/// let  solved = solve_utf8_bytes(&b);
+/// let  solved = decode_utf8(&b);
 /// assert_eq!(solved.codepoint, 'a' as u32);
 /// assert_eq!(solved.bytes_length, 1);
 ///
 /// let b = "©".as_bytes();
-/// let  solved = solve_utf8_bytes(&b);
+/// let  solved = decode_utf8(&b);
 /// assert_eq!(solved.codepoint, '©' as u32);
 /// assert_eq!(solved.bytes_length, 2);
 ///
 /// let b = "好".as_bytes();
-/// let  solved = solve_utf8_bytes(&b);
+/// let  solved = decode_utf8(&b);
 /// assert_eq!(solved.codepoint, '好' as u32);
 /// assert_eq!(solved.bytes_length, 3);
 ///
 /// let b = "🍎".as_bytes();
-/// let  solved = solve_utf8_bytes(&b);
+/// let  solved = decode_utf8(&b);
 /// assert_eq!(solved.codepoint, '🍎' as u32);
 /// assert_eq!(solved.bytes_length, 4);
 /// ```
-pub fn solve_utf8_bytes(bytes: &[u8]) -> SolvedUtf8Properties {
-    let bytes_length = get_utf8_bytes_length(bytes[0]);
+pub fn decode_utf8(bytes: &[u8]) -> SolvedUtf8Properties {
+    let bytes_length = utf8_bytes_length(bytes[0]);
     let codepoint: u32 = match bytes_length {
         1 => (bytes[0] & 0b01111111_u8) as u32,
         2 => (((bytes[1] & 0b00111111_u8) as u32) | (((bytes[0] & 0b00011111_u8) as u32) << 6_u32)),
@@ -122,28 +122,28 @@ pub fn solve_utf8_bytes(bytes: &[u8]) -> SolvedUtf8Properties {
 
 /// # Examples
 /// ```
-/// use lib::utf8::unicode_to_utf8;
+/// use lib::utf8::encode_utf8;
 ///
 /// let mut dest: [u8; 4] = [0, 0, 0, 0];
 ///
-/// let  size = unicode_to_utf8('a' as u32, &mut dest);
+/// let  size = encode_utf8('a' as u32, &mut dest);
 /// assert_eq!(size, 1);
 /// assert_eq!(String::from_utf8(Vec::from(&dest[..size as usize])).unwrap(), "a");
 ///
-/// let size = unicode_to_utf8('©' as u32, &mut dest);
+/// let size = encode_utf8('©' as u32, &mut dest);
 /// assert_eq!(size, 2);
 /// assert_eq!(String::from_utf8(Vec::from(&dest[..size as usize])).unwrap(), "©");
 ///
-/// let size = unicode_to_utf8('好' as u32, &mut dest);
+/// let size = encode_utf8('好' as u32, &mut dest);
 /// assert_eq!(size, 3);
 /// assert_eq!(String::from_utf8(Vec::from(&dest[..size as usize])).unwrap(), "好");
 ///
-/// let size = unicode_to_utf8('🍎' as u32, &mut dest);
+/// let size = encode_utf8('🍎' as u32, &mut dest);
 /// assert_eq!(size, 4);
 /// assert_eq!(String::from_utf8(Vec::from(&dest[..size as usize])).unwrap(), "🍎");
 /// ```
-pub fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
-    let utf8_size = get_utf8_size(codepoint);
+pub fn encode_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
+    let utf8_size = utf8_size(codepoint);
     match utf8_size {
         1 => {
             dest[0] = codepoint as u8;
@@ -170,6 +170,7 @@ pub fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
     return utf8_size;
 }
 
+/// The UTF-16 surrogate pair struct
 /// lead: the high surrogate
 ///
 /// trail: the low surrogate

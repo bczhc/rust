@@ -1,6 +1,6 @@
 extern crate lib;
 
-use lib::utf8::{get_utf8_bytes_length, solve_utf8_bytes};
+use lib::utf8::{utf8_bytes_length, decode_utf8};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::io::{stdin, BufReader, Read};
@@ -82,10 +82,10 @@ Options:
                 break;
             }
 
-            let size = get_utf8_bytes_length(buf[0]) as usize;
+            let size = utf8_bytes_length(buf[0]) as usize;
             reader.read_exact(&mut buf[1..size]).unwrap();
 
-            let solved = solve_utf8_bytes(&buf);
+            let solved = decode_utf8(&buf);
             let c = std::char::from_u32(solved.codepoint).unwrap();
 
             if map.contains_key(&c) {

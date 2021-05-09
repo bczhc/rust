@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Mul, Div, AddAssign, SubAssign, MulAssign, DivAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 pub type ComplexValueF64 = ComplexValue<f64>;
 
@@ -32,7 +32,10 @@ impl Add<&Self> for ComplexValue<f64> {
 
     #[inline]
     fn add(self, rhs: &ComplexValue<f64>) -> Self::Output {
-        return Self { re: self.re + rhs.re, im: self.im + rhs.im };
+        return Self {
+            re: self.re + rhs.re,
+            im: self.im + rhs.im,
+        };
     }
 }
 
@@ -74,7 +77,10 @@ impl Sub<&Self> for ComplexValue<f64> {
 
     #[inline]
     fn sub(self, rhs: &ComplexValue<f64>) -> Self::Output {
-        return Self { re: self.re - rhs.re, im: self.im - rhs.im };
+        return Self {
+            re: self.re - rhs.re,
+            im: self.im - rhs.im,
+        };
     }
 }
 
@@ -168,43 +174,5 @@ impl DivAssign<&Self> for ComplexValue<f64> {
         let im1 = (self.im * rhs.re - self.re * rhs.im) / a;
         self.re = re1;
         self.im = im1;
-    }
-}
-
-pub mod complex_integral {
-    use crate::complex_num::ComplexValueF64;
-
-    pub struct IntegralCalculator<T> where T: ComplexFunction {
-        n: i32,
-        function: T,
-    }
-
-    pub trait ComplexFunction {
-        fn x(&self, t: f64) -> ComplexValueF64;
-    }
-
-    impl<T> IntegralCalculator<T> where T: ComplexFunction {
-        #[inline]
-        pub fn new(integral_separate_n: i32, function: T) -> IntegralCalculator<T> {
-            Self {
-                function,
-                n: integral_separate_n,
-            }
-        }
-
-        pub fn calc(&self, x0: f64, xn: f64) -> ComplexValueF64 {
-            let d = (xn - x0) / self.n as f64;
-            let mut i = x0;
-            let mut i2: f64;
-            let mut sum = ComplexValueF64::new(0.0, 0.0);
-            let c2 = ComplexValueF64::new(2.0, 0.0);
-            let c_d = ComplexValueF64::new(d, 0.0);
-            while i < xn {
-                i2 = i + d;
-                sum += (self.function.x(i) + self.function.x(i2)) * c_d / c2;
-                i = i2;
-            }
-            sum
-        }
     }
 }

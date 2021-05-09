@@ -33,6 +33,10 @@ path = "src/stdin_size.rs"
 name = "file-size"
 path = "src/file_size.rs"
 
+[[bin]]
+name = "fourier-series-demo"
+path = "src/fourier_series_demo.rs"
+
 [dependencies]
 rand = "0.8.3"
 libc = "0.2.93"

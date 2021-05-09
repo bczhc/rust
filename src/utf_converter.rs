@@ -2,7 +2,7 @@ extern crate lib;
 
 use lib::byteorder::{get_endianness, Endianness};
 use lib::utf8;
-use lib::utf8::{get_utf8_bytes_length, solve_utf8_bytes};
+use lib::utf8::{utf8_bytes_length, decode_utf8};
 use std::fs::OpenOptions;
 use std::io::{stdin, stdout, BufReader, ErrorKind, Read, Write};
 
@@ -37,7 +37,7 @@ fn print_help_msg(help_msg: &str) {
 /// returns: bytes size
 #[inline]
 fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
-    return utf8::unicode_to_utf8(codepoint, dest);
+    return utf8::encode_utf8(codepoint, dest);
 }
 
 /// returns: bytes size
@@ -296,14 +296,14 @@ impl Main {
                     panic!("{}", e);
                 }
             }
-            let utf8_bytes_length = get_utf8_bytes_length(read[0]);
+            let utf8_bytes_length = utf8_bytes_length(read[0]);
             if utf8_bytes_length > 1 {
                 // read the left bytes the current character needed
                 self.input_stream
                     .read_exact(&mut read[1_usize..(utf8_bytes_length as usize)])
                     .unwrap();
             }
-            let solved = solve_utf8_bytes(&read);
+            let solved = decode_utf8(&read);
             let size = unicode_converter(solved.codepoint, &mut out_buf) as usize;
             self.output_stream.write(&out_buf[..size]).unwrap();
         }
