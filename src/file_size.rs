@@ -94,12 +94,12 @@ fn print_file_size(file_path: &String, human_readable: bool) -> Result<(), Strin
         if fp.is_null() {
             return Err(String::from("Failed to open file"));
         }
-        if libc::fseeko(fp, 0, libc::SEEK_END) != 0 {
+        if portable_fseek(fp, 0, libc::SEEK_END) != 0 {
             return Err(String::from("Failed to seek file"));
         }
-        let size = libc::ftello(fp);
+        let size = portable_ftell(fp);
         if size < 0 {
-            return Err(format!("ftello(...) error, errno: {}", errno::errno().0));
+            return Err(format!("ftell error, errno: {}", errno::errno().0));
         }
         let size = size as u64;
         if human_readable {
@@ -116,8 +116,28 @@ fn str_to_c_str(s: &str) -> *const libc::c_char {
     return s.as_bytes().as_ptr() as *const libc::c_char;
 }
 
-fn string_to_c_str(s: &String) -> *const i8 {
+fn string_to_c_str(s: &String) -> *const libc::c_char {
     return str_to_c_str(s.as_str());
+}
+
+#[cfg(target_family = "windows")]
+fn portable_ftell(fp: *mut libc::FILE) -> libc::off_t {
+    return unsafe { libc::ftell(fp) };
+}
+
+#[cfg(target_family = "windows")]
+fn portable_fseek(fp: *mut libc::FILE, offset: libc::c_long, whence: libc::c_int) -> libc::c_int {
+    return unsafe { return libc::fseek(fp, offset, whence) };
+}
+
+#[cfg(target_family = "unix")]
+fn portable_ftell(fp: *mut libc::FILE) -> libc::off_t {
+    return unsafe { libc::ftello(fp) };
+}
+
+#[cfg(target_family = "unix")]
+fn portable_fseek(fp: *mut libc::FILE, offset: libc::c_long, whence: libc::c_int) -> libc::c_int {
+    return unsafe { libc::fseeko(fp, offset, whence) };
 }
 
 struct Arguments {
