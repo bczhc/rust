@@ -116,7 +116,7 @@ fn str_to_c_str(s: &str) -> *const libc::c_char {
     return s.as_bytes().as_ptr() as *const libc::c_char;
 }
 
-fn string_to_c_str(s: &String) -> *const i8 {
+fn string_to_c_str(s: &String) -> *const libc::c_char {
     return str_to_c_str(s.as_str());
 }
 
