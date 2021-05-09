@@ -1,30 +1,23 @@
-# This is a basic workflow to help you get started with Actions
-
 name: rust CI
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ '**' ]
   pull_request:
-    branches: [ master ]
+    branches: [ '**' ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  ubuntu:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
       - name: Install Rust
-        run: sudo apt install rustc -y
-      - name: build
+        run: |
+          sudo apt install rustc -y
+          rustc --version
+      - name: Build
         run: cargo build -j4
       - name: Test lib
         run: cargo test -p lib
@@ -50,3 +43,35 @@ jobs:
         with:
           name: documentation
           path: documentation.tgz
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer
+          chmod +x installer
+          ./installer --default-host x86_64-pc-windows-gnu -y
+          rustc --version
+      - name: Build
+        run: cargo build -j4
+      - name: Test lib
+        run: cargo test -p lib
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer
+          chmod +x installer
+          ./installer -y
+          rustc --version
+      - name: Build
+        run: cargo build -j4
+      - name: Test lib
+        run: cargo test -p lib
