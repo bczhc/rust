@@ -2,7 +2,7 @@ use lib::byteorder::{get_endianness, Endianness};
 use lib::utf8;
 use lib::utf8::{decode_utf8, utf8_bytes_length};
 use std::fs::OpenOptions;
-use std::io::{stdin, stdout, BufReader, ErrorKind, Read, Write};
+use std::io::{stdin, stdout, BufReader, BufWriter, ErrorKind, Read, Write};
 
 fn main() -> Result<(), String> {
     let mut m = Main::new();
@@ -151,7 +151,7 @@ impl Main {
             return Ok(());
         }
 
-        let mut buffer_size: i64 = 8192;
+        let mut _buffer_size: i64 = 8192;
         let mut input_file_path: Option<&String> = None;
         let mut output_file_path: Option<&String> = None;
 
@@ -170,7 +170,7 @@ impl Main {
                 if option.eq("-b") || option.eq("--buffer-size") {
                     let parsed = arg.parse::<i64>();
                     if let Ok(v) = parsed {
-                        buffer_size = v;
+                        _buffer_size = v;
                     } else if let Err(e) = parsed {
                         return Err(e.to_string());
                     }
@@ -191,16 +191,18 @@ impl Main {
                 .create(true)
                 .write(true)
                 .read(true)
-                .open(path);
-            self.input_stream = Box::new(BufReader::new(f.unwrap()));
+                .open(path)
+                .unwrap();
+            self.input_stream = Box::new(BufReader::new(BufReader::new(f)));
         }
         if let Some(path) = output_file_path {
             let f = OpenOptions::new()
                 .create(true)
                 .write(true)
                 .read(true)
-                .open(path);
-            self.output_stream = Box::new(f.unwrap());
+                .open(path)
+                .unwrap();
+            self.output_stream = Box::new(BufWriter::new(f));
         }
 
         let from = &args[arg_count - 2];

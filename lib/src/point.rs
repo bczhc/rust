@@ -10,15 +10,22 @@ pub struct Point<T> {
 
 impl<T> Point<T> {
     #[inline]
-    pub fn new(re: T, im: T) -> Point<T> {
-        return Self { x: re, y: im };
+    pub fn new(x: T, y: T) -> Point<T> {
+        return Self { x, y };
     }
 }
 
 impl Point<f64> {
-    pub fn set(&mut self, re: f64, im: f64) {
-        self.x = re;
-        self.y = im;
+    pub fn set(&mut self, x: f64, y: f64) {
+        self.x = x;
+        self.y = y;
+    }
+
+    pub fn mid(a: &PointF64, b: &PointF64) -> PointF64 {
+        Self {
+            x: (a.x + b.x) / 2.0,
+            y: (a.y + b.y) / 2.0,
+        }
     }
 }
 
@@ -115,6 +122,17 @@ impl Mul<&Self> for Point<f64> {
     }
 }
 
+impl Mul<f64> for PointF64 {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Self {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+}
+
 impl MulAssign<Self> for Point<f64> {
     #[inline]
     fn mul_assign(&mut self, rhs: Point<f64>) {
@@ -129,6 +147,13 @@ impl MulAssign<&Self> for Point<f64> {
         let im1 = self.x * rhs.y + self.y * rhs.x;
         self.x = re1;
         self.y = im1;
+    }
+}
+
+impl MulAssign<f64> for PointF64 {
+    fn mul_assign(&mut self, rhs: f64) {
+        self.x *= rhs;
+        self.y *= rhs;
     }
 }
 
@@ -154,6 +179,17 @@ impl Div<&Self> for Point<f64> {
     }
 }
 
+impl Div<f64> for PointF64 {
+    type Output = Self;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Self {
+            x: self.x / rhs,
+            y: self.y / rhs,
+        }
+    }
+}
+
 impl DivAssign for Point<f64> {
     #[inline]
     fn div_assign(&mut self, rhs: Self) {
@@ -169,5 +205,12 @@ impl DivAssign<&Self> for Point<f64> {
         let im1 = (self.y * rhs.x - self.x * rhs.y) / a;
         self.x = re1;
         self.y = im1;
+    }
+}
+
+impl DivAssign<f64> for PointF64 {
+    fn div_assign(&mut self, rhs: f64) {
+        self.x /= rhs;
+        self.y /= rhs;
     }
 }

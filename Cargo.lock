@@ -88,6 +88,9 @@ dependencies = [
 [[package]]
 name = "lib"
 version = "1.0.0"
+dependencies = [
+ "threadpool",
+]
 
 [[package]]
 name = "libc"
