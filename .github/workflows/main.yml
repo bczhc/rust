@@ -18,7 +18,7 @@ jobs:
           sudo apt install rustc -y
           rustc --version
       - name: Build
-        run: cargo build -j4
+        run: cargo build -j4 --workspace
       - name: Test lib
         run: cargo test -p lib
       - name: Generate documentation
@@ -36,7 +36,7 @@ jobs:
           git config user.email "bczhc0@126.com"
           cp -r ../target/doc/* .
           git add --all
-          git commit -m 'update'
+          if [[ `git commit -m update | grep "workking tree clean"` != "" ]; then exit; fi
           git push origin gh-pages
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
@@ -56,7 +56,7 @@ jobs:
           ./installer --default-host x86_64-pc-windows-gnu -y
           rustc --version
       - name: Build
-        run: cargo build -j4
+        run: cargo build -j4 --workspace
       - name: Test lib
         run: cargo test -p lib
 
@@ -72,6 +72,6 @@ jobs:
           ./installer -y
           rustc --version
       - name: Build
-        run: cargo build -j4
+        run: cargo build -j4 --workspace
       - name: Test lib
         run: cargo test -p lib

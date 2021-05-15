@@ -1,14 +1,9 @@
-extern crate lib;
-
-use lib::utf8::{utf8_bytes_length, decode_utf8};
+use lib::char::han_char_range;
+use lib::utf8::{decode_utf8, utf8_bytes_length};
+use lib::utils::{get_args_without_self_path, get_file_name, MsgPrinter, MsgType};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::io::{stdin, BufReader, Read};
-use utils::{get_args_without_self_path, get_file_name, MsgPrinter, MsgType};
-
-use lib::char::han_char_range;
-
-mod utils;
 
 fn main() -> Result<(), String> {
     let mut m = Main::new();

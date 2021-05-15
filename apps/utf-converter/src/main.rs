@@ -1,8 +1,6 @@
-extern crate lib;
-
 use lib::byteorder::{get_endianness, Endianness};
 use lib::utf8;
-use lib::utf8::{utf8_bytes_length, decode_utf8};
+use lib::utf8::{decode_utf8, utf8_bytes_length};
 use std::fs::OpenOptions;
 use std::io::{stdin, stdout, BufReader, ErrorKind, Read, Write};
 

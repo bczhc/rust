@@ -1,6 +1,3 @@
-extern crate lib;
-extern crate rand;
-
 use lib::io::ReadLine;
 use rand::{thread_rng, Rng};
 use std::env::args;

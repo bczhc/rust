@@ -1,49 +1,24 @@
 [package]
-default-run = "main"
+default-run = "demo"
 name = "rust"
 version = "1.0.0"
 authors = ["bczhc <bczhc0@126.com>"]
 license = "MIT"
+edition = "2018"
+
+[workspace]
+members = [
+    "apps/character_statistics",
+    "apps/file_size",
+    "apps/reverse",
+    "apps/shuffle_string",
+    "apps/stdin_size",
+    "apps/utf-converter",
+]
 
 [[bin]]
-name = "main"
 path = "src/demo.rs"
-
-[[bin]]
-name = "utf-converter"
-path = "src/utf_converter.rs"
-
-[[bin]]
-name = "character-statistics"
-path = "src/character_statistics.rs"
-
-[[bin]]
-name = "shuffle-string"
-path = "src/shuffle_string.rs"
-
-[[bin]]
-name = "reverse"
-path = "src/reverse.rs"
-
-[[bin]]
-name = "stdin-size"
-path = "src/stdin_size.rs"
-
-[[bin]]
-name = "file-size"
-path = "src/file_size.rs"
-
-[[bin]]
-name = "fourier-series-demo"
-path = "src/fourier_series_demo.rs"
+name = "demo"
 
 [dependencies]
-rand = "0.8.3"
-libc = "0.2.93"
 lib = { path = "lib", version = "1.0.0" }
-size_format = "1.0.2"
-curl = "0.4.36"
-serde_json = "1.0.64"
-json = "0.12.4"
-errno = "0.2.7"
-termcolor = "1.1.2"

@@ -1,4 +1,4 @@
-use std::io::{Read, ErrorKind};
+use std::io::{ErrorKind, Read};
 
 pub trait ReadLine {
     fn read_line(&mut self) -> Option<String>;
@@ -13,7 +13,9 @@ impl ReadLine for dyn Read {
             if let Err(e) = result {
                 if let ErrorKind::UnexpectedEof = e.kind() {
                     return None;
-                } else { panic!("{}", e.to_string()); }
+                } else {
+                    panic!("{}", e.to_string());
+                }
             }
             if buf[0] == b'\n' {
                 break;

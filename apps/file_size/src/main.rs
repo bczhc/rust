@@ -1,9 +1,5 @@
-extern crate size_format;
-
+use lib::utils::{get_args_without_self_path, get_file_name, MsgPrinter, MsgType};
 use size_format::SizeFormatterBinary;
-use utils::{get_args_without_self_path, get_file_name, MsgPrinter, MsgType};
-
-mod utils;
 
 fn main() -> Result<(), String> {
     let msg_printer = MsgPrinter::new(format!(
