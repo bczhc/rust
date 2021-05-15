@@ -20,5 +20,10 @@ members = [
 path = "src/demo.rs"
 name = "demo"
 
+[[bin]]
+path = "src/fourier_series_demo.rs"
+name = "fourier-series-demo"
+
 [dependencies]
 lib = { path = "lib", version = "1.0.0" }
+threadpool = "1.8.1"

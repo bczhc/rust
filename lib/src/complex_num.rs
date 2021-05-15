@@ -15,10 +15,20 @@ impl<T> ComplexValue<T> {
     }
 }
 
-impl ComplexValue<f64> {
+impl ComplexValueF64 {
     #[inline]
     pub fn module(&self) -> f64 {
         return f64::sqrt(f64::powi(self.re, 2) + self.im.powi(2));
+    }
+
+    /// Definition: `r`e<sup>i&theta;</sup>
+    pub fn from_exponent_form_with_r(r: f64, theta: f64) -> ComplexValueF64 {
+        return ComplexValueF64::from_exponent_form(theta) * r;
+    }
+
+    /// Definition: e<sup>i&theta;</sup>
+    pub fn from_exponent_form(theta: f64) -> ComplexValueF64 {
+        return ComplexValueF64::new(f64::cos(theta), f64::sin(theta));
     }
 
     pub fn set(&mut self, re: f64, im: f64) {
@@ -27,11 +37,11 @@ impl ComplexValue<f64> {
     }
 }
 
-impl Add<&Self> for ComplexValue<f64> {
+impl Add<&Self> for ComplexValueF64 {
     type Output = Self;
 
     #[inline]
-    fn add(self, rhs: &ComplexValue<f64>) -> Self::Output {
+    fn add(self, rhs: &ComplexValueF64) -> Self::Output {
         return Self {
             re: self.re + rhs.re,
             im: self.im + rhs.im,
@@ -39,7 +49,7 @@ impl Add<&Self> for ComplexValue<f64> {
     }
 }
 
-impl Add for ComplexValue<f64> {
+impl Add for ComplexValueF64 {
     type Output = Self;
 
     #[inline]
@@ -48,22 +58,22 @@ impl Add for ComplexValue<f64> {
     }
 }
 
-impl AddAssign for ComplexValue<f64> {
+impl AddAssign for ComplexValueF64 {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
         self.add_assign(&rhs);
     }
 }
 
-impl AddAssign<&Self> for ComplexValue<f64> {
+impl AddAssign<&Self> for ComplexValueF64 {
     #[inline]
-    fn add_assign(&mut self, rhs: &ComplexValue<f64>) {
+    fn add_assign(&mut self, rhs: &ComplexValueF64) {
         self.re += rhs.re;
         self.im += rhs.im;
     }
 }
 
-impl Sub for ComplexValue<f64> {
+impl Sub for ComplexValueF64 {
     type Output = Self;
 
     #[inline]
@@ -72,11 +82,11 @@ impl Sub for ComplexValue<f64> {
     }
 }
 
-impl Sub<&Self> for ComplexValue<f64> {
+impl Sub<&Self> for ComplexValueF64 {
     type Output = Self;
 
     #[inline]
-    fn sub(self, rhs: &ComplexValue<f64>) -> Self::Output {
+    fn sub(self, rhs: &ComplexValueF64) -> Self::Output {
         return Self {
             re: self.re - rhs.re,
             im: self.im - rhs.im,
@@ -84,22 +94,22 @@ impl Sub<&Self> for ComplexValue<f64> {
     }
 }
 
-impl SubAssign for ComplexValue<f64> {
+impl SubAssign for ComplexValueF64 {
     #[inline]
     fn sub_assign(&mut self, rhs: Self) {
         self.sub_assign(&rhs);
     }
 }
 
-impl SubAssign<&Self> for ComplexValue<f64> {
+impl SubAssign<&Self> for ComplexValueF64 {
     #[inline]
-    fn sub_assign(&mut self, rhs: &ComplexValue<f64>) {
+    fn sub_assign(&mut self, rhs: &ComplexValueF64) {
         self.re -= rhs.re;
         self.im -= rhs.im;
     }
 }
 
-impl Mul for ComplexValue<f64> {
+impl Mul for ComplexValueF64 {
     type Output = Self;
 
     #[inline]
@@ -108,11 +118,11 @@ impl Mul for ComplexValue<f64> {
     }
 }
 
-impl Mul<&Self> for ComplexValue<f64> {
+impl Mul<&Self> for ComplexValueF64 {
     type Output = Self;
 
     #[inline]
-    fn mul(self, rhs: &ComplexValue<f64>) -> Self::Output {
+    fn mul(self, rhs: &ComplexValueF64) -> Self::Output {
         return Self {
             re: self.re * rhs.re - self.im * rhs.im,
             im: self.re * rhs.im + self.im * rhs.re,
@@ -120,16 +130,27 @@ impl Mul<&Self> for ComplexValue<f64> {
     }
 }
 
-impl MulAssign<Self> for ComplexValue<f64> {
+impl Mul<f64> for ComplexValueF64 {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        return Self {
+            re: self.re * rhs,
+            im: self.im * rhs,
+        };
+    }
+}
+
+impl MulAssign<Self> for ComplexValueF64 {
     #[inline]
-    fn mul_assign(&mut self, rhs: ComplexValue<f64>) {
+    fn mul_assign(&mut self, rhs: ComplexValueF64) {
         self.mul_assign(&rhs);
     }
 }
 
-impl MulAssign<&Self> for ComplexValue<f64> {
+impl MulAssign<&Self> for ComplexValueF64 {
     #[inline]
-    fn mul_assign(&mut self, rhs: &ComplexValue<f64>) {
+    fn mul_assign(&mut self, rhs: &ComplexValueF64) {
         let re1 = self.re * rhs.re - self.im * rhs.im;
         let im1 = self.re * rhs.im + self.im * rhs.re;
         self.re = re1;
@@ -137,7 +158,14 @@ impl MulAssign<&Self> for ComplexValue<f64> {
     }
 }
 
-impl Div for ComplexValue<f64> {
+impl MulAssign<f64> for ComplexValueF64 {
+    fn mul_assign(&mut self, rhs: f64) {
+        self.re *= rhs;
+        self.im *= rhs;
+    }
+}
+
+impl Div for ComplexValueF64 {
     type Output = Self;
 
     #[inline]
@@ -146,11 +174,22 @@ impl Div for ComplexValue<f64> {
     }
 }
 
-impl Div<&Self> for ComplexValue<f64> {
+impl Div<f64> for ComplexValueF64 {
+    type Output = Self;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        return Self {
+            re: self.re / rhs,
+            im: self.im / rhs,
+        };
+    }
+}
+
+impl Div<&Self> for ComplexValueF64 {
     type Output = Self;
 
     #[inline]
-    fn div(self, rhs: &ComplexValue<f64>) -> Self::Output {
+    fn div(self, rhs: &ComplexValueF64) -> Self::Output {
         let a = rhs.re.powi(2) + rhs.im.powi(2);
         return Self {
             re: (self.re * rhs.re + self.im * rhs.im) / a,
@@ -159,20 +198,49 @@ impl Div<&Self> for ComplexValue<f64> {
     }
 }
 
-impl DivAssign for ComplexValue<f64> {
+impl DivAssign for ComplexValueF64 {
     #[inline]
     fn div_assign(&mut self, rhs: Self) {
         self.div_assign(&rhs);
     }
 }
 
-impl DivAssign<&Self> for ComplexValue<f64> {
+impl DivAssign<&Self> for ComplexValueF64 {
     #[inline]
-    fn div_assign(&mut self, rhs: &ComplexValue<f64>) {
+    fn div_assign(&mut self, rhs: &ComplexValueF64) {
         let a = rhs.re.powi(2) + rhs.im.powi(2);
         let re1 = (self.re * rhs.re + self.im * rhs.im) / a;
         let im1 = (self.im * rhs.re - self.re * rhs.im) / a;
         self.re = re1;
         self.im = im1;
+    }
+}
+
+impl DivAssign<f64> for ComplexValueF64 {
+    fn div_assign(&mut self, rhs: f64) {
+        self.re /= rhs;
+        self.im /= rhs;
+    }
+}
+
+pub mod complex_integral {
+    use crate::complex_num::ComplexValueF64;
+
+    pub fn complex_integral<F>(separate_n: i32, x0: f64, xn: f64, function: F) -> ComplexValueF64
+    where
+        F: Fn(f64) -> ComplexValueF64,
+    {
+        let d = (xn - x0) / separate_n as f64;
+        let mut i = x0;
+        let mut i2: f64;
+        let mut sum = ComplexValueF64::new(0.0, 0.0);
+        let c2 = ComplexValueF64::new(2.0, 0.0);
+        let c_d = ComplexValueF64::new(d, 0.0);
+        while i < xn {
+            i2 = i + d;
+            sum += (function(i) + function(i2)) * c_d / c2;
+            i = i2;
+        }
+        sum
     }
 }

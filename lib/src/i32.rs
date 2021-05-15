@@ -9,6 +9,14 @@ pub trait ToStringRadix {
 }
 
 impl ToStringRadix for i32 {
+    /// Convert `i32` to a Hex string
+    ///
+    /// # Example
+    /// ```
+    /// use lib::i32::ToStringRadix;
+    ///
+    /// assert_eq!(51966.to_string_radix(16).unwrap(), "cafe")
+    /// ```
     fn to_string_radix(&self, radix: i32) -> Result<String, String> {
         let mut i = *self;
 
