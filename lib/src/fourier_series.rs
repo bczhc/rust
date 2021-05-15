@@ -43,33 +43,123 @@ pub fn fourier_series_calc<F: 'static, R: 'static>(
 }
 
 pub fn quadratic_bezier_curve_length(curve: &QuadraticBezierCurve) -> f64 {
-    let x0 = curve.p0.x;
-    let x1 = curve.p1.x;
-    let x2 = curve.p2.x;
-    let y0 = curve.p0.y;
-    let y1 = curve.p1.y;
-    let y2 = curve.p2.y;
-
-    let dx0 = x1 - x0;
-    let dx1 = x2 - x1;
-    let dy0 = y1 - y0;
-    let dy1 = y2 - y1;
-
-    let a = (dx1 - dx0).powf(2.0) + (dy1 - dy0).powf(2.0);
-    let b = dx0 * (dx1 - dx0) + dy0 * (dy1 - dy0);
-    let c = dx0.powf(2.0) + dy0.powf(2.0);
-    let d = a * c - b.powf(2.0);
+    let x_0 = curve.p0.x;
+    let y_0 = curve.p0.y;
+    let x_1 = curve.p1.x;
+    let y_1 = curve.p1.y;
+    let x_2 = curve.p2.x;
+    let y_2 = curve.p2.y;
 
     let mut t = 1.0;
-    let t1 = (t + b / a) * f64::sqrt(a * t.powf(2.0) + 2.0 * b * t + c)
-        + ((d) / a.powf(3.0 / 2.0)) * f64::asinh((a * t + b) / f64::sqrt(d));
 
+    let t1 = integral_calc(x_0, y_0, x_1, y_1, x_2, y_2, t);
     t = 0.0;
-
-    let t0 = (t + b / a) * f64::sqrt(a * t.powf(2.0) + 2.0 * b * t + c)
-        + ((d) / a.powf(3.0 / 2.0)) * f64::asinh((a * t + b) / f64::sqrt(d));
-
+    let t0 = integral_calc(x_0, y_0, x_1, y_1, x_2, y_2, t);
     return t1 - t0;
+}
+
+fn integral_calc(x_0: f64, y_0: f64, x_1: f64, y_1: f64, x_2: f64, y_2: f64, t: f64) -> f64 {
+    ((f64::ln(
+        t * x_0.powf(2.0) - x_0.powf(2.0) - 4.0 * t * x_1 * x_0
+            + 3.0 * x_1 * x_0
+            + 2.0 * t * x_2 * x_0
+            - x_2 * x_0
+            + 4.0 * t * x_1.powf(2.0)
+            - 2.0 * x_1.powf(2.0)
+            + t * x_2.powf(2.0)
+            + t * y_0.powf(2.0)
+            - y_0.powf(2.0)
+            + 4.0 * t * y_1.powf(2.0)
+            - 2.0 * y_1.powf(2.0)
+            + t * y_2.powf(2.0)
+            - 4.0 * t * x_1 * x_2
+            + x_1 * x_2
+            - 4.0 * t * y_0 * y_1
+            + 3.0 * y_0 * y_1
+            + 2.0 * t * y_0 * y_2
+            - y_0 * y_2
+            - 4.0 * t * y_1 * y_2
+            + y_1 * y_2
+            + f64::sqrt(
+                x_0.powf(2.0)
+                    + (2.0 * x_2 - 4.0 * x_1) * x_0
+                    + 4.0 * x_1.powf(2.0)
+                    + x_2.powf(2.0)
+                    + y_0.powf(2.0)
+                    + 4.0 * y_1.powf(2.0)
+                    + y_2.powf(2.0)
+                    - 4.0 * x_1 * x_2
+                    - 4.0 * y_0 * y_1
+                    + 2.0 * y_0 * y_2
+                    - 4.0 * y_1 * y_2,
+            ) * f64::sqrt(
+                x_2.powf(2.0) * t.powf(2.0)
+                    + y_0.powf(2.0) * t.powf(2.0)
+                    + 4.0 * y_1.powf(2.0) * t.powf(2.0)
+                    + y_2.powf(2.0) * t.powf(2.0)
+                    - 4.0 * y_0 * y_1 * t.powf(2.0)
+                    + 2.0 * y_0 * y_2 * t.powf(2.0)
+                    - 4.0 * y_1 * y_2 * t.powf(2.0)
+                    - 2.0 * y_0.powf(2.0) * t
+                    - 4.0 * y_1.powf(2.0) * t
+                    + 2.0 * (1.0 - 2.0 * t) * x_1 * x_2 * t
+                    + 6.0 * y_0 * y_1 * t
+                    - 2.0 * y_0 * y_2 * t
+                    + 2.0 * y_1 * y_2 * t
+                    + (t - 1.0).powf(2.0) * x_0.powf(2.0)
+                    + (1.0 - 2.0 * t).powf(2.0) * x_1.powf(2.0)
+                    + y_0.powf(2.0)
+                    + y_1.powf(2.0)
+                    - 2.0 * (t - 1.0) * x_0 * ((2.0 * t - 1.0) * x_1 - t * x_2)
+                    - 2.0 * y_0 * y_1,
+            ),
+    ) * (x_2 * (y_1 - y_0) + x_1 * (y_0 - y_2) + x_0 * (y_2 - y_1)).powf(2.0))
+        / (x_0.powf(2.0)
+            + (2.0 * x_2 - 4.0 * x_1) * x_0
+            + 4.0 * x_1.powf(2.0)
+            + x_2.powf(2.0)
+            + y_0.powf(2.0)
+            + 4.0 * y_1.powf(2.0)
+            + y_2.powf(2.0)
+            - 4.0 * x_1 * x_2
+            - 4.0 * y_0 * y_1
+            + 2.0 * y_0 * y_2
+            - 4.0 * y_1 * y_2)
+            .powf(3.0 / 2.0))
+        + f64::sqrt(
+            x_2.powf(2.0) * t.powf(2.0)
+                + y_0.powf(2.0) * t.powf(2.0)
+                + 4.0 * y_1.powf(2.0) * t.powf(2.0)
+                + y_2.powf(2.0) * t.powf(2.0)
+                - 4.0 * y_0 * y_1 * t.powf(2.0)
+                + 2.0 * y_0 * y_2 * t.powf(2.0)
+                - 4.0 * y_1 * y_2 * t.powf(2.0)
+                - 2.0 * y_0.powf(2.0) * t
+                - 4.0 * y_1.powf(2.0) * t
+                + 2.0 * (1.0 - 2.0 * t) * x_1 * x_2 * t
+                + 6.0 * y_0 * y_1 * t
+                - 2.0 * y_0 * y_2 * t
+                + 2.0 * y_1 * y_2 * t
+                + (t - 1.0).powf(2.0) * x_0.powf(2.0)
+                + (1.0 - 2.0 * t).powf(2.0) * x_1.powf(2.0)
+                + y_0.powf(2.0)
+                + y_1.powf(2.0)
+                - 2.0 * (t - 1.0) * x_0 * ((2.0 * t - 1.0) * x_1 - t * x_2)
+                - 2.0 * y_0 * y_1,
+        ) * (t
+            + (-x_0.powf(2.0) + (3.0 * x_1 - x_2) * x_0 - 2.0 * x_1.powf(2.0) + x_1 * x_2
+                - (y_0 - y_1) * (y_0 - 2.0 * y_1 + y_2))
+                / (x_0.powf(2.0)
+                    + (2.0 * x_2 - 4.0 * x_1) * x_0
+                    + 4.0 * x_1.powf(2.0)
+                    + x_2.powf(2.0)
+                    + y_0.powf(2.0)
+                    + 4.0 * y_1.powf(2.0)
+                    + y_2.powf(2.0)
+                    - 4.0 * x_1 * x_2
+                    - 4.0 * y_0 * y_1
+                    + 2.0 * y_0 * y_2
+                    - 4.0 * y_1 * y_2))
 }
 
 /// Evaluate a quadratic bézier curve
