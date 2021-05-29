@@ -1,4 +1,4 @@
-use std::ffi::{CString};
+use std::ffi::CString;
 
 pub trait ToCString {
     /// As a string pointer in C, for libc FFI.

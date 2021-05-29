@@ -1,16 +1,19 @@
-use lib::fourier_series::{BezierCurvePath, BezierCurve, quadratic_bezier_curve_length, QuadraticBezierCurve};
+use lib::fourier_series::{quadratic_bezier_curve_length, BezierCurvePath, QuadraticBezierCurve};
 use lib::io::ReadLine;
 use lib::point::PointF64;
 use std::fs::File;
 use std::io::Read;
 
 fn main() {
-    for i in 0..100000 {
-        println!("{}", quadratic_bezier_curve_length(&QuadraticBezierCurve {
-            p0: PointF64::new(0.0, 10.0),
-            p1: PointF64::new(1.0, 0.0),
-            p2: PointF64::new(1.001, 0.0),
-        }));
+    for _i in 0..100000 {
+        println!(
+            "{}",
+            quadratic_bezier_curve_length(&QuadraticBezierCurve {
+                p0: PointF64::new(0.0, 10.0),
+                p1: PointF64::new(1.0, 0.0),
+                p2: PointF64::new(1.001, 0.0),
+            })
+        );
     }
     return;
     let mut input = Vec::new();
