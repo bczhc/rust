@@ -208,3 +208,16 @@ pub fn unicode_to_surrogate_pair(codepoint: u32) -> Surrogate {
     let lead = ((codepoint >> 10_u32) as u16) + 0xd800_u16;
     return Surrogate { lead, trail };
 }
+
+#[cfg(test)]
+mod test {
+    use crate::utf8::{surrogate_pair_to_unicode, unicode_to_surrogate_pair};
+
+    #[test]
+    pub fn test() {
+        let codepoint = surrogate_pair_to_unicode(0xdb7f, 0xdfff);
+        println!("{:#x}", codepoint);
+
+        println!("{:#x?}", unicode_to_surrogate_pair(codepoint));
+    }
+}

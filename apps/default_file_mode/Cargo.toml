@@ -1,5 +1,5 @@
 [package]
-name = "lib"
+name = "default-file-mode"
 version = "1.0.0"
 authors = ["bczhc <bczhc0@126.com>"]
 edition = "2018"
@@ -7,5 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-threadpool = "1.8.1"
+lib = { path = "../../lib", version = "1.0.0" }
 libc = "0.2.95"
