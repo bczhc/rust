@@ -8,7 +8,7 @@ use std::path::Path;
 
 pub mod main {
     pub fn run() -> Result<(), String> {
-        let m = super::Main::new();
+        let mut m = super::Main::new();
         m.run()
     }
 }
