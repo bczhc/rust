@@ -14,7 +14,8 @@ members = [
     "apps/shuffle_string",
     "apps/stdin_size",
     "apps/utf-converter",
-    "apps/default_file_mode"
+    "apps/default_file_mode",
+    "apps/bitmap"
 ]
 
 [[bin]]

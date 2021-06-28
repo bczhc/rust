@@ -1,6 +1,8 @@
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 pub type PointF64 = Point<f64>;
+pub type PointI32 = Point<i32>;
+pub type PointU32 = Point<u32>;
 
 #[derive(PartialEq, Copy, Debug, Clone, Hash)]
 pub struct Point<T> {
