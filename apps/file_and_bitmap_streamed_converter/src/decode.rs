@@ -1,11 +1,15 @@
-use bmp::{Image, Pixel};
+use bmp::Pixel;
 use byteorder::{LittleEndian, ReadBytesExt};
-use lib::point::{Point, PointI32, PointU32};
-use std::fs::{File, OpenOptions};
-use std::io::{BufReader, BufWriter, Cursor, Write};
+use lib::point::PointU32;
+use std::fs::OpenOptions;
+use std::io::{BufWriter, Cursor, Write};
+use lib::utils::get_args_without_self_path;
 
 fn main() -> Result<(), ()> {
-    let output_path = "/home/bczhc/c.bmp";
+    let args = get_args_without_self_path();
+    let output_path = &args[0];
+    let input_path = &args[1];
+
     let mut output = BufWriter::new(
         OpenOptions::new()
             .create(true)
@@ -15,8 +19,7 @@ fn main() -> Result<(), ()> {
             .unwrap(),
     );
 
-    let path = "/home/bczhc/b.bmp";
-    let image = bmp::open(path).unwrap();
+    let image = bmp::open(input_path).unwrap();
 
     let width = image.get_width();
     let height = image.get_height();
@@ -24,15 +27,12 @@ fn main() -> Result<(), ()> {
 
     let p1 = image.get_pixel(0, 0);
     let p2 = image.get_pixel(1, 0);
-    let file_size = resolve_file_size(p1, p2);
+    let _file_size = resolve_file_size(p1, p2);
 
-    let mut positioner = Positioner::new(width, height, 2);
-    for i in 0..file_size {
-        let point = positioner.get();
-        if let None = point {
-            break;
-        }
-        let point = point.unwrap();
+    let mut positioner = Positioner::new(width, height);
+    positioner.nth((width - 1) as usize);
+
+    for point in positioner {
         let pixel = image.get_pixel(point.x, point.y);
         output.write(&[pixel.r, pixel.g, pixel.b]).unwrap();
     }
@@ -58,21 +58,20 @@ struct Positioner {
 
 impl Positioner {
     #[inline]
-    fn new(width: u32, height: u32, initial_offset: i32) -> Self {
-        let mut positioner = Self {
+    fn new(width: u32, height: u32) -> Self {
+        Self {
             width,
             height,
             width_i: 0,
             height_i: 0,
-        };
-        for _i in 0..initial_offset {
-            positioner.get();
         }
-        positioner
     }
+}
 
-    #[inline]
-    fn get(&mut self) -> Option<Point<u32>> {
+impl Iterator for Positioner {
+    type Item = PointU32;
+
+    fn next(&mut self) -> Option<Self::Item> {
         if self.height_i == self.height {
             return None;
         }

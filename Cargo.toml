@@ -15,7 +15,7 @@ members = [
     "apps/stdin_size",
     "apps/utf-converter",
     "apps/default_file_mode",
-    "apps/bitmap"
+    "apps/file_and_bitmap_streamed_converter"
 ]
 
 [[bin]]
