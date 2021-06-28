@@ -7,8 +7,8 @@ use lib::utils::get_args_without_self_path;
 
 fn main() -> Result<(), ()> {
     let args = get_args_without_self_path();
-    let output_path = &args[0];
-    let input_path = &args[1];
+    let input_path = &args[0];
+    let output_path = &args[1];
 
     let mut output = BufWriter::new(
         OpenOptions::new()

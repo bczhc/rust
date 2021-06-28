@@ -6,11 +6,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
-name = "file2bitmap"
+name = "file2bmp"
 path = "src/encode.rs"
 
 [[bin]]
-name = "bitmap2file"
+name = "bmp2file"
 path = "src/decode.rs"
 
 [dependencies]
