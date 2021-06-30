@@ -1,5 +1,5 @@
 [package]
-name = "file_size"
+name = "file-size"
 version = "1.0.0"
 authors = ["bczhc <bczhc0@126.com>"]
 edition = "2018"
