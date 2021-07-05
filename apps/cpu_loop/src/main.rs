@@ -1,5 +1,5 @@
-use std::thread::{spawn};
-use std::sync::{Mutex, Condvar};
+use std::sync::{Condvar, Mutex};
+use std::thread::spawn;
 
 fn main() {
     let count = num_cpus::get();
@@ -9,5 +9,6 @@ fn main() {
         spawn(|| loop {});
     }
 
-    Condvar::new().wait(Mutex::new(0).lock().unwrap());
+    let mutex = Mutex::new(0);
+    let _guard = Condvar::new().wait(mutex.lock().unwrap()).unwrap();
 }

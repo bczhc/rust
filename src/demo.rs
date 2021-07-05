@@ -16,9 +16,17 @@ impl Solution {
         let t = max(a_len, b_len);
         for i in 0..t {
             let index = a_len - 1 - i;
-            let a_bit = if index < 0 { false } else { a[index as usize] == b'1' };
+            let a_bit = if index < 0 {
+                false
+            } else {
+                a[index as usize] == b'1'
+            };
             let index = b_len - 1 - i;
-            let b_bit = if index < 0 { false } else { b[index as usize] == b'1' };
+            let b_bit = if index < 0 {
+                false
+            } else {
+                b[index as usize] == b'1'
+            };
 
             let half_add_bit = a_bit ^ b_bit;
             let full_add_bit = half_add_bit ^ carry;

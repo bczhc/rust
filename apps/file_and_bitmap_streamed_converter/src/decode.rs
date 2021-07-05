@@ -1,9 +1,9 @@
 use bmp::Pixel;
 use byteorder::{LittleEndian, ReadBytesExt};
 use lib::point::PointU32;
+use lib::utils::get_args_without_self_path;
 use std::fs::OpenOptions;
 use std::io::{BufWriter, Cursor, Write};
-use lib::utils::get_args_without_self_path;
 
 fn main() -> Result<(), ()> {
     let args = get_args_without_self_path();

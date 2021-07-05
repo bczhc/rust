@@ -1,8 +1,6 @@
-
 use lib::utf8::utf8_bytes_length;
 
-
-use std::io::{stdin, BufReader, Cursor, Read, Stdin};
+use std::io::{stdin, Read};
 
 fn main() {
     let length = char_length(&mut stdin());
@@ -10,7 +8,7 @@ fn main() {
 }
 
 fn char_length<T>(reader: &mut T) -> i32
-    where
+where
     T: Read,
 {
     let mut buf: [u8; 4] = [0, 0, 0, 0];

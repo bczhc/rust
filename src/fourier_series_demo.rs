@@ -3,7 +3,6 @@ use lib::io::ReadLine;
 use lib::point::PointF64;
 use std::fs::File;
 
-
 fn main() {
     for _i in 0..100000 {
         println!(
@@ -15,10 +14,9 @@ fn main() {
             })
         );
     }
-    return;
     let mut input = Vec::new();
 
-    let mut file = &mut File::open("./data").unwrap();
+    let file = &mut File::open("./data").unwrap();
     loop {
         let line = file.read_line_without_line_terminator();
         if let None = line {

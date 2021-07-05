@@ -1,4 +1,3 @@
-use std::borrow::BorrowMut;
 use std::cell::RefCell;
 
 use std::sync::{Arc, Condvar, Mutex};
@@ -18,7 +17,7 @@ fn main() {
 
         let handle = spawn(move || {
             let (mutex, cond) = &*moved_pair;
-            cond.wait(mutex.lock().unwrap());
+            let _guard = cond.wait(mutex.lock().unwrap()).unwrap();
             println!("{}", i);
         });
 

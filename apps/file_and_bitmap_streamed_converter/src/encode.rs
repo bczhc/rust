@@ -1,9 +1,9 @@
-use bmp::{open, Image, ImageIndex, Pixel};
-use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
+use bmp::{Image, Pixel};
+use byteorder::{LittleEndian, WriteBytesExt};
 
-use std::fs::File;
-use std::io::{BufReader, Cursor, Read, Seek};
 use lib::utils::get_args_without_self_path;
+use std::fs::File;
+use std::io::{BufReader, Read};
 
 fn main() -> Result<(), ()> {
     let args = get_args_without_self_path();
