@@ -3,7 +3,7 @@ use std::io::Read;
 
 /// Return if a character is a Han character.
 ///
-/// # Example
+/// # Examples
 /// ```
 /// use lib::char::han_char_range;
 ///
