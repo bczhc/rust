@@ -1,8 +1,17 @@
+use std::env::args;
 use std::sync::{Condvar, Mutex};
 use std::thread::spawn;
 
 fn main() {
-    let count = num_cpus::get();
+    let args = args().skip(1);
+    let args: Vec<String> = args.collect();
+
+    let mut count = num_cpus::get();
+
+    if args.len() == 1 {
+        count = args[0].parse().unwrap();
+    }
+
     println!("count: {}", count);
 
     for _i in 0..count {

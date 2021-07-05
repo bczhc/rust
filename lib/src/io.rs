@@ -1,5 +1,5 @@
 use std::fs::{File, OpenOptions};
-use std::io::{ErrorKind, Read};
+use std::io::{Error, ErrorKind, Read};
 use std::path::Path;
 
 pub trait ReadLine {
@@ -43,3 +43,20 @@ pub trait OpenOrCreate {
 }
 
 impl OpenOrCreate for File {}
+
+pub trait Skip {
+    fn skip(&mut self, size: usize) -> std::io::Result<()>;
+}
+
+impl<T> Skip for T
+where
+    T: Read,
+{
+    fn skip(&mut self, size: usize) -> std::io::Result<()> {
+        let read = std::io::copy(&mut self.take(size as u64), &mut std::io::sink())?;
+        if read as usize != size {
+            return Err(Error::new(ErrorKind::UnexpectedEof, "Failed to skip"));
+        }
+        Ok(())
+    }
+}
