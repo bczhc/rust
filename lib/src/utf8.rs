@@ -95,6 +95,46 @@ pub fn utf8_bytes_length(first_byte: u8) -> u32 {
 /// ```
 pub fn decode_utf8(bytes: &[u8]) -> SolvedUtf8Properties {
     let bytes_length = utf8_bytes_length(bytes[0]);
+    decode_utf8_with_length(bytes, bytes_length)
+}
+
+/// Decode UTF-8 with a given length
+///
+/// Notice the given length must is the result of [`utf8_bytes_length`]
+///
+/// # Examples
+/// ```
+/// use lib::utf8::{utf8_bytes_length, decode_utf8_with_length};
+///
+/// let b = "a".as_bytes();
+/// let length = utf8_bytes_length(b[0]);
+/// assert_eq!(length, 1);
+/// let solved = decode_utf8_with_length(&b, length);
+/// assert_eq!(solved.codepoint, 'a' as u32);
+/// assert_eq!(solved.bytes_length, 1);
+///
+/// let b = "©".as_bytes();
+/// let length = utf8_bytes_length(b[0]);
+/// assert_eq!(length, 2);
+/// let solved = decode_utf8_with_length(&b, length);
+/// assert_eq!(solved.codepoint, '©' as u32);
+/// assert_eq!(solved.bytes_length, 2);
+///
+/// let b = "好".as_bytes();
+/// let length = utf8_bytes_length(b[0]);
+/// assert_eq!(length, 3);
+/// let solved = decode_utf8_with_length(&b, length);
+/// assert_eq!(solved.codepoint, '好' as u32);
+/// assert_eq!(solved.bytes_length, 3);
+///
+/// let b = "🍎".as_bytes();
+/// let length = utf8_bytes_length(b[0]);
+/// assert_eq!(length, 4);
+/// let solved = decode_utf8_with_length(&b, length);
+/// assert_eq!(solved.codepoint, '🍎' as u32);
+/// assert_eq!(solved.bytes_length, 4);
+/// ```
+pub fn decode_utf8_with_length(bytes: &[u8], bytes_length: u32) -> SolvedUtf8Properties {
     let codepoint: u32 = match bytes_length {
         1 => (bytes[0] & 0b01111111_u8) as u32,
         2 => (((bytes[1] & 0b00111111_u8) as u32) | (((bytes[0] & 0b00011111_u8) as u32) << 6_u32)),

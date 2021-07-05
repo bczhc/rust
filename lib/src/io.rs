@@ -3,11 +3,14 @@ use std::io::{ErrorKind, Read};
 use std::path::Path;
 
 pub trait ReadLine {
-    fn read_line(&mut self) -> Option<String>;
+    fn read_line_without_line_terminator(&mut self) -> Option<String>;
 }
 
-impl ReadLine for dyn Read {
-    fn read_line(&mut self) -> Option<String> {
+impl<T> ReadLine for T
+where
+    T: Read,
+{
+    fn read_line_without_line_terminator(&mut self) -> Option<String> {
         let mut read: Vec<u8> = Vec::new();
         let mut buf = [0_u8];
         loop {

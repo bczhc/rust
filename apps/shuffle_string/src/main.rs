@@ -35,9 +35,8 @@ fn main() -> Result<(), String> {
     match shuffle_mode {
         ShuffleMode::Line => {
             let mut stdin = stdin();
-            let stdin = &mut stdin as &mut dyn Read;
             loop {
-                let read = stdin.read_line();
+                let read = stdin.read_line_without_line_terminator();
                 if let Some(line) = read {
                     shuffle_string_and_print(&line);
                     // newline and refresh the buffer

@@ -46,9 +46,8 @@ fn main() -> Result<(), String> {
     match arguments.reverse_mode {
         ReverseMode::Line => {
             let mut stdin = stdin();
-            let stdin = &mut stdin as &mut dyn Read;
             loop {
-                let read = stdin.read_line();
+                let read = stdin.read_line_without_line_terminator();
                 if let Some(line) = read {
                     let reversed = reverse_string(&line);
                     println!("{}", reversed);

@@ -1,3 +1,6 @@
+use crate::utf8::{decode_utf8_with_length, utf8_bytes_length};
+use std::io::Read;
+
 /// Return if a character is a Han character.
 ///
 /// # Example
@@ -33,4 +36,49 @@ pub fn han_char_range(codepoint: u32) -> bool {
         return true;
     }
     return false;
+}
+
+pub struct CharReader<T>
+where
+    T: Read,
+{
+    reader: T,
+    buf: [u8; 4],
+}
+
+impl<T> CharReader<T>
+where
+    T: Read,
+{
+    #[inline]
+    pub fn new(reader: T) -> CharReader<T> {
+        Self {
+            reader,
+            buf: [0, 0, 0, 0],
+        }
+    }
+}
+
+impl<T> Iterator for CharReader<T>
+where
+    T: Read,
+{
+    type Item = char;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let result = self.reader.read_exact(&mut self.buf[0..1]);
+        if let Err(_) = result {
+            return None;
+        }
+
+        let len = utf8_bytes_length(self.buf[0]);
+        let result = self.reader.read_exact(&mut self.buf[1..len as usize]);
+        if let Err(_) = result {
+            panic!("Invalid UTF-8 bytes");
+        }
+
+        let solved = decode_utf8_with_length(&self.buf[0..len as usize], len);
+        let c = unsafe { std::char::from_u32_unchecked(solved.codepoint) };
+        Some(c)
+    }
 }

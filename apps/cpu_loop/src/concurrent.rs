@@ -1,7 +1,7 @@
 use std::borrow::BorrowMut;
 use std::cell::RefCell;
-use std::ops::Deref;
-use std::sync::{Arc, Condvar, Mutex, MutexGuard};
+
+use std::sync::{Arc, Condvar, Mutex};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
@@ -10,7 +10,7 @@ fn main() {
 
     let count = 10;
 
-    let mut handlers = Arc::new(RefCell::new(Vec::new()));
+    let handlers = Arc::new(RefCell::new(Vec::new()));
 
     for i in 0..count {
         let moved_pair = pair.clone();

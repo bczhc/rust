@@ -1,4 +1,4 @@
-use std::thread::{spawn, Thread};
+use std::thread::{spawn};
 use std::sync::{Mutex, Condvar};
 
 fn main() {

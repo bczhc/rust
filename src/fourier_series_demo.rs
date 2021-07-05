@@ -2,7 +2,7 @@ use lib::fourier_series::{quadratic_bezier_curve_length, BezierCurvePath, Quadra
 use lib::io::ReadLine;
 use lib::point::PointF64;
 use std::fs::File;
-use std::io::Read;
+
 
 fn main() {
     for _i in 0..100000 {
@@ -18,9 +18,9 @@ fn main() {
     return;
     let mut input = Vec::new();
 
-    let mut file = &mut File::open("./data").unwrap() as &mut dyn Read;
+    let mut file = &mut File::open("./data").unwrap();
     loop {
-        let line = file.read_line();
+        let line = file.read_line_without_line_terminator();
         if let None = line {
             break;
         }
