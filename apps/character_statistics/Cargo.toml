@@ -1,5 +1,5 @@
 [package]
-name = "character-statistics"
+name = "char-stat"
 version = "1.0.0"
 authors = ["bczhc <bczhc0@126.com>"]
 edition = "2018"
