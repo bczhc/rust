@@ -38,6 +38,23 @@ pub fn han_char_range(codepoint: u32) -> bool {
     return false;
 }
 
+/// # Examples
+/// ```no_run
+/// use lib::char::CharReader;
+/// use std::io::stdin;
+/// use std::fs::File;
+///
+/// let reader = CharReader::new(stdin());
+/// for c in reader {
+///     print!("{}", c);
+/// }
+///
+/// let file = File::open("./demo").unwrap();
+/// let reader = CharReader::new(file);
+/// let count = reader.count();
+/// println!("There are {} characters in this file.", count);
+///
+/// ```
 pub struct CharReader<T>
 where
     T: Read,
@@ -59,23 +76,6 @@ where
     }
 }
 
-/// # Examples
-/// ```no_run
-/// use lib::char::CharReader;
-/// use std::io::stdin;
-/// use std::fs::File;
-///
-/// let reader = CharReader::new(stdin());
-/// for c in reader {
-///     print!("{}", c);
-/// }
-///
-/// let file = File::open("./demo").unwrap();
-/// let reader = CharReader::new(file);
-/// let count = reader.count();
-/// println!("There are {} characters in this file.", count);
-///
-/// ```
 impl<T> Iterator for CharReader<T>
 where
     T: Read,
