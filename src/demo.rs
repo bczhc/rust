@@ -1,51 +1,34 @@
 use std::cmp::max;
 use std::collections::LinkedList;
+use std::fs::File;
+use lib::io::ReadLine;
+use lib::point::PointF64;
+use lib::fourier_series::LinearPath;
 
 struct Solution;
 
-impl Solution {
-    pub fn add_binary(a: String, b: String) -> String {
-        let mut carry = false;
-        let a = a.as_bytes();
-        let b = b.as_bytes();
-        let a_len = a.len() as isize;
-        let b_len = b.len() as isize;
-
-        let mut result = LinkedList::new();
-
-        let t = max(a_len, b_len);
-        for i in 0..t {
-            let index = a_len - 1 - i;
-            let a_bit = if index < 0 {
-                false
-            } else {
-                a[index as usize] == b'1'
-            };
-            let index = b_len - 1 - i;
-            let b_bit = if index < 0 {
-                false
-            } else {
-                b[index as usize] == b'1'
-            };
-
-            let half_add_bit = a_bit ^ b_bit;
-            let full_add_bit = half_add_bit ^ carry;
-            result.push_front(if full_add_bit { b'1' } else { b'0' });
-
-            carry = (a_bit && b_bit) || (half_add_bit && carry);
-        }
-
-        if carry {
-            result.push_front(b'1');
-        }
-
-        unsafe { String::from_utf8_unchecked(result.into_iter().collect()) }
-    }
-}
-
 fn main() {
-    println!(
-        "{}",
-        Solution::add_binary(String::from("1110101010"), String::from("010101011"))
-    );
+    let mut points = Vec::new();
+
+    let mut file = File::open("/home/bczhc/code/gtk/cmake-build-debug/data.txt").unwrap();
+    loop {
+        let line = file.read_line_without_line_terminator();
+        if line == None {
+            break;
+        }
+        let line = line.unwrap();
+
+        let mut split = line.split(", ");
+        let x: f64 = split.next().unwrap().parse().unwrap();
+        let y: f64 = split.next().unwrap().parse().unwrap();
+        points.push(PointF64::new(x, y));
+    }
+
+    println!("length: {}", points.len());
+
+    let path = LinearPath::new(&points, 100.0);
+    for i in 0..=100 {
+        let point = path.evaluate_path(i as f64);
+        println!("{:?}", point);
+    }
 }
