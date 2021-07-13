@@ -1,14 +1,31 @@
 use bmp::{Image, Pixel};
 use byteorder::{LittleEndian, WriteBytesExt};
 
+use clap::{App, Arg};
 use lib::utils::get_args_without_self_path;
 use std::fs::File;
 use std::io::{BufReader, Read};
 
 fn main() -> Result<(), ()> {
-    let args = get_args_without_self_path();
-    let input_path = &args[0];
-    let output_path = &args[1];
+    let matches = App::new("file2bmp")
+        .about("This can convert a file into a bitmap")
+        .author("bczhc <bczhc0@126.com>")
+        .arg(
+            Arg::with_name("src")
+                .value_name("src-path")
+                .help("The file path")
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("dest")
+                .value_name("dest-path")
+                .help("The output bitmap path")
+                .required(true),
+        )
+        .get_matches();
+
+    let input_path = matches.value_of("src").unwrap();
+    let output_path = matches.value_of("dest").unwrap();
 
     let file = File::open(input_path).unwrap();
     let len = file.metadata().unwrap().len() as u32 + 8;

@@ -1,3 +1,4 @@
+use clap::{App, Arg};
 use lib::byteorder::{get_endianness, Endianness};
 use lib::utf8;
 use lib::utf8::{decode_utf8, utf8_bytes_length};
@@ -7,29 +8,6 @@ use std::io::{stdin, stdout, BufReader, BufWriter, ErrorKind, Read, Write};
 fn main() -> Result<(), String> {
     let mut m = Main::new();
     return m.run();
-}
-
-fn get_help_msg(file_name: &str) -> String {
-    return format!(
-        "A from-stdin-to-stdout UTF converter.
-Usage: {0} [option] <from> <to>
-       {0} (--help | -h)
-       {0} --about
-
-Options:
-  -b <size>, --buffer-size <size>  IO buffer size, in bytes.
-  -i <path>, --input <path>  Input file instead of stdin.
-  -o <path>, --output <path>  Output file instead of stdout.
-
-Positional arguments:
-from, to: [utf[-]](8|16be|16le|32be|32le)",
-        file_name
-    );
-}
-
-#[inline]
-fn print_help_msg(help_msg: &str) {
-    println!("{}", help_msg);
 }
 
 /// returns: bytes size
@@ -123,66 +101,60 @@ impl Main {
     }
 
     fn run(&mut self) -> Result<(), String> {
+        let matches = App::new("utf-converter")
+            .author("bczhc <bczhc0@126.com>")
+            .about("A from-stdin-to-stdout UTF converter")
+            .arg(
+                Arg::with_name("bufferSize")
+                    .long("--buffer-size")
+                    .short("b")
+                    .required(false)
+                    .help("IO buffer size, in bytes")
+                    .takes_value(true)
+                    .value_name("size"),
+            )
+            .arg(
+                Arg::with_name("inputPath")
+                    .required(false)
+                    .long("input")
+                    .short("i")
+                    .help(" Input file instead of stdin")
+                    .takes_value(true)
+                    .value_name("path"),
+            )
+            .arg(
+                Arg::with_name("outputPath")
+                    .required(false)
+                    .long("output")
+                    .short("o")
+                    .help(" Output file instead of stdout")
+                    .takes_value(true)
+                    .value_name("path"),
+            )
+            .arg(
+                Arg::with_name("from")
+                    .required(true)
+                    .help("[utf[-]](8|16be|16le|32be|32le)"),
+            )
+            .arg(
+                Arg::with_name("to")
+                    .required(true)
+                    .help("[utf[-]](8|16be|16le|32be|32le)"),
+            )
+            .get_matches();
+
         let self_endianness = get_endianness();
 
-        let args: Vec<String> = std::env::args().collect();
-        let call_cmd = &args[0];
-        let args = &args[1..];
-        let arg_count = args.len();
+        let mut _buffer_size: i64 = matches
+            .value_of("bufferSize")
+            .unwrap_or("8192")
+            .parse()
+            .unwrap();
+        let mut input_file_path = matches.value_of("inputPath");
+        let mut output_file_path = matches.value_of("outputPath");
 
-        let path = std::path::Path::new(&call_cmd);
-        let file_name = path.file_name().unwrap().to_str().unwrap();
-
-        let help_msg = get_help_msg(file_name);
-
-        if arg_count == 0 {
-            print_help_msg(&help_msg);
-            return Ok(());
-        }
-        if arg_count == 1 {
-            let argv1 = &args[0];
-            if argv1.eq_ignore_ascii_case("-h") || argv1.eq_ignore_ascii_case("--help") {
-                print_help_msg(&help_msg);
-            } else if argv1.eq_ignore_ascii_case("--about") {
-                println!("Written by bczhc (https://github.com/bczhc).\n...");
-            } else {
-                return Err(format!("Unknown option: {}", argv1));
-            }
-            return Ok(());
-        }
-
-        let mut _buffer_size: i64 = 8192;
-        let mut input_file_path: Option<&String> = None;
-        let mut output_file_path: Option<&String> = None;
-
-        if arg_count > 2 {
-            for i in (0..(arg_count - 3)).step_by(2) {
-                let option = &args[i];
-                let option_bytes = option.as_bytes();
-                if option_bytes[0] != b'-' && !option[0..2].eq("--") {
-                    return Err(format!("Unknown option: {}", option));
-                }
-                if i > arg_count {
-                    return Err(String::from("Invalid arguments count."));
-                }
-                let arg = &args[i + 1];
-
-                if option.eq("-b") || option.eq("--buffer-size") {
-                    let parsed = arg.parse::<i64>();
-                    if let Ok(v) = parsed {
-                        _buffer_size = v;
-                    } else if let Err(e) = parsed {
-                        return Err(e.to_string());
-                    }
-                } else if option.eq("-i") || option.eq("--input") {
-                    input_file_path = Some(arg);
-                } else if option.eq("-o") || option.eq("--output") {
-                    output_file_path = Some(arg);
-                } else {
-                    return Err(format!("Unknown option: {}", option));
-                }
-            }
-        }
+        let from = matches.value_of("from").unwrap();
+        let to = matches.value_of("to").unwrap();
 
         // TODO: SIGINT handling
 
@@ -205,8 +177,6 @@ impl Main {
             self.output_stream = Box::new(BufWriter::new(f));
         }
 
-        let from = &args[arg_count - 2];
-        let to = &args[arg_count - 1];
         let converter: fn(u32, &mut [u8]) -> u32;
 
         match to.to_ascii_lowercase().as_str() {
