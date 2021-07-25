@@ -1,20 +1,12 @@
 use clap::{App, Arg, ArgGroup};
+use std::rc::Rc;
 
 fn main() {
-    let matches = App::new("My Super Program")
-        .version("1.0.0")
-        .author("bczhc <bczhc0@126.com>")
-        .about("My first CLI program")
-        .arg(Arg::with_name("src").value_name("src-path").required(true))
-        .arg(
-            Arg::with_name("dest")
-                .value_name("dest-path")
-                .required(true),
-        )
-        .get_matches();
+    let x;
+    {
+        let a = Box::new(2);
+        x = a;
+    }
 
-    let src_path = matches.value_of("src").unwrap();
-    let dest_path = matches.value_of("dest").unwrap();
-
-    println!("{:?}", (src_path, dest_path));
+    println!("{}", x);
 }

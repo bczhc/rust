@@ -18,6 +18,7 @@ members = [
     "apps/file_and_bitmap_streamed_converter",
     "apps/cpu_loop",
     "apps/char_count",
+    "apps/regex-test",
 ]
 
 [[bin]]
