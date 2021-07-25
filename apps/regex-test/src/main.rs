@@ -4,7 +4,16 @@ use std::fs::File;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 
-fn main() -> Result<(), String> {
+#[derive(Debug)]
+enum RetErr<A, B, C> {
+    Rust(A),
+    PCRE(B),
+    Text(C),
+}
+
+type RetErrType = RetErr<regex::Error, pcre2::Error, String>;
+
+fn main() -> Result<(), RetErrType> {
     // regex test REGEX TEXT...
     // regex match REGEX TEXT
     // -e, --engine <engine>
@@ -50,30 +59,30 @@ fn main() -> Result<(), String> {
         )
         .get_matches();
 
-    let get_regex = |e: Engine, regex: &str| -> Result<Box<dyn Regex>, String> {
+    let get_regex = |e: Engine, regex: &str| -> Result<Box<dyn Regex>, RetErrType> {
         match e {
             Engine::Rust => {
                 let r = RustRegex::new(regex);
                 if let Err(e) = r {
-                    return Err(e.to_string());
+                    return Err(RetErr::Rust(e));
                 }
                 Ok(Box::new(r.unwrap()) as Box<dyn Regex>)
             }
             Engine::PCRE => {
                 let r = PcreRegex::new(regex);
                 if let Err(e) = r {
-                    return Err(e.to_string());
+                    return Err(RetErr::PCRE(e));
                 }
                 Ok(Box::new(r.unwrap()) as Box<dyn Regex>)
             }
         }
     };
 
-    let get_engine = |engine: &str| -> Result<Engine, String> {
+    let get_engine = |engine: &str| -> Result<Engine, RetErrType> {
         match engine.to_lowercase().as_str() {
             "rust" => Ok(Engine::Rust),
             "pcre" => Ok(Engine::PCRE),
-            _ => Err(format!("Unknown engine: {}", engine)),
+            _ => Err(RetErr::Text(format!("Unknown engine: {}", engine))),
         }
     };
 
@@ -104,9 +113,7 @@ fn main() -> Result<(), String> {
             let engine = get_engine(matcher.value_of("engine").unwrap())?;
             let regex = get_regex(engine, regex)?;
             let regex = regex.as_ref() as &dyn Regex;
-
-            let join: String = regex.matches(text).join(", ");
-            println!("[{}]", join);
+            regex.print_matches(text);
         }
         (_, _) => {}
     }
@@ -117,7 +124,7 @@ fn main() -> Result<(), String> {
 trait Regex {
     fn test(&self, text: &str) -> bool;
 
-    fn matches(&self, text: &str) -> Vec<String>;
+    fn print_matches(&self, text: &str);
 }
 
 struct RustRegex {
@@ -136,13 +143,19 @@ impl Regex for RustRegex {
         self.regex.is_match(text)
     }
 
-    fn matches(&self, text: &str) -> Vec<String> {
+    fn print_matches(&self, text: &str) {
         let matches = self.regex.captures_iter(text);
-        let mut vec = Vec::new();
-        for x in matches {
-            vec.push(String::from(x.get(0).unwrap().as_str()));
+        for groups in matches {
+            let len = groups.len();
+            print!("[");
+            if len != 0 {
+                print!("{}", groups.get(0).unwrap().as_str());
+                for i in 1..len {
+                    print!(", {}", groups.get(i).unwrap().as_str());
+                }
+            }
+            println!("]");
         }
-        vec
     }
 }
 
@@ -152,7 +165,8 @@ struct PcreRegex {
 
 impl PcreRegex {
     fn new(regex: &str) -> Result<Self, pcre2::Error> {
-        let r = pcre2::bytes::Regex::new(regex)?;
+        let result = pcre2::bytes::RegexBuilder::new().utf(true).build(regex);
+        let r = result?;
         Ok(Self { regex: r })
     }
 }
@@ -162,13 +176,26 @@ impl Regex for PcreRegex {
         self.regex.is_match(text.as_bytes()).unwrap()
     }
 
-    fn matches(&self, text: &str) -> Vec<String> {
+    fn print_matches(&self, text: &str) {
         let matches = self.regex.captures_iter(text.as_bytes());
-        let mut vec = Vec::new();
         for x in matches {
-            vec.push(String::from_utf8_lossy(x.unwrap().get(0).unwrap().as_bytes()).to_string());
+            let groups = x.unwrap();
+            let len = groups.len();
+            print!("[");
+            if len != 0 {
+                print!(
+                    "{}",
+                    String::from_utf8_lossy(groups.get(0).unwrap().as_bytes())
+                );
+                for i in 1..len {
+                    print!(
+                        ", {}",
+                        String::from_utf8_lossy(groups.get(i).unwrap().as_bytes())
+                    );
+                }
+            }
+            println!("]");
         }
-        vec
     }
 }
 
