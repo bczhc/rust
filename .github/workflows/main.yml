@@ -36,7 +36,7 @@ jobs:
           git config user.email "bczhc0@126.com"
           cp -r ../target/doc/* .
           git add --all
-          if [[ `git commit -m update | grep "workking tree clean"` != "" ]]; then exit; fi
+          if [[ `git commit -m update | grep "working tree clean"` != "" ]]; then exit; fi
           git push origin gh-pages
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

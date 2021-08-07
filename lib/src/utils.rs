@@ -47,3 +47,16 @@ pub fn get_args_without_self_path() -> Vec<String> {
     c.remove(0);
     return c;
 }
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct Pair<T1, T2> {
+    a: T1,
+    b: T2,
+}
+
+impl<T1, T2> Pair<T1, T2> {
+    #[inline]
+    pub fn new(a: T1, b: T2) -> Pair<T1, T2> {
+        Self { a, b }
+    }
+}

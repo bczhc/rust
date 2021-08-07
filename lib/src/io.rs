@@ -3,6 +3,23 @@ use std::io::{Error, ErrorKind, Read};
 use std::path::Path;
 
 pub trait ReadLine {
+    /// Read lines without the end newline mark (CR and/or LF)
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use std::fs::File;
+    /// use lib::io::ReadLine;
+    ///
+    /// let mut file = File::open("a.txt").expect("Failed to open file");
+    /// loop {
+    ///     let result = file.read_line_without_line_terminator();
+    ///     if let Some(line) = result {
+    ///         println!("{}\n", line);
+    ///     } else {
+    ///         break;
+    ///     }
+    /// }
+    /// ```
     fn read_line_without_line_terminator(&mut self) -> Option<String>;
 }
 
@@ -11,6 +28,7 @@ where
     T: Read,
 {
     fn read_line_without_line_terminator(&mut self) -> Option<String> {
+        // TODO: not read the last line when files don't have EOL
         let mut read: Vec<u8> = Vec::new();
         let mut buf = [0_u8];
         loop {
@@ -38,6 +56,15 @@ pub trait OpenOrCreate {
             .create(true)
             .write(true)
             .read(true)
+            .open(path.as_ref())
+    }
+
+    fn open_append_file<P: AsRef<Path>>(path: P) -> std::io::Result<File> {
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .read(true)
+            .append(true)
             .open(path.as_ref())
     }
 }

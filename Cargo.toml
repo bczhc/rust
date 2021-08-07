@@ -19,6 +19,7 @@ members = [
     "apps/cpu_loop",
     "apps/char_count",
     "apps/regex-test",
+    "apps/transfer",
 ]
 
 [[bin]]

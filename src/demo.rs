@@ -1,12 +1,10 @@
 use clap::{App, Arg, ArgGroup};
 use std::rc::Rc;
+use std::io::stdin;
+use lib::io::ReadLine;
 
 fn main() {
-    let x;
-    {
-        let a = Box::new(2);
-        x = a;
-    }
+    let s = stdin().read_line_without_line_terminator().unwrap();
 
-    println!("{}", x);
+    println!("{}", s.len());
 }
