@@ -1,8 +1,10 @@
+use sha1::Sha1;
+
 pub mod receive;
 pub mod send;
 
 pub mod lib {
-    use lib::io::{ReadLine, OpenOrCreate};
+    use lib::io::{OpenOrCreate, ReadLine};
     use lib::utils::Pair;
     use std::fs::{create_dir, create_dir_all, File};
     use std::io::{stdin, stdout, Read, Seek, SeekFrom, Write};
@@ -45,8 +47,8 @@ pub mod lib {
 
     #[derive(Debug)]
     pub struct Configuration {
-        destination_ip: String,
-        port: u16,
+        pub destination_ip: String,
+        pub port: u16,
     }
 
     pub fn handle_config() -> Configuration {
@@ -155,4 +157,30 @@ pub mod lib {
             config_file.write_all(b"\n").unwrap();
         }
     }
+
+    pub fn split_ipv4_string(ip: &String) -> Option<(u8, u8, u8, u8)> {
+        let split = ip.split(".");
+        let split: Vec<&str> = split.collect();
+        if split.len() != 4 {
+            None
+        } else {
+            let a = split[0].parse();
+            let b = split[1].parse();
+            let c = split[2].parse();
+            let d = split[3].parse();
+            if a.is_err() || b.is_err() || c.is_err() || d.is_err() {
+                return None;
+            }
+
+            Some((a.unwrap(), b.unwrap(), c.unwrap(), d.unwrap()))
+        }
+    }
 }
+
+pub fn compute_sha1(data: &[u8]) -> [u8; 20] {
+    let mut sha1 = Sha1::new();
+    sha1.update(data);
+    sha1.digest().bytes()
+}
+
+const HEADER: &[u8; 5] = b"bczhc";

@@ -1,5 +1,5 @@
 use std::fs::{File, OpenOptions};
-use std::io::{Error, ErrorKind, Read};
+use std::io::{BufWriter, Cursor, Error, ErrorKind, Read};
 use std::path::Path;
 
 pub trait ReadLine {
@@ -14,7 +14,7 @@ pub trait ReadLine {
     /// loop {
     ///     let result = file.read_line_without_line_terminator();
     ///     if let Some(line) = result {
-    ///         println!("{}\n", line);
+    ///         println!("{}", line);
     ///     } else {
     ///         break;
     ///     }
@@ -85,5 +85,41 @@ where
             return Err(Error::new(ErrorKind::UnexpectedEof, "Failed to skip"));
         }
         Ok(())
+    }
+}
+
+pub trait ReadAll {
+    /// Read all data until the end
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use std::fs::File;
+    /// use lib::io::ReadAll;
+    ///
+    /// let mut file = File::open("aa").unwrap();
+    /// let data = file.read_all();
+    /// println!("Data: {:?}", data);
+    /// ```
+    fn read_all(&mut self) -> Vec<u8>;
+}
+
+impl<R> ReadAll for R
+where
+    R: Read,
+{
+    fn read_all(&mut self) -> Vec<u8> {
+        let mut out = Vec::new();
+        let mut buf = [0_u8; 4096];
+        loop {
+            let read_len = self.read(&mut buf[..]).unwrap();
+            if read_len == 0 {
+                // EOF
+                break;
+            }
+            for b in buf[..read_len].iter() {
+                out.push(*b);
+            }
+        }
+        out
     }
 }
