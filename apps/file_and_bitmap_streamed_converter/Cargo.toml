@@ -16,5 +16,5 @@ path = "src/decode.rs"
 [dependencies]
 bmp = "0.5.0"
 byteorder = "1.4.3"
-lib = { path = "../../lib", version = "1.0.0" }
+bczhc_lib = { path = "../../lib", version = "1.0.0" }
 clap = "2.33.3"

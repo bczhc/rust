@@ -38,6 +38,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
+name = "bczhc_lib"
+version = "1.0.0"
+dependencies = [
+ "libc",
+ "threadpool",
+]
+
+[[package]]
 name = "bitflags"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -83,14 +91,14 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "char-count"
 version = "1.0.0"
 dependencies = [
- "lib",
+ "bczhc_lib",
 ]
 
 [[package]]
 name = "char-stat"
 version = "1.0.0"
 dependencies = [
- "lib",
+ "bczhc_lib",
 ]
 
 [[package]]
@@ -119,7 +127,7 @@ dependencies = [
 name = "default-file-mode"
 version = "1.0.0"
 dependencies = [
- "lib",
+ "bczhc_lib",
  "libc",
  "magic",
 ]
@@ -149,8 +157,8 @@ dependencies = [
 name = "file-size"
 version = "1.0.0"
 dependencies = [
+ "bczhc_lib",
  "errno",
- "lib",
  "libc",
  "size_format",
 ]
@@ -159,10 +167,10 @@ dependencies = [
 name = "file_and_bitmap_streamed_converter"
 version = "1.0.0"
 dependencies = [
+ "bczhc_lib",
  "bmp",
  "byteorder",
  "clap",
- "lib",
 ]
 
 [[package]]
@@ -216,14 +224,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "972f5ae5d1cb9c6ae417789196c803205313edde988685da5e3aae0827b9e7fd"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "lib"
-version = "1.0.0"
-dependencies = [
- "libc",
- "threadpool",
 ]
 
 [[package]]
@@ -452,16 +452,16 @@ checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 name = "reverse"
 version = "1.0.0"
 dependencies = [
- "lib",
+ "bczhc_lib",
 ]
 
 [[package]]
 name = "rust"
 version = "1.0.0"
 dependencies = [
+ "bczhc_lib",
  "clap",
  "errno",
- "lib",
  "libc",
 ]
 
@@ -475,7 +475,7 @@ checksum = "2579985fda508104f7587689507983eadd6a6e84dd35d6d115361f530916fa0d"
 name = "shuffle-string"
 version = "1.0.0"
 dependencies = [
- "lib",
+ "bczhc_lib",
  "rand",
 ]
 
@@ -493,7 +493,7 @@ dependencies = [
 name = "stdin-size"
 version = "1.0.0"
 dependencies = [
- "lib",
+ "bczhc_lib",
  "size_format",
 ]
 
@@ -534,10 +534,10 @@ dependencies = [
 name = "transfer"
 version = "1.0.0"
 dependencies = [
+ "bczhc_lib",
  "byteorder",
  "clap",
  "home",
- "lib",
  "sha1",
 ]
 
@@ -557,8 +557,8 @@ checksum = "9337591893a19b88d8d87f2cec1e73fad5cdfd10e5a6f349f498ad6ea2ffb1e3"
 name = "utf-converter"
 version = "1.0.0"
 dependencies = [
+ "bczhc_lib",
  "clap",
- "lib",
 ]
 
 [[package]]

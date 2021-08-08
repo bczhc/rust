@@ -1,16 +1,18 @@
 use crate::Type::{Directory, File, Stdin};
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use sha1::Sha1;
+use std::io::{Cursor, ErrorKind, Read, Write};
+use std::string::FromUtf8Error;
 
 pub mod receive;
 pub mod send;
 
 pub mod lib {
-    use lib::io::{OpenOrCreate, ReadLine};
-    use lib::utils::Pair;
     use std::fs::{create_dir, create_dir_all, File};
     use std::io::{stdin, stdout, Read, Seek, SeekFrom, Write};
     use std::iter::{Map, Scan};
     use std::path::{Path, PathBuf};
+    use bczhc_lib::io::{OpenOrCreate, ReadLine};
 
     #[inline]
     fn home_dir() -> Option<PathBuf> {
@@ -178,13 +180,20 @@ pub mod lib {
     }
 }
 
-pub fn compute_sha1(data: &[u8], path: &str) -> [u8; 20] {
+pub fn compute_sha1_with_path(data: &[u8], path: &str) -> [u8; 20] {
     let mut sha1 = Sha1::new();
     sha1.update(data);
     sha1.update(path.as_bytes());
     sha1.digest().bytes()
 }
 
+pub fn compute_sha1(data: &[u8]) -> [u8; 20] {
+    let mut sha1 = Sha1::new();
+    sha1.update(data);
+    sha1.digest().bytes()
+}
+
+#[derive(Debug)]
 pub enum Type {
     File,
     Directory,
@@ -210,4 +219,71 @@ impl Type {
     }
 }
 
-const HEADER: &[u8; 5] = b"bczhc";
+pub fn make_header(end: bool, file_type: Type) -> [u8; 8] {
+    let mut header = [0_u8; 8];
+    for i in 0..5 {
+        header[i] = HEADER_PREFIX[i];
+    }
+    header[5] = if end { 1 } else { 0 };
+    header[6] = file_type.value();
+    header
+}
+
+#[derive(Debug)]
+pub struct Header {
+    end: bool,
+    file_type: Type,
+}
+
+pub fn read_header<R>(input: &mut R) -> MyResult<Header>
+where
+    R: Read,
+{
+    let mut header_prefix = [0_u8; 5];
+    input.read_exact(&mut header_prefix)?;
+    if &header_prefix != HEADER_PREFIX {
+        return Err(Error::InvalidHeader);
+    }
+
+    let result = input.read_u8()?;
+    let end = result != 0;
+
+    let result = input.read_u8()?;
+    let file_type = Type::value_of(result);
+    if let None = file_type {
+        return Err(Error::InvalidType);
+    }
+    let file_type = file_type.unwrap();
+
+    bczhc_lib::io::Skip::skip(input, 1)?;
+
+    Ok(Header { end, file_type })
+}
+
+const HEADER_PREFIX: &[u8; 5] = b"bczhc";
+
+pub type MyResult<T> = Result<T, Error>;
+
+#[derive(Debug)]
+pub enum Error {
+    UnexpectedEOF,
+    InvalidHeader,
+    InvalidType,
+    UnknownSubcommand,
+    String(String),
+    IOError(std::io::Error),
+    Utf8Error(FromUtf8Error),
+    DigestCheckError,
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Error::IOError(e)
+    }
+}
+
+impl From<FromUtf8Error> for Error {
+    fn from(e: FromUtf8Error) -> Self {
+        Error::Utf8Error(e)
+    }
+}

@@ -1,10 +1,7 @@
 use crate::lib::{handle_config, split_ipv4_string};
-use crate::{compute_sha1, Type, HEADER};
+use crate::{compute_sha1, compute_sha1_with_path, make_header, Type, HEADER_PREFIX};
 use byteorder::{BigEndian, ByteOrder, WriteBytesExt};
 use clap::ArgMatches;
-use lib::fs::ForeachDir;
-use lib::io::{OpenOrCreate, ReadAll};
-use sha1::{Digest, Sha1};
 use std::borrow::Borrow;
 use std::env::args;
 use std::fs::{File, Permissions};
@@ -12,6 +9,8 @@ use std::io::{stdin, BufReader, BufWriter, Error, ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, TcpStream};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
+use bczhc_lib::fs::ForeachDir;
+use bczhc_lib::io::ReadAll;
 
 pub fn run(matches: &ArgMatches) -> Result<(), String> {
     // send:
@@ -33,10 +32,7 @@ pub fn run(matches: &ArgMatches) -> Result<(), String> {
     if let Err(e) = tcp_conn {
         return Err(e.to_string());
     }
-    let mut tcp_conn = tcp_conn.unwrap();
-
-    let config = handle_config();
-    println!("Configuration: {:?}\n", config);
+    let mut tcp_stream = tcp_conn.unwrap();
 
     if let Some(files) = files {
         for file_path in files {
@@ -45,23 +41,23 @@ pub fn run(matches: &ArgMatches) -> Result<(), String> {
                 let result = handle_path_file(
                     path,
                     path.file_name().unwrap().to_str().unwrap(),
-                    &mut tcp_conn,
+                    &mut tcp_stream,
                 );
                 if let Err(e) = result {
                     println!("{:?}", e);
                 }
             } else if path.is_dir() {
-                let result = handle_path_dir(path, &mut tcp_conn);
+                let result = handle_path_dir(path, &mut tcp_stream);
                 if let Err(e) = result {
                     eprintln!("{:?}", e);
                 }
             }
         }
     } else {
-        send(&mut tcp_conn, &mut stdin(), None, Type::Stdin);
+        send_stdin(&mut tcp_stream, &mut stdin());
     }
 
-    send_end(&mut tcp_conn);
+    send_end(&mut tcp_stream);
 
     Ok(())
 }
@@ -80,12 +76,13 @@ fn handle_path_dir(path: &Path, tcp_conn: &mut TcpStream) -> std::io::Result<()>
         let cann_path = d.unwrap().path().canonicalize();
 
         if let Ok(cann_path) = cann_path {
-            let relative_path = cann_path.strip_prefix(prefix).unwrap();
+            let path_diff = cann_path.strip_prefix(prefix).unwrap();
             let r = unsafe { &mut *(ptr as *mut TcpStream) };
-            let result = handle_path_file(cann_path.as_path(), relative_path.to_str().unwrap(), r);
+            println!("{:?}", path_diff);
+            /*let result = handle_path_file(cann_path.as_path(), path_diff.to_str().unwrap(), r);
             if let Err(e) = result {
                 eprintln!("{:?}", e);
-            }
+            }*/
         } else if let Err(e) = cann_path {
             eprintln!("{:?}", e);
         }
@@ -99,7 +96,7 @@ fn handle_path_dir(path: &Path, tcp_conn: &mut TcpStream) -> std::io::Result<()>
 fn handle_path_file(
     file_path: &Path,
     path_diff: &str,
-    tcp_conn: &mut TcpStream,
+    tcp_stream: &mut TcpStream,
 ) -> std::io::Result<()> {
     let file = File::open(file_path);
     if let Err(e) = file {
@@ -122,53 +119,82 @@ fn handle_path_file(
 
     let path_diff = path_cann.strip_prefix(parent).unwrap();
 
-    send(
-        tcp_conn,
-        &mut file.unwrap(),
-        Some(path_diff.to_str().unwrap()),
-        Type::File,
-    );
+    send_file(tcp_stream, &mut file.unwrap(), path_diff.to_str().unwrap());
     Ok(())
 }
 
-/// ### Structure:
-///
-/// | Header (5) | End (1) | PathLength (4) | Path | Type (1) | ContentLength (4) | Digest | Content |
-fn send<R>(connection: &mut TcpStream, input: &mut R, path: Option<&str>, file_type: Type)
+fn send_file<R>(connection: &mut TcpStream, input: &mut R, path: &str)
 where
     R: Read,
 {
     println!("Read...");
     let data = input.read_all();
     println!("Digest...");
-    let sha1 = compute_sha1(&data, path.unwrap_or(""));
+    let sha1 = compute_sha1_with_path(&data, path);
 
     println!("Send...");
-    connection.write_all(HEADER).unwrap();
-    connection.write_u8(0).unwrap();
-    match file_type {
-        Type::File | Type::Directory => {
-            let path = path.unwrap();
-            connection
-                .write_u32::<BigEndian>(path.len() as u32)
-                .unwrap();
-            connection.write_all(path.as_bytes()).unwrap();
-        }
-        Type::Stdin => {
-            connection.write_all(&[0, 0, 0, 0]).unwrap();
-        }
-    };
-    connection.write_u8(file_type.value()).unwrap();
+    // Header
+    connection
+        .write_all(&make_header(false, Type::File))
+        .unwrap();
+    // PathLength
+    connection
+        .write_u32::<BigEndian>(path.len() as u32)
+        .unwrap();
+    // Path
+    connection.write_all(path.as_bytes()).unwrap();
+    // ContentLength
     connection
         .write_u32::<BigEndian>(data.len() as u32)
         .unwrap();
+    // Digest
     connection.write_all(&sha1).unwrap();
+    // Content
     connection.write_all(&data);
+
+    connection.flush().unwrap();
+}
+
+fn send_dir(connection: &mut TcpStream, path: &str) {
+    // Header
+    connection
+        .write_all(&make_header(false, Type::Directory))
+        .unwrap();
+    // PathLength
+    connection
+        .write_u32::<BigEndian>(path.len() as u32)
+        .unwrap();
+    // Path
+    connection.write_all(path.as_bytes()).unwrap();
+
+    connection.flush().unwrap();
+}
+
+fn send_stdin<R>(connection: &mut TcpStream, input: &mut R)
+where
+    R: Read,
+{
+    let data = input.read_all();
+    let digest = compute_sha1(&data);
+
+    // Header
+    connection
+        .write_all(&make_header(false, Type::Stdin))
+        .unwrap();
+    // ContentLength
+    connection
+        .write_u32::<BigEndian>(data.len() as u32)
+        .unwrap();
+    // Digest
+    connection.write_all(&digest).unwrap();
+    // Content
+    std::io::copy(input, connection).unwrap();
+
     connection.flush().unwrap();
 }
 
 fn send_end(connection: &mut TcpStream) {
-    connection.write_all(HEADER).unwrap();
+    connection.write_all(HEADER_PREFIX).unwrap();
     connection.write_u8(1).unwrap();
     connection.flush().unwrap();
 }

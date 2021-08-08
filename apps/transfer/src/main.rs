@@ -1,7 +1,26 @@
+//! ## Structure:
+//!
+//!
+//! ### Header (8):
+//! | "bczhc" (5) | EndMark (1) | Type (1) | Null (1) |
+//!
+//! ### End:
+//! | Header (8) |
+//!
+//! ### Not end:
+//! #### File:
+//! | Header (8) | PathLength (4) | Path | ContentLength (4) | Digest | Content |
+//! #### Directory
+//! | Header (8) | PathLength (4) | Path |
+//! #### Stdin
+//! | Header (8) | ContentLength (4) | Digest | Content |
+//!
+//!
 use clap::{App, Arg};
 use std::fs::{create_dir, DirEntry, File};
+use transfer::{Error, MyResult};
 
-fn main() -> Result<(), String> {
+fn main() -> MyResult<()> {
     // transfer <subcommand>
     // subcommands: send, receive
 
@@ -40,11 +59,18 @@ fn main() -> Result<(), String> {
 
     let subcommand = matches.subcommand();
     match subcommand.0 {
-        "send" => transfer::send::run(subcommand.1.unwrap()),
+        "send" => {
+            let result = transfer::send::run(subcommand.1.unwrap());
+            if let Err(e) = result {
+                Err(Error::String(e))
+            } else {
+                Ok(())
+            }
+        }
         "receive" => transfer::receive::run(subcommand.1.unwrap()),
         _ => {
             println!("{}", matches.usage());
-            Err(String::from("Unknown subcommand"))
+            Err(Error::UnknownSubcommand)
         }
     }
 }
