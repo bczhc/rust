@@ -1,15 +1,12 @@
 use crate::lib::handle_config;
-use crate::{
-    compute_sha1, compute_sha1_with_path, read_header, Error,
-    MyResult, Type,
-};
+use crate::{compute_sha1, compute_sha1_with_path, read_header, Error, MyResult, Type};
+use bczhc_lib::io::{put_char, OpenOrCreate, ReadAll};
 use byteorder::{BigEndian, ReadBytesExt};
 use clap::ArgMatches;
 use std::fs::{create_dir, File};
 use std::io::{BufReader, BufWriter, Cursor, ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use std::path::Path;
-use bczhc_lib::io::{ReadAll, OpenOrCreate, put_char};
 
 pub fn run(matches: &ArgMatches) -> MyResult<()> {
     // receive:
@@ -26,9 +23,6 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     println!("Accept: {:?}", socket_addr);
     loop {
         let header = read_header(&mut tcp_stream)?;
-        if header.end {
-            break;
-        }
 
         let file_type = header.file_type;
 
@@ -42,6 +36,9 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
             Type::Stdin => {
                 receive_stdin(&mut tcp_stream);
             }
+            Type::End => {
+                break;
+            }
         }
     }
 
@@ -51,11 +48,12 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
 fn receive_file(stream: &mut TcpStream) -> MyResult<()> {
     let path = read_path(stream)?;
     // ContentLength
-    let content_len = stream.read_u32::<BigEndian>()?;
+    let content_len = stream.read_u32::<BigEndian>()? as usize;
     // Digest
     let digest = read_digest(stream)?;
     // Content
-    let data = stream.read_all();
+    let mut data = vec![0_u8; content_len];
+    stream.read_exact(&mut data)?;
 
     let sha1 = compute_sha1_with_path(&data, &path);
     if sha1 != digest {

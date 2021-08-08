@@ -1,5 +1,7 @@
 use crate::lib::{handle_config, split_ipv4_string};
-use crate::{compute_sha1, compute_sha1_with_path, make_header, Type, HEADER_PREFIX};
+use crate::{compute_sha1, compute_sha1_with_path, make_header, MyResult, Type, HEADER_PREFIX};
+use bczhc_lib::fs::ForeachDir;
+use bczhc_lib::io::ReadAll;
 use byteorder::{BigEndian, ByteOrder, WriteBytesExt};
 use clap::ArgMatches;
 use std::borrow::Borrow;
@@ -9,8 +11,6 @@ use std::io::{stdin, BufReader, BufWriter, Error, ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, TcpStream};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
-use bczhc_lib::fs::ForeachDir;
-use bczhc_lib::io::ReadAll;
 
 pub fn run(matches: &ArgMatches) -> Result<(), String> {
     // send:
@@ -134,9 +134,7 @@ where
 
     println!("Send...");
     // Header
-    connection
-        .write_all(&make_header(false, Type::File))
-        .unwrap();
+    connection.write_all(&make_header(Type::File)).unwrap();
     // PathLength
     connection
         .write_u32::<BigEndian>(path.len() as u32)
@@ -157,9 +155,7 @@ where
 
 fn send_dir(connection: &mut TcpStream, path: &str) {
     // Header
-    connection
-        .write_all(&make_header(false, Type::Directory))
-        .unwrap();
+    connection.write_all(&make_header(Type::Directory)).unwrap();
     // PathLength
     connection
         .write_u32::<BigEndian>(path.len() as u32)
@@ -178,9 +174,7 @@ where
     let digest = compute_sha1(&data);
 
     // Header
-    connection
-        .write_all(&make_header(false, Type::Stdin))
-        .unwrap();
+    connection.write_all(&make_header(Type::Stdin)).unwrap();
     // ContentLength
     connection
         .write_u32::<BigEndian>(data.len() as u32)
@@ -193,8 +187,7 @@ where
     connection.flush().unwrap();
 }
 
-fn send_end(connection: &mut TcpStream) {
-    connection.write_all(HEADER_PREFIX).unwrap();
-    connection.write_u8(1).unwrap();
-    connection.flush().unwrap();
+fn send_end(connection: &mut TcpStream) -> MyResult<()> {
+    connection.write_all(&make_header(Type::End))?;
+    Ok(())
 }

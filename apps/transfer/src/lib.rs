@@ -1,4 +1,3 @@
-use crate::Type::{Directory, File, Stdin};
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use sha1::Sha1;
 use std::io::{Cursor, ErrorKind, Read, Write};
@@ -8,11 +7,11 @@ pub mod receive;
 pub mod send;
 
 pub mod lib {
+    use bczhc_lib::io::{OpenOrCreate, ReadLine};
     use std::fs::{create_dir, create_dir_all, File};
     use std::io::{stdin, stdout, Read, Seek, SeekFrom, Write};
     use std::iter::{Map, Scan};
     use std::path::{Path, PathBuf};
-    use bczhc_lib::io::{OpenOrCreate, ReadLine};
 
     #[inline]
     fn home_dir() -> Option<PathBuf> {
@@ -198,6 +197,7 @@ pub enum Type {
     File,
     Directory,
     Stdin,
+    End,
 }
 
 impl Type {
@@ -206,32 +206,32 @@ impl Type {
             Type::File => 0,
             Type::Directory => 1,
             Type::Stdin => 2,
+            Type::End => 3,
         }
     }
 
     fn value_of(value: u8) -> Option<Type> {
         match value {
-            0 => Some(File),
-            1 => Some(Directory),
-            2 => Some(Stdin),
+            0 => Some(Type::File),
+            1 => Some(Type::Directory),
+            2 => Some(Type::Stdin),
+            3 => Some(Type::End),
             _ => None,
         }
     }
 }
 
-pub fn make_header(end: bool, file_type: Type) -> [u8; 8] {
+pub fn make_header(file_type: Type) -> [u8; 8] {
     let mut header = [0_u8; 8];
     for i in 0..5 {
         header[i] = HEADER_PREFIX[i];
     }
-    header[5] = if end { 1 } else { 0 };
-    header[6] = file_type.value();
+    header[5] = file_type.value();
     header
 }
 
 #[derive(Debug)]
 pub struct Header {
-    end: bool,
     file_type: Type,
 }
 
@@ -239,25 +239,19 @@ pub fn read_header<R>(input: &mut R) -> MyResult<Header>
 where
     R: Read,
 {
-    let mut header_prefix = [0_u8; 5];
-    input.read_exact(&mut header_prefix)?;
-    if &header_prefix != HEADER_PREFIX {
+    let mut data = [0_u8; 8];
+    input.read_exact(&mut data)?;
+    if &data[..5] != HEADER_PREFIX {
         return Err(Error::InvalidHeader);
     }
 
-    let result = input.read_u8()?;
-    let end = result != 0;
-
-    let result = input.read_u8()?;
-    let file_type = Type::value_of(result);
-    if let None = file_type {
+    let result = Type::value_of(data[5]);
+    if let None = result {
         return Err(Error::InvalidType);
     }
-    let file_type = file_type.unwrap();
+    let file_type = result.unwrap();
 
-    bczhc_lib::io::Skip::skip(input, 1)?;
-
-    Ok(Header { end, file_type })
+    Ok(Header { file_type })
 }
 
 const HEADER_PREFIX: &[u8; 5] = b"bczhc";
