@@ -269,7 +269,8 @@ pub enum Error {
     Utf8Error(FromUtf8Error),
     InvalidUTF8,
     DigestCheckError,
-    InvalidIpv4
+    InvalidIpv4,
+    Unsupported
 }
 
 impl From<std::io::Error> for Error {

@@ -4,7 +4,7 @@ use bczhc_lib::io::{put_char, OpenOrCreate, ReadAll};
 use byteorder::{BigEndian, ReadBytesExt};
 use clap::ArgMatches;
 use std::fs::{create_dir, File};
-use std::io::{BufReader, BufWriter, Cursor, ErrorKind, Read, Write};
+use std::io::{stdout, BufReader, BufWriter, Cursor, ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use std::path::Path;
 
@@ -13,12 +13,17 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     // transfer receive [-v]
 
     let verbose = matches.is_present("verbose");
+    let stream_mode = matches.is_present("stream-mode");
 
     let config = handle_config();
 
     let listener = TcpListener::bind(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), config.port))?;
 
     let (mut tcp_stream, socket_addr) = listener.accept()?;
+    if stream_mode {
+        return receive_stream_mode(&mut tcp_stream);
+    }
+
     loop {
         let header = read_header(&mut tcp_stream)?;
 
@@ -109,4 +114,9 @@ fn read_digest(stream: &mut TcpStream) -> MyResult<[u8; 20]> {
     let mut buf = [0_u8; 20];
     stream.read_exact(&mut buf)?;
     Ok(buf)
+}
+
+fn receive_stream_mode(stream: &mut TcpStream) -> MyResult<()> {
+    std::io::copy(stream, &mut stdout())?;
+    Ok(())
 }

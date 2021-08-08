@@ -17,13 +17,17 @@ use std::rc::Rc;
 pub fn run(matches: &ArgMatches) -> MyResult<()> {
     // send:
     // transfer send [-v] [-f <file>...]
+    // transfer send -s
 
     // TODO
     let verbose = matches.is_present("verbose");
-
+    let stream_mode = matches.is_present("stream-mode");
     let files = matches.values_of("file");
 
     let config = handle_config();
+    if !stream_mode {
+        println!("{:?}", config);
+    }
 
     let ipv4 = split_ipv4_string(&config.destination_ip);
     if let None = ipv4 {
@@ -35,6 +39,10 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
         Ipv4Addr::new(ipv4.0, ipv4.1, ipv4.2, ipv4.3),
         config.port,
     ))?;
+
+    if stream_mode {
+        return handle_stream_send(&mut tcp_stream, &mut stdin());
+    }
 
     if let Some(files) = files {
         for file_path in files {
@@ -69,18 +77,16 @@ fn handle_path_dir(path: &Path, tcp_stream: &mut TcpStream) -> MyResult<()> {
     let prefix = result.unwrap();
 
     let ptr = tcp_stream as *mut TcpStream as usize;
-    path.traversal_dir(|d| {
-        match d {
-            Ok(d) => {
-                let r = unsafe { &mut *(ptr as *mut TcpStream) };
-                let result = handle_file_in_dir(r, prefix, d);
-                if let Err(e) = result {
-                    eprintln!("{:?}", e);
-                }
-            }
-            Err(e) => {
+    path.traversal_dir(|d| match d {
+        Ok(d) => {
+            let r = unsafe { &mut *(ptr as *mut TcpStream) };
+            let result = handle_file_in_dir(r, prefix, d);
+            if let Err(e) = result {
                 eprintln!("{:?}", e);
             }
+        }
+        Err(e) => {
+            eprintln!("{:?}", e);
         }
     })
     .unwrap();
@@ -183,5 +189,13 @@ where
 
 fn send_end(connection: &mut TcpStream) -> MyResult<()> {
     connection.write_all(&make_header(Type::End))?;
+    Ok(())
+}
+
+fn handle_stream_send<R>(stream: &mut TcpStream, input: &mut R) -> MyResult<()>
+where
+    R: Read,
+{
+    std::io::copy(input, stream)?;
     Ok(())
 }

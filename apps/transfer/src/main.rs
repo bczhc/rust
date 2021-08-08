@@ -16,13 +16,13 @@
 //! | Header (8) | ContentLength (4) | Digest | Content |
 //!
 //!
-use clap::{App, Arg};
+use clap::{App, Arg, ArgGroup};
 use std::fs::{create_dir, DirEntry, File};
 use transfer::{Error, MyResult};
 
 fn main() -> MyResult<()> {
     // transfer <subcommand>
-    // subcommands: send, receive
+    // subcommands: send, receive, config
 
     let matches = App::new("transfer")
         .about("A tool to send and receive files or texts")
@@ -45,15 +45,33 @@ fn main() -> MyResult<()> {
                         .takes_value(true)
                         .required(false)
                         .multiple(true),
-                ),
+                )
+                .arg(
+                    Arg::with_name("stream-mode")
+                        .short("s")
+                        .long("stream")
+                        .help("Send in pure stream mode (no pre-read, no digest check)"),
+                )
+                .group(ArgGroup::with_name("normal-mode-group").args(&["file", "verbose"]))
+                .group(ArgGroup::with_name("stream-mode-group").args(&["stream-mode"])),
         )
         .subcommand(
-            App::new("receive").about("Receive files or texts").arg(
-                Arg::with_name("verbose")
-                    .required(false)
-                    .short("v")
-                    .long("verbose"),
-            ),
+            App::new("receive")
+                .about("Receive files or texts")
+                .arg(
+                    Arg::with_name("verbose")
+                        .required(false)
+                        .short("v")
+                        .long("verbose"),
+                )
+                .arg(
+                    Arg::with_name("stream-mode")
+                        .short("s")
+                        .long("stream")
+                        .help("Send in pure stream mode (input-to-output, no pre-read, no digest check)"),
+                )
+                .group(ArgGroup::with_name("normal-mode-group").args(&["verbose"]))
+                .group(ArgGroup::with_name("stream-mode-group").args(&["stream-mode"])),
         )
         .get_matches();
 
