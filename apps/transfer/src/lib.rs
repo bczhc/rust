@@ -179,10 +179,10 @@ pub mod lib {
     }
 }
 
-pub fn compute_sha1_with_path(data: &[u8], path: &str) -> [u8; 20] {
+pub fn compute_sha1_with_str(data: &[u8], extra: &str) -> [u8; 20] {
     let mut sha1 = Sha1::new();
     sha1.update(data);
-    sha1.update(path.as_bytes());
+    sha1.update(extra.as_bytes());
     sha1.digest().bytes()
 }
 
@@ -267,7 +267,9 @@ pub enum Error {
     String(String),
     IOError(std::io::Error),
     Utf8Error(FromUtf8Error),
+    InvalidUTF8,
     DigestCheckError,
+    InvalidIpv4
 }
 
 impl From<std::io::Error> for Error {

@@ -1,5 +1,5 @@
 use crate::lib::handle_config;
-use crate::{compute_sha1, compute_sha1_with_path, read_header, Error, MyResult, Type};
+use crate::{compute_sha1, compute_sha1_with_str, read_header, Error, MyResult, Type};
 use bczhc_lib::io::{put_char, OpenOrCreate, ReadAll};
 use byteorder::{BigEndian, ReadBytesExt};
 use clap::ArgMatches;
@@ -55,7 +55,7 @@ fn receive_file(stream: &mut TcpStream) -> MyResult<()> {
     let mut data = vec![0_u8; content_len];
     stream.read_exact(&mut data)?;
 
-    let sha1 = compute_sha1_with_path(&data, &path);
+    let sha1 = compute_sha1_with_str(&data, &path);
     if sha1 != digest {
         return Err(Error::DigestCheckError);
     }

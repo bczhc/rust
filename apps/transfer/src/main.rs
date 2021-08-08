@@ -9,7 +9,7 @@
 //!
 //! ### Not end:
 //! #### File:
-//! | Header (8) | PathLength (4) | Path | ContentLength (4) | Digest | Content |
+//! | Header (8) | FilenameLength (4) | Filename | ContentLength (4) | Digest | Content |
 //! #### Directory
 //! | Header (8) | PathLength (4) | Path |
 //! #### Stdin
@@ -59,14 +59,7 @@ fn main() -> MyResult<()> {
 
     let subcommand = matches.subcommand();
     match subcommand.0 {
-        "send" => {
-            let result = transfer::send::run(subcommand.1.unwrap());
-            if let Err(e) = result {
-                Err(Error::String(e))
-            } else {
-                Ok(())
-            }
-        }
+        "send" => transfer::send::run(subcommand.1.unwrap()),
         "receive" => transfer::receive::run(subcommand.1.unwrap()),
         _ => {
             println!("{}", matches.usage());
