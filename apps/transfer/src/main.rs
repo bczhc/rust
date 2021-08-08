@@ -24,7 +24,8 @@ fn main() -> Result<(), String> {
                         .long("file")
                         .help("Specify the files to be transferred")
                         .takes_value(true)
-                        .required(false),
+                        .required(false)
+                        .multiple(true),
                 ),
         )
         .subcommand(

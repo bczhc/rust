@@ -1,3 +1,4 @@
+use crate::Type::{Directory, File, Stdin};
 use sha1::Sha1;
 
 pub mod receive;
@@ -177,10 +178,36 @@ pub mod lib {
     }
 }
 
-pub fn compute_sha1(data: &[u8]) -> [u8; 20] {
+pub fn compute_sha1(data: &[u8], path: &str) -> [u8; 20] {
     let mut sha1 = Sha1::new();
     sha1.update(data);
+    sha1.update(path.as_bytes());
     sha1.digest().bytes()
+}
+
+pub enum Type {
+    File,
+    Directory,
+    Stdin,
+}
+
+impl Type {
+    fn value(&self) -> u8 {
+        match self {
+            Type::File => 0,
+            Type::Directory => 1,
+            Type::Stdin => 2,
+        }
+    }
+
+    fn value_of(value: u8) -> Option<Type> {
+        match value {
+            0 => Some(File),
+            1 => Some(Directory),
+            2 => Some(Stdin),
+            _ => None,
+        }
+    }
 }
 
 const HEADER: &[u8; 5] = b"bczhc";

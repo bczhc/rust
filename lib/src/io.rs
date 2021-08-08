@@ -123,3 +123,13 @@ where
         out
     }
 }
+
+#[inline]
+pub fn put_char(c: u8) -> Result<(), ErrorKind> {
+    unsafe {
+        if libc::putchar(c as libc::c_int) == libc::EOF {
+            return Err(ErrorKind::UnexpectedEof);
+        };
+    }
+    Ok(())
+}
