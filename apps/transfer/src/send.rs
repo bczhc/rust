@@ -24,7 +24,6 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     let files = matches.values_of("file");
 
     let config = handle_config();
-    println!("Configuration: {:?}\n", config);
 
     let ipv4 = split_ipv4_string(&config.destination_ip);
     if let None = ipv4 {
@@ -177,7 +176,7 @@ where
     // Digest
     connection.write_all(&digest).unwrap();
     // Content
-    std::io::copy(input, connection).unwrap();
+    connection.write_all(&data).unwrap();
 
     connection.flush().unwrap();
 }

@@ -15,12 +15,10 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     let verbose = matches.is_present("verbose");
 
     let config = handle_config();
-    println!("Configuration: {:?}", config);
 
     let listener = TcpListener::bind(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), config.port))?;
 
     let (mut tcp_stream, socket_addr) = listener.accept()?;
-    println!("Accept: {:?}", socket_addr);
     loop {
         let header = read_header(&mut tcp_stream)?;
 
