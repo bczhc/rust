@@ -8,7 +8,7 @@ pub trait ForeachDir {
     /// # Examples
     /// ```no_run
     /// use std::path::Path;
-    /// use lib::fs::ForeachDir;
+    /// use bczhc_lib::fs::ForeachDir;
     ///
     /// let path = Path::new("/tmp/zhc");
     /// path.traversal_dir(|entry| {
@@ -33,7 +33,7 @@ where
             let file_type = d.file_type();
             if let Ok(t) = file_type {
                 if t.is_dir() {
-                    recursive_traversal_dir(&d.path(), callback.clone());
+                    recursive_traversal_dir(&d.path(), callback.clone())?;
                 }
             } else if let Err(e) = file_type {
                 callback(Err(e));

@@ -8,7 +8,7 @@ pub trait ReadLine {
     /// # Examples
     /// ```no_run
     /// use std::fs::File;
-    /// use lib::io::ReadLine;
+    /// use bczhc_lib::io::ReadLine;
     ///
     /// let mut file = File::open("a.txt").expect("Failed to open file");
     /// loop {
@@ -125,10 +125,10 @@ where
 }
 
 #[inline]
-pub fn put_char(c: u8) -> Result<(), ErrorKind> {
+pub fn put_char(c: u8) -> std::io::Result<()> {
     unsafe {
         if libc::putchar(c as libc::c_int) == libc::EOF {
-            return Err(ErrorKind::UnexpectedEof);
+            return Err(std::io::Error::from(ErrorKind::UnexpectedEof));
         };
     }
     Ok(())

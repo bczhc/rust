@@ -90,7 +90,7 @@ pub mod lib {
 
             if let None = destination_ip {
                 print!("Destination IP: ");
-                stdout.flush();
+                stdout.flush().unwrap();
                 destination_ip = Some(stdin.read_line_without_line_terminator().unwrap());
                 conf_vec.push((
                     String::from("destination-ip"),
@@ -100,7 +100,7 @@ pub mod lib {
 
             if let None = port {
                 print!("Port: ");
-                stdout.flush();
+                stdout.flush().unwrap();
                 port = Some(stdin.read_line_without_line_terminator().unwrap());
                 conf_vec.push((String::from("port"), port.clone().unwrap().clone()));
             }
@@ -145,7 +145,7 @@ pub mod lib {
             config_file.read_exact(&mut last_byte).unwrap();
             if last_byte[0] != b'\n' {
                 config_file.write_all(b"\n").unwrap();
-                config_file.seek(SeekFrom::Current(-1));
+                config_file.seek(SeekFrom::Current(-1)).unwrap();
             }
         };
 

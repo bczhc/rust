@@ -78,7 +78,7 @@ impl Main {
                     );
                 }
             }
-        });
+        }).unwrap();
 
         Ok(())
     }

@@ -115,7 +115,7 @@ fn handle_file_in_dir(tcp_stream: &mut TcpStream, prefix: &str, d: &DirEntry) ->
     }
     let path_diff = result.unwrap();
 
-    send_file(tcp_stream, &mut file, path_diff);
+    send_file(tcp_stream, &mut file, path_diff)?;
 
     Ok(())
 }
@@ -128,11 +128,11 @@ fn handle_path_file(file_path: &Path, tcp_stream: &mut TcpStream) -> MyResult<()
     let path = result.unwrap();
 
     let mut file = File::open(file_path)?;
-    send_file(tcp_stream, &mut file, path);
+    send_file(tcp_stream, &mut file, path)?;
     Ok(())
 }
 
-fn send_file<R>(connection: &mut TcpStream, input: &mut R, path: &str)
+fn send_file<R>(connection: &mut TcpStream, input: &mut R, path: &str) -> MyResult<()>
 where
     R: Read,
 {
@@ -158,9 +158,11 @@ where
     // Digest
     connection.write_all(&sha1).unwrap();
     // Content
-    connection.write_all(&data);
+    connection.write_all(&data)?;
 
     connection.flush().unwrap();
+
+    Ok(())
 }
 
 fn send_dir(connection: &mut TcpStream, path: &str) {

@@ -34,13 +34,13 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
 
         match file_type {
             Type::File => {
-                receive_file(&mut tcp_stream);
+                receive_file(&mut tcp_stream)?;
             }
             Type::Directory => {
-                receive_dir(&mut tcp_stream);
+                receive_dir(&mut tcp_stream)?;
             }
             Type::Stdin => {
-                receive_stdin(&mut tcp_stream);
+                receive_stdin(&mut tcp_stream)?;
             }
             Type::End => {
                 break;
@@ -96,7 +96,7 @@ fn receive_stdin(stream: &mut TcpStream) -> MyResult<()> {
     }
 
     for c in data {
-        put_char(c);
+        put_char(c)?;
     }
 
     Ok(())
