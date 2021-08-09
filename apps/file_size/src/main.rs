@@ -1,4 +1,4 @@
-use lib::utils::{get_args_without_self_path, get_file_name, MsgPrinter, MsgType};
+use bczhc_lib::utils::{get_args_without_self_path, get_file_name, MsgPrinter, MsgType};
 use size_format::SizeFormatterBinary;
 
 fn main() -> Result<(), String> {

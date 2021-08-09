@@ -1,4 +1,4 @@
-use lib::utf8::utf8_bytes_length;
+use bczhc_lib::utf8::utf8_bytes_length;
 
 use std::io::{stdin, Read};
 

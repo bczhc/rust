@@ -2,7 +2,7 @@ use bmp::{Image, Pixel};
 use byteorder::{LittleEndian, WriteBytesExt};
 
 use clap::{App, Arg};
-use lib::utils::get_args_without_self_path;
+use bczhc_lib::utils::get_args_without_self_path;
 use std::fs::File;
 use std::io::{BufReader, Read};
 

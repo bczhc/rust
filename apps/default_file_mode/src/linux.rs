@@ -1,6 +1,6 @@
-use lib::fs::ForeachDir;
-use lib::libc::ToCString;
-use lib::utils::get_args_without_self_path;
+use bczhc_lib::fs::ForeachDir;
+use bczhc_lib::libc::ToCString;
+use bczhc_lib::utils::get_args_without_self_path;
 use magic::{Cookie, CookieFlags, MagicError};
 use std::env::current_dir;
 
@@ -47,6 +47,7 @@ impl Main {
         let path = Path::new(self.arguments.path.as_ref().unwrap());
 
         path.traversal_dir(|entry| unsafe {
+            let entry = entry.unwrap();
             let path_buf = entry.path();
             let path_str = path_buf.to_str().unwrap();
             let path_c_string = path_str.to_c_string();

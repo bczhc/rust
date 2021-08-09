@@ -1,6 +1,6 @@
-extern crate lib;
+extern crate bczhc_lib;
 
-use lib::io::ReadLine;
+use bczhc_lib::io::ReadLine;
 use std::env::args;
 use std::io::{stdin, Read};
 use std::path::Path;

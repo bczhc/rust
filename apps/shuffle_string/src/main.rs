@@ -1,4 +1,4 @@
-use lib::io::ReadLine;
+use bczhc_lib::io::ReadLine;
 use rand::{thread_rng, Rng};
 use std::env::args;
 use std::io::{stdin, Read};

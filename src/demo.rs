@@ -1,4 +1,4 @@
-use lib::fs::ForeachDir;
+use bczhc_lib::fs::ForeachDir;
 use std::path::{Path, PathBuf};
 
 fn main() {

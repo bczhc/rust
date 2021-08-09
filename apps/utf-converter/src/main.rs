@@ -1,7 +1,7 @@
 use clap::{App, Arg};
-use lib::byteorder::{get_endianness, Endianness};
-use lib::utf8;
-use lib::utf8::{decode_utf8, utf8_bytes_length};
+use bczhc_lib::byteorder::{get_endianness, Endianness};
+use bczhc_lib::utf8;
+use bczhc_lib::utf8::{decode_utf8, utf8_bytes_length};
 use std::fs::OpenOptions;
 use std::io::{stdin, stdout, BufReader, BufWriter, ErrorKind, Read, Write};
 

@@ -1,7 +1,7 @@
 use bmp::Pixel;
 use byteorder::{LittleEndian, ReadBytesExt};
 use clap::{App, Arg};
-use lib::point::PointU32;
+use bczhc_lib::point::PointU32;
 use std::fs::OpenOptions;
 use std::io::{BufWriter, Cursor, Write};
 
