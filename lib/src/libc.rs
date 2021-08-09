@@ -5,7 +5,7 @@ pub trait ToCString {
     ///
     /// # Example
     /// ```
-    /// use lib::libc::ToCString;
+    /// use bczhc_lib::libc::ToCString;
     /// let heap_str = String::from("abc");
     /// let stack_str = "cba";
     ///

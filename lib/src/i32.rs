@@ -13,7 +13,7 @@ impl ToStringRadix for i32 {
     ///
     /// # Example
     /// ```
-    /// use lib::i32::ToStringRadix;
+    /// use bczhc_lib::i32::ToStringRadix;
     ///
     /// assert_eq!(51966.to_string_radix(16).unwrap(), "cafe")
     /// ```

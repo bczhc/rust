@@ -5,7 +5,7 @@ use std::io::Read;
 ///
 /// # Examples
 /// ```
-/// use lib::char::han_char_range;
+/// use bczhc_lib::char::han_char_range;
 ///
 /// assert_eq!(han_char_range('a' as u32), false);
 /// assert_eq!(han_char_range('哈' as u32), true);
@@ -40,7 +40,7 @@ pub fn han_char_range(codepoint: u32) -> bool {
 
 /// # Examples
 /// ```no_run
-/// use lib::char::CharReader;
+/// use bczhc_lib::char::CharReader;
 /// use std::io::stdin;
 /// use std::fs::File;
 ///

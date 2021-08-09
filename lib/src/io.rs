@@ -94,7 +94,7 @@ pub trait ReadAll {
     /// # Examples
     /// ```no_run
     /// use std::fs::File;
-    /// use lib::io::ReadAll;
+    /// use bczhc_lib::io::ReadAll;
     ///
     /// let mut file = File::open("aa").unwrap();
     /// let data = file.read_all();

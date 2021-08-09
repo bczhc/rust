@@ -15,7 +15,7 @@ impl SolvedUtf8Properties {
 
 /// # Examples
 /// ```
-/// use lib::utf8::utf8_size;
+/// use bczhc_lib::utf8::utf8_size;
 ///
 /// let  r = utf8_size('a' as u32);
 /// assert_eq!(r, 1);
@@ -45,7 +45,7 @@ pub fn utf8_size(codepoint: u32) -> u32 {
 
 /// # Examples
 /// ```
-/// use lib::utf8::utf8_bytes_length;
+/// use bczhc_lib::utf8::utf8_bytes_length;
 ///
 /// assert_eq!(utf8_bytes_length("a".as_bytes()[0]), 1);
 ///
@@ -71,7 +71,7 @@ pub fn utf8_bytes_length(first_byte: u8) -> u32 {
 
 /// # Examples
 /// ```
-/// use lib::utf8::decode_utf8;
+/// use bczhc_lib::utf8::decode_utf8;
 ///
 /// let b = "a".as_bytes();
 /// let  solved = decode_utf8(&b);
@@ -104,7 +104,7 @@ pub fn decode_utf8(bytes: &[u8]) -> SolvedUtf8Properties {
 ///
 /// # Examples
 /// ```
-/// use lib::utf8::{utf8_bytes_length, decode_utf8_with_length};
+/// use bczhc_lib::utf8::{utf8_bytes_length, decode_utf8_with_length};
 ///
 /// let b = "a".as_bytes();
 /// let length = utf8_bytes_length(b[0]);
@@ -162,7 +162,7 @@ pub fn decode_utf8_with_length(bytes: &[u8], bytes_length: u32) -> SolvedUtf8Pro
 
 /// # Examples
 /// ```
-/// use lib::utf8::encode_utf8;
+/// use bczhc_lib::utf8::encode_utf8;
 ///
 /// let mut dest: [u8; 4] = [0, 0, 0, 0];
 ///
@@ -222,7 +222,7 @@ pub struct Surrogate {
 
 /// # Examples
 /// ```
-/// use lib::utf8::surrogate_pair_to_unicode;
+/// use bczhc_lib::utf8::surrogate_pair_to_unicode;
 ///
 /// let unicode = surrogate_pair_to_unicode(0xd83c, 0xdf47);
 /// assert_eq!(std::char::from_u32(unicode).unwrap(), '🍇');
@@ -235,7 +235,7 @@ pub fn surrogate_pair_to_unicode(lead: u16, trail: u16) -> u32 {
 
 /// # Examples
 /// ```
-/// use lib::utf8::unicode_to_surrogate_pair;
+/// use bczhc_lib::utf8::unicode_to_surrogate_pair;
 ///
 /// let surrogate_pair = unicode_to_surrogate_pair('🍇' as u32);
 /// assert_eq!(surrogate_pair.lead, 0xd83c);
