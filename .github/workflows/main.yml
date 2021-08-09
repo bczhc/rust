@@ -20,7 +20,7 @@ jobs:
       - name: Build
         run: cargo build -j4 --workspace
       - name: Test lib
-        run: cargo test -p lib
+        run: cargo test -p bczhc_lib
       - name: Generate documentation
         run: |
           cargo doc -j4
@@ -58,7 +58,7 @@ jobs:
       - name: Build
         run: cargo build -j4 --workspace
       - name: Test lib
-        run: cargo test -p lib
+        run: cargo test -p bczhc_lib
 
   macos:
     runs-on: macos-latest
@@ -74,4 +74,4 @@ jobs:
       - name: Build
         run: cargo build -j4 --workspace
       - name: Test lib
-        run: cargo test -p lib
+        run: cargo test -p bczhc_lib
