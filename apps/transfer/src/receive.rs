@@ -10,7 +10,7 @@ use std::path::Path;
 
 pub fn run(matches: &ArgMatches) -> MyResult<()> {
     // receive:
-    // transfer receive [-v]
+    // transfer receive [-s]
 
     let verbose = matches.is_present("verbose");
     let stream_mode = matches.is_present("stream-mode");
@@ -18,6 +18,9 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     let config = handle_config();
 
     let listener = TcpListener::bind(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), config.port))?;
+    if !stream_mode {
+        println!("Listening at {}:{}", config.destination_ip, config.port);
+    }
 
     let (mut tcp_stream, socket_addr) = listener.accept()?;
     if stream_mode {

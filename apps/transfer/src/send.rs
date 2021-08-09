@@ -12,17 +12,26 @@ use std::fs::{DirEntry, File, Permissions};
 use std::io::{stdin, BufReader, BufWriter, ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, TcpStream};
 use std::path::{Path, PathBuf};
+use std::ptr::null_mut;
 use std::rc::Rc;
+
+#[derive(Debug)]
+struct Options {
+    verbose: bool,
+}
+
+static mut OPTIONS: Options = Options { verbose: false };
 
 pub fn run(matches: &ArgMatches) -> MyResult<()> {
     // send:
     // transfer send [-v] [-f <file>...]
     // transfer send -s
 
-    // TODO
     let verbose = matches.is_present("verbose");
     let stream_mode = matches.is_present("stream-mode");
     let files = matches.values_of("file");
+
+    unsafe { OPTIONS.verbose = verbose; };
 
     let config = handle_config();
     if !stream_mode {
@@ -127,12 +136,13 @@ fn send_file<R>(connection: &mut TcpStream, input: &mut R, path: &str)
 where
     R: Read,
 {
-    println!("Read...");
+    if unsafe {OPTIONS.verbose} {
+        println!("{}", path);
+    }
+
     let data = input.read_all();
-    println!("Digest...");
     let sha1 = compute_sha1_with_str(&data, path);
 
-    println!("Send...");
     // Header
     connection.write_all(&make_header(Type::File)).unwrap();
     // PathLength
