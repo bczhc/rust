@@ -4,6 +4,12 @@ use clap::ArgMatches;
 
 pub fn run(matches: &ArgMatches) -> MyResult<()> {
     // transfer config <key> <value>
+
+    let list = matches.is_present("list");
+    if list {
+        return list_configs();
+    }
+
     let key = matches.value_of("key").unwrap();
     let value = matches.value_of("value");
 
@@ -31,5 +37,11 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     }
     write_config_file(&config)?;
 
+    Ok(())
+}
+
+fn list_configs() -> MyResult<()> {
+    let configs = read_config_file()?;
+    println!("{:#?}", configs);
     Ok(())
 }

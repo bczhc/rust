@@ -67,7 +67,9 @@ fn main() -> MyResult<()> {
             App::new("config")
                 .about("Set up configurations")
                 .arg(Arg::with_name("key").required(true))
-                .arg(Arg::with_name("value").required(true).required(false)),
+                .arg(Arg::with_name("value").required(false))
+                .arg(Arg::with_name("list").required(false).long("list"))
+                // TODO: separate usage: transfer config --list
         )
         .get_matches();
 

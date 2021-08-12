@@ -3,6 +3,7 @@ use sha1::Sha1;
 use std::io::{Cursor, ErrorKind, Read, Write};
 use std::num::ParseIntError;
 use std::string::FromUtf8Error;
+use std::fmt::{Debug, Formatter};
 
 pub mod config;
 pub mod receive;
