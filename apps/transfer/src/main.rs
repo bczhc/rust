@@ -51,19 +51,23 @@ fn main() -> MyResult<()> {
                         .short("s")
                         .long("stream")
                         .help("Send in pure stream mode (no pre-read, no digest check)"),
-                )
+                ),
         )
         .subcommand(
-            App::new("receive")
-                .about("Receive files or texts")
-                .arg(
-                    Arg::with_name("stream-mode")
-                        .short("s")
-                        .long("stream")
-                        .help(
+            App::new("receive").about("Receive files or texts").arg(
+                Arg::with_name("stream-mode")
+                    .short("s")
+                    .long("stream")
+                    .help(
                         "Send in pure stream mode (input-to-output, no pre-read, no digest check)",
                     ),
-                )
+            ),
+        )
+        .subcommand(
+            App::new("config")
+                .about("Set up configurations")
+                .arg(Arg::with_name("key").required(true))
+                .arg(Arg::with_name("value").required(true).required(false)),
         )
         .get_matches();
 
@@ -71,6 +75,7 @@ fn main() -> MyResult<()> {
     match subcommand.0 {
         "send" => transfer::send::run(subcommand.1.unwrap()),
         "receive" => transfer::receive::run(subcommand.1.unwrap()),
+        "config" => transfer::config::run(subcommand.1.unwrap()),
         _ => {
             println!("{}", matches.usage());
             Err(Error::UnknownSubcommand)

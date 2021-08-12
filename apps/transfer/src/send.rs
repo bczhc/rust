@@ -1,6 +1,7 @@
-use crate::lib::{handle_config, split_ipv4_string};
+use crate::lib::{read_config_file, search_config, split_ipv4_string};
 use crate::{
-    compute_sha1, compute_sha1_with_str, make_header, Error, MyResult, Type, HEADER_PREFIX,
+    check_option, compute_sha1, compute_sha1_with_str, make_header, parse_port_str, Configs, Error,
+    MyResult, Type, HEADER_PREFIX,
 };
 use bczhc_lib::fs::ForeachDir;
 use bczhc_lib::io::ReadAll;
@@ -31,22 +32,24 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     let stream_mode = matches.is_present("stream-mode");
     let files = matches.values_of("file");
 
-    unsafe { OPTIONS.verbose = verbose; };
+    unsafe {
+        OPTIONS.verbose = verbose;
+    };
 
-    let config = handle_config();
-    if !stream_mode {
-        println!("{:?}", config);
-    }
+    let config = read_config_file()?;
+    let result = search_config(&config, Configs::DestinationIP.key());
+    let destination_ip = check_option(result, Error::NoConfig(Configs::DestinationIP))?;
 
-    let ipv4 = split_ipv4_string(&config.destination_ip);
-    if let None = ipv4 {
-        return Err(Error::InvalidIpv4);
-    }
-    let ipv4 = ipv4.unwrap();
+    let result = search_config(&config, Configs::Port.key());
+    let port = check_option(result, Error::NoConfig(Configs::Port))?;
+    let port = parse_port_str(port)?;
+
+    let result = split_ipv4_string(destination_ip);
+    let ipv4 = check_option(result, Error::InvalidIpv4)?;
 
     let mut tcp_stream = TcpStream::connect(SocketAddrV4::new(
         Ipv4Addr::new(ipv4.0, ipv4.1, ipv4.2, ipv4.3),
-        config.port,
+        port,
     ))?;
 
     if stream_mode {
@@ -136,7 +139,7 @@ fn send_file<R>(connection: &mut TcpStream, input: &mut R, path: &str) -> MyResu
 where
     R: Read,
 {
-    if unsafe {OPTIONS.verbose} {
+    if unsafe { OPTIONS.verbose } {
         println!("{}", path);
     }
 

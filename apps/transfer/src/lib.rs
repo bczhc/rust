@@ -1,12 +1,15 @@
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use sha1::Sha1;
 use std::io::{Cursor, ErrorKind, Read, Write};
+use std::num::ParseIntError;
 use std::string::FromUtf8Error;
 
+pub mod config;
 pub mod receive;
 pub mod send;
 
 pub mod lib {
+    use crate::{Error, MyResult, check_option};
     use bczhc_lib::io::{OpenOrCreate, ReadLine};
     use std::fs::{create_dir, create_dir_all, File};
     use std::io::{stdin, stdout, Read, Seek, SeekFrom, Write};
@@ -32,112 +35,51 @@ pub mod lib {
         Some(dir)
     }
 
-    // configuration content:
-
-    fn config_path() -> PathBuf {
-        let mut config_dir = bczhc_config_dir().expect("Cannot found home directory to store");
-        if !config_dir.exists() {
-            create_dir_all(config_dir.clone()).unwrap();
-        }
-        config_dir.push("transfer");
-        config_dir
+    #[inline]
+    fn config_file_path() -> Option<PathBuf> {
+        let mut path = bczhc_config_dir()?;
+        path.push("transfer");
+        Some(path)
     }
 
-    fn open_config_file() -> File {
-        File::open_append_file(config_path()).unwrap()
-    }
+    pub fn read_config_file() -> MyResult<Vec<(String, String)>> {
+        check_config_file()?;
 
-    #[derive(Debug)]
-    pub struct Configuration {
-        pub destination_ip: String,
-        pub port: u16,
-    }
-
-    pub fn handle_config() -> Configuration {
-        let config_path = config_path();
-        if !config_path.exists() {
-            File::create(config_path.clone()).unwrap();
+        let file_path = config_file_path();
+        if file_path == None {
+            return Err(Error::CannotGetHomeDir);
         }
 
-        let mut destination_ip = None;
-        let mut port = None;
-        let mut matched = false;
+        let mut vec = Vec::new();
 
-        let mut conf_vec = read_config_file();
-        for x in conf_vec.iter() {
-            let key = &(*x).0;
-            let value = &(*x).1;
-            match key.as_str() {
-                "destination-ip" => {
-                    destination_ip = Some(value.clone());
-                    matched = true;
-                }
-                "port" => {
-                    port = Some(value.clone());
-                    matched = true;
-                }
-                _ => {}
-            }
-        }
+        let mut file = File::open(file_path.unwrap())?;
+        let mut read_str = String::new();
+        file.read_to_string(&mut read_str);
 
-        if !matched {
-            println!(
-                "You need to enter some missing information, and then they will be stored at {}",
-                config_path.to_str().unwrap()
-            );
-            let mut stdin = stdin();
-            let mut stdout = stdout();
-
-            if let None = destination_ip {
-                print!("Destination IP: ");
-                stdout.flush().unwrap();
-                destination_ip = Some(stdin.read_line_without_line_terminator().unwrap());
-                conf_vec.push((
-                    String::from("destination-ip"),
-                    destination_ip.clone().unwrap().clone(),
-                ));
-            }
-
-            if let None = port {
-                print!("Port: ");
-                stdout.flush().unwrap();
-                port = Some(stdin.read_line_without_line_terminator().unwrap());
-                conf_vec.push((String::from("port"), port.clone().unwrap().clone()));
-            }
-            write_config_file(&conf_vec);
-        }
-
-        return Configuration {
-            destination_ip: destination_ip.unwrap(),
-            port: port.unwrap().parse().unwrap(),
-        };
-    }
-
-    fn read_config_file() -> Vec<(String, String)> {
-        let mut pairs = Vec::new();
-
-        let mut config_file = open_config_file();
-        loop {
-            let result = config_file.read_line_without_line_terminator();
-            if let Some(line) = result {
-                let separator_index = line.find('=');
-                if let None = separator_index {
+        for line in read_str.lines() {
+            let find = line.find("=");
+            match find {
+                None => {
                     continue;
                 }
-                let (key, value) = line.split_at(separator_index.unwrap());
-                let value = &value[1..];
-
-                let pair = (String::from(key), String::from(value));
-                pairs.push(pair);
-            } else {
-                break;
+                Some(find) => {
+                    let split = line.split_at(find);
+                    let key = split.0;
+                    let value = &split.1[1..];
+                    vec.push((String::from(key), String::from(value)));
+                }
             }
         }
-        pairs
+
+        Ok(vec)
     }
 
-    fn write_config_file(pairs: &Vec<(String, String)>) {
-        let mut config_file = open_config_file();
+    pub fn write_config_file(pairs: &Vec<(String, String)>) -> MyResult<()> {
+        check_config_file()?;
+
+        let result = config_file_path();
+        let config_path = check_option(result, Error::CannotGetHomeDir)?;
+        let mut config_file = File::create(config_path)?;
 
         if config_file.metadata().unwrap().len() != 0 {
             config_file.seek(SeekFrom::End(-1)).unwrap();
@@ -158,6 +100,38 @@ pub mod lib {
             config_file.write_all(write_str.as_bytes()).unwrap();
             config_file.write_all(b"\n").unwrap();
         }
+
+        Ok(())
+    }
+
+    fn check_config_file() -> MyResult<()> {
+        let config_path = config_file_path();
+        let config_path = check_option(config_path, Error::CannotGetHomeDir)?;
+        if !config_path.exists() {
+            File::open_or_create(config_path)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn search_config<'a>(vec: &'a Vec<(String, String)>, key: &str) -> Option<&'a String> {
+        for (k, v) in vec {
+            if k.as_str() == key {
+                return Some(v);
+            }
+        }
+        None
+    }
+
+    pub fn search_config_index(vec: &Vec<(String, String)>, key: &str) -> Option<usize> {
+        let len = vec.len();
+        for i in 0..len {
+            let (k, _) = &vec[i];
+            if k.as_str() == key {
+                return Some(i);
+            }
+        }
+        None
     }
 
     pub fn split_ipv4_string(ip: &String) -> Option<(u8, u8, u8, u8)> {
@@ -270,7 +244,11 @@ pub enum Error {
     InvalidUTF8,
     DigestCheckError,
     InvalidIpv4,
-    Unsupported
+    Unsupported,
+    CannotGetHomeDir,
+    NoConfigKey(String),
+    NoConfig(Configs),
+    InvalidPort(ParseIntError),
 }
 
 impl From<std::io::Error> for Error {
@@ -282,5 +260,43 @@ impl From<std::io::Error> for Error {
 impl From<FromUtf8Error> for Error {
     fn from(e: FromUtf8Error) -> Self {
         Error::Utf8Error(e)
+    }
+}
+
+#[derive(Debug)]
+pub enum Configs {
+    DestinationIP,
+    Port,
+}
+
+impl Configs {
+    pub fn key(self) -> &'static str {
+        match self {
+            Configs::DestinationIP => "destination-ip",
+            Configs::Port => "port",
+        }
+    }
+
+    pub fn value_of(key: &str) -> Option<Self> {
+        match key {
+            "destination-ip" => Some(Self::DestinationIP),
+            "port" => Some(Self::Port),
+            _ => None,
+        }
+    }
+}
+
+pub fn check_option<R>(option: Option<R>, error: Error) -> MyResult<R> {
+    match option {
+        None => Err(error),
+        Some(some) => Ok(some),
+    }
+}
+
+pub fn parse_port_str(port: &str) -> MyResult<u16> {
+    let parse = port.parse::<u16>();
+    match parse {
+        Ok(r) => Ok(r),
+        Err(e) => Err(Error::InvalidPort(e)),
     }
 }

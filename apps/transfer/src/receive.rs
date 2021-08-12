@@ -1,5 +1,4 @@
-use crate::lib::handle_config;
-use crate::{compute_sha1, compute_sha1_with_str, read_header, Error, MyResult, Type};
+use crate::{compute_sha1, compute_sha1_with_str, read_header, Error, MyResult, Type, Configs, check_option, parse_port_str};
 use bczhc_lib::io::{put_char, OpenOrCreate, ReadAll};
 use byteorder::{BigEndian, ReadBytesExt};
 use clap::ArgMatches;
@@ -7,6 +6,7 @@ use std::fs::{create_dir, File};
 use std::io::{stdout, BufReader, BufWriter, Cursor, ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use std::path::Path;
+use crate::lib::{read_config_file, search_config};
 
 pub fn run(matches: &ArgMatches) -> MyResult<()> {
     // receive:
@@ -15,11 +15,14 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     let verbose = matches.is_present("verbose");
     let stream_mode = matches.is_present("stream-mode");
 
-    let config = handle_config();
+    let config = read_config_file()?;
+    let result = search_config(&config, Configs::Port.key());
+    let port = check_option(result, Error::NoConfig(Configs::Port))?;
+    let port = parse_port_str(port)?;
 
-    let listener = TcpListener::bind(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), config.port))?;
+    let listener = TcpListener::bind(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port))?;
     if !stream_mode {
-        println!("Listening at {}:{}", config.destination_ip, config.port);
+        println!("Listening at port {}", port);
     }
 
     let (mut tcp_stream, socket_addr) = listener.accept()?;
