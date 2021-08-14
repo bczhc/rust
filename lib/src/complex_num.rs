@@ -226,11 +226,11 @@ impl DivAssign<f64> for ComplexValueF64 {
 pub mod complex_integral {
     use crate::complex_num::ComplexValueF64;
 
-    pub fn complex_integral<F>(separate_n: i32, x0: f64, xn: f64, function: F) -> ComplexValueF64
+    pub fn complex_integral<F>(segments: u32, x0: f64, xn: f64, function: F) -> ComplexValueF64
     where
         F: Fn(f64) -> ComplexValueF64,
     {
-        let d = (xn - x0) / separate_n as f64;
+        let d = (xn - x0) / segments as f64;
         let mut i = x0;
         let mut i2: f64;
         let mut sum = ComplexValueF64::new(0.0, 0.0);

@@ -6,16 +6,17 @@ use std::f64::consts::PI;
 use threadpool::ThreadPool;
 
 pub fn fourier_series_calc<F: 'static, R: 'static>(
-    epicycle_count: i32,
+    epicycle_count: u32,
     period: f64,
-    thread_count: i32,
-    integral_separate_n: i32,
+    thread_count: u32,
+    integral_segments: u32,
     function: F,
     result_callback: R,
 ) where
     F: Fn(f64) -> ComplexValueF64 + Send + Copy,
     R: Fn(Epicycle) + Send + Copy,
 {
+    let epicycle_count = epicycle_count as i32;
     let n_to = epicycle_count / 2;
     let n_from = -(epicycle_count - n_to) + 1;
     let omega = 2.0 * PI / period;
@@ -24,7 +25,7 @@ pub fn fourier_series_calc<F: 'static, R: 'static>(
     let pool = ThreadPool::new(thread_count as usize);
     for n in n_from..=n_to {
         pool.execute(move || {
-            let an = complex_integral(integral_separate_n, -half_period, half_period, |t| {
+            let an = complex_integral(integral_segments, -half_period, half_period, |t| {
                 ComplexValueF64::from_exponent_form(-(n as f64) * omega * t) * function(t)
             }) / period;
             let w = (n as f64) * omega;
@@ -68,9 +69,27 @@ impl<'a> LinearPath<'a> {
         }
     }
 
-    /// t is in `[0, period]`
+    #[inline]
+    fn period_limit(mut t: f64, period: f64) -> f64 {
+        let x = t / period;
+        if (x as i32 as f64) == x {
+            // t is divisible by period (x is integer)
+            t = 0.0;
+        } else {
+            if x > 0.0 {
+                t -= x.floor() * period;
+            } else {
+                // x < 0.0
+                t += -x.floor() * period;
+            }
+        }
+        t
+    }
+
+    /// the main period range of t is in `[0, period]`
     // TODO can use binary search
-    pub fn evaluate_path(&self, t: f64) -> PointF64 {
+    pub fn evaluate_path(&self, mut t: f64) -> PointF64 {
+        t = LinearPath::period_limit(t, self.period);
         let len_in_total_len = t / self.period * self.lines_len_sum;
 
         let mut count = 0.0;
