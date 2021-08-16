@@ -39,8 +39,7 @@ fn main() {
                 if r == 0 {
                     break;
                 }
-                println!("{}", r);
-                println!("{}", r);
+                println!("Read: {:?}", &buf[..r]);
             }
             Err(e) => {
                 panic!(e.to_string());

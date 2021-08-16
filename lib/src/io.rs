@@ -125,6 +125,18 @@ where
     }
 }
 
+/// Perform a `putchar` in C
+/// # Examples
+///
+/// ```no_run
+/// use bczhc_lib::io::put_char;
+///
+/// put_char(b'a').unwrap();
+/// ```
+///
+/// # Errors
+/// When the C `putchar` returns [`libc::EOF`]
+///
 #[inline]
 pub fn put_char(c: u8) -> std::io::Result<()> {
     unsafe {
@@ -136,6 +148,36 @@ pub fn put_char(c: u8) -> std::io::Result<()> {
 }
 
 pub trait TryReadExact {
+    /// Read exact data
+    ///
+    /// This function blocks. It reads exact data, so the return value is the buffer's when
+    /// it doesn't reach EOF.
+    ///
+    /// If it reaches EOF, the return value is the bytes it has read.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use std::io::stdin;
+    /// use bczhc_lib::io::TryReadExact;
+    ///
+    /// let mut stdin = stdin();
+    /// let mut buf = [0_u8; 5];
+    /// loop {
+    ///     let result = stdin.try_read_exact(&mut buf);
+    ///     match result {
+    ///         Ok(r) => {
+    ///             if r == 0 {
+    ///                 break;
+    ///             }
+    ///             println!("Read: {:?}", &buf[..r]);
+    ///         }
+    ///         Err(e) => {
+    ///             eprintln!("IO error: {}", e);
+    ///         }
+    ///     }
+    /// }
+    /// ```
     fn try_read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize>;
 }
 
