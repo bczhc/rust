@@ -142,7 +142,7 @@ where
 pub fn put_c_char(c: u8) -> std::io::Result<()> {
     unsafe {
         let r = libc::write(
-            libc::STDOUT_FILENO,
+            1,
             &c as *const u8 as *const libc::c_void,
             1,
         );
