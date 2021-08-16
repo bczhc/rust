@@ -3,7 +3,7 @@ use std::ffi::CString;
 pub trait ToCString {
     /// As a string pointer in C, for libc FFI.
     ///
-    /// # Example
+    /// # Examples
     /// ```
     /// use bczhc_lib::libc::ToCString;
     /// let heap_str = String::from("abc");

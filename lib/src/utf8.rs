@@ -17,7 +17,7 @@ impl SolvedUtf8Properties {
 /// ```
 /// use bczhc_lib::utf8::utf8_size;
 ///
-/// let  r = utf8_size('a' as u32);
+/// let r = utf8_size('a' as u32);
 /// assert_eq!(r, 1);
 ///
 /// let r = utf8_size('©' as u32);
@@ -74,22 +74,22 @@ pub fn utf8_bytes_length(first_byte: u8) -> u32 {
 /// use bczhc_lib::utf8::decode_utf8;
 ///
 /// let b = "a".as_bytes();
-/// let  solved = decode_utf8(&b);
+/// let solved = decode_utf8(&b);
 /// assert_eq!(solved.codepoint, 'a' as u32);
 /// assert_eq!(solved.bytes_length, 1);
 ///
 /// let b = "©".as_bytes();
-/// let  solved = decode_utf8(&b);
+/// let solved = decode_utf8(&b);
 /// assert_eq!(solved.codepoint, '©' as u32);
 /// assert_eq!(solved.bytes_length, 2);
 ///
 /// let b = "好".as_bytes();
-/// let  solved = decode_utf8(&b);
+/// let solved = decode_utf8(&b);
 /// assert_eq!(solved.codepoint, '好' as u32);
 /// assert_eq!(solved.bytes_length, 3);
 ///
 /// let b = "🍎".as_bytes();
-/// let  solved = decode_utf8(&b);
+/// let solved = decode_utf8(&b);
 /// assert_eq!(solved.codepoint, '🍎' as u32);
 /// assert_eq!(solved.bytes_length, 4);
 /// ```
@@ -166,7 +166,7 @@ pub fn decode_utf8_with_length(bytes: &[u8], bytes_length: u32) -> SolvedUtf8Pro
 ///
 /// let mut dest: [u8; 4] = [0, 0, 0, 0];
 ///
-/// let  size = encode_utf8('a' as u32, &mut dest);
+/// let size = encode_utf8('a' as u32, &mut dest);
 /// assert_eq!(size, 1);
 /// assert_eq!(String::from_utf8(Vec::from(&dest[..size as usize])).unwrap(), "a");
 ///

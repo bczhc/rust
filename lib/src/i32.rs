@@ -11,7 +11,7 @@ pub trait ToStringRadix {
 impl ToStringRadix for i32 {
     /// Convert `i32` to a Hex string
     ///
-    /// # Example
+    /// # Examples
     /// ```
     /// use bczhc_lib::i32::ToStringRadix;
     ///
