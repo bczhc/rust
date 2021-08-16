@@ -1,6 +1,7 @@
 use std::fs::{File, OpenOptions};
 use std::io::{BufWriter, Cursor, Error, ErrorKind, Read};
 use std::path::Path;
+use std::sync::mpsc::RecvError;
 
 pub trait ReadLine {
     /// Read lines without the end newline mark (CR and/or LF)
@@ -132,4 +133,34 @@ pub fn put_char(c: u8) -> std::io::Result<()> {
         };
     }
     Ok(())
+}
+
+pub trait TryReadExact {
+    fn try_read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize>;
+}
+
+impl<R> TryReadExact for R
+where
+    R: Read,
+{
+    fn try_read_exact(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let mut read = 0_usize;
+        loop {
+            let result = self.read(&mut buf[read..]);
+            match result {
+                Ok(r) => {
+                    if r == 0 {
+                        return Ok(read);
+                    }
+                    read += r;
+                    if read == buf.len() {
+                        return Ok(read);
+                    }
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            }
+        }
+    }
 }
