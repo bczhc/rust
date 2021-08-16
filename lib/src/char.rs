@@ -76,6 +76,22 @@ where
     }
 }
 
+pub trait CharsTrait<T>
+where
+    T: Read,
+{
+    fn chars(self) -> CharReader<T>;
+}
+
+impl<T> CharsTrait<T> for T
+where
+    T: Read,
+{
+    fn chars(self) -> CharReader<T> {
+        CharReader::new(self)
+    }
+}
+
 impl<T> Iterator for CharReader<T>
 where
     T: Read,

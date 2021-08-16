@@ -42,6 +42,7 @@ name = "base256"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
+ "clap",
 ]
 
 [[package]]
