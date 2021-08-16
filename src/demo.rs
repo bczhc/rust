@@ -49,10 +49,16 @@ fn main() {
     }
 }
 
+#[cfg(not(windows))]
 fn set_termios() {
     let mut termios = Termios::from_fd(1).unwrap();
     termios.c_lflag &= !(ICANON | ECHO);
     termios.c_cc[VMIN] = 1;
     tcsetattr(1, TCSANOW, &termios).unwrap();
     tcflush(1, TCIOFLUSH).unwrap();
+}
+
+#[cfg(windows)]
+fn set_termios() {
+    // no-op
 }
