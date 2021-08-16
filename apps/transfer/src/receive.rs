@@ -1,5 +1,5 @@
 use crate::{compute_sha1, compute_sha1_with_str, read_header, Error, MyResult, Type, Configs, check_option, parse_port_str};
-use bczhc_lib::io::{put_char, OpenOrCreate, ReadAll};
+use bczhc_lib::io::{put_c_char, OpenOrCreate, ReadAll};
 use byteorder::{BigEndian, ReadBytesExt};
 use clap::ArgMatches;
 use std::fs::{create_dir, File};
@@ -99,7 +99,7 @@ fn receive_stdin(stream: &mut TcpStream) -> MyResult<()> {
     }
 
     for c in data {
-        put_char(c)?;
+        put_c_char(c)?;
     }
 
     Ok(())

@@ -12,13 +12,13 @@ fn main() -> Result<(), String> {
 
 /// returns: bytes size
 #[inline]
-fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
+fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> usize {
     return utf8::encode_utf8(codepoint, dest);
 }
 
 /// returns: bytes size
 #[inline]
-fn unicode_to_utf16_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
+fn unicode_to_utf16_machine_endianness(codepoint: u32, dest: &mut [u8]) -> usize {
     return if codepoint <= 0xffff {
         let codepoint = (codepoint & 0b1111_1111_1111_1111__u32) as u16;
         unsafe {
@@ -47,7 +47,7 @@ fn unicode_to_utf16_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
 
 /// returns: bytes size
 #[inline]
-fn unicode_to_utf16_reversed_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
+fn unicode_to_utf16_reversed_machine_endianness(codepoint: u32, dest: &mut [u8]) -> usize {
     let mut t: [u8; 4] = [0, 0, 0, 0];
     let r = unicode_to_utf16_machine_endianness(codepoint, &mut t);
     if r == 2 {
@@ -64,7 +64,7 @@ fn unicode_to_utf16_reversed_machine_endianness(codepoint: u32, dest: &mut [u8])
 }
 
 #[inline]
-fn unicode_to_utf32_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
+fn unicode_to_utf32_machine_endianness(codepoint: u32, dest: &mut [u8]) -> usize {
     unsafe {
         let p = &codepoint as *const u32 as *const u8;
         dest[0] = *(((p as usize) + 0) as *const u8);
@@ -76,7 +76,7 @@ fn unicode_to_utf32_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
 }
 
 #[inline]
-fn unicode_to_utf32_reversed_machine_endianness(codepoint: u32, dest: &mut [u8]) -> u32 {
+fn unicode_to_utf32_reversed_machine_endianness(codepoint: u32, dest: &mut [u8]) -> usize {
     let mut t: [u8; 4] = [0, 0, 0, 0];
     let _ = unicode_to_utf32_machine_endianness(codepoint, &mut t);
     dest[0] = t[3];
@@ -177,7 +177,7 @@ impl Main {
             self.output_stream = Box::new(BufWriter::new(f));
         }
 
-        let converter: fn(u32, &mut [u8]) -> u32;
+        let converter: fn(u32, &mut [u8]) -> usize;
 
         match to.to_ascii_lowercase().as_str() {
             "utf8" => converter = unicode_to_utf8,
@@ -254,7 +254,7 @@ impl Main {
         return Ok(());
     }
 
-    fn process_utf8_input(&mut self, unicode_converter: &fn(u32, &mut [u8]) -> u32) {
+    fn process_utf8_input(&mut self, unicode_converter: &fn(u32, &mut [u8]) -> usize) {
         let mut read: [u8; 4] = [0, 0, 0, 0];
         let mut out_buf: [u8; 4] = [0, 0, 0, 0];
         loop {
@@ -281,7 +281,7 @@ impl Main {
 
     fn process_utf16_input_machine_endianness(
         &mut self,
-        unicode_converter: &fn(u32, &mut [u8]) -> u32,
+        unicode_converter: &fn(u32, &mut [u8]) -> usize,
     ) {
         let mut buf: [u8; 4] = [0, 0, 0, 0];
         loop {
@@ -314,7 +314,7 @@ impl Main {
 
     fn process_utf16_input_reversed_machine_endianness(
         &mut self,
-        unicode_converter: &fn(u32, &mut [u8]) -> u32,
+        unicode_converter: &fn(u32, &mut [u8]) -> usize,
     ) {
         let mut buf: [u8; 4] = [0, 0, 0, 0];
         loop {
@@ -353,7 +353,7 @@ impl Main {
 
     fn process_utf32_input_machine_endianness(
         &mut self,
-        unicode_converter: &fn(u32, &mut [u8]) -> u32,
+        unicode_converter: &fn(u32, &mut [u8]) -> usize,
     ) {
         let mut buf: [u8; 4] = [0, 0, 0, 0];
         loop {
@@ -374,7 +374,7 @@ impl Main {
 
     fn process_utf32_input_reversed_machine_endianness(
         &mut self,
-        unicode_converter: &fn(u32, &mut [u8]) -> u32,
+        unicode_converter: &fn(u32, &mut [u8]) -> usize,
     ) {
         let mut buf: [u8; 4] = [0, 0, 0, 0];
         let mut t: [u8; 4] = [0, 0, 0, 0];

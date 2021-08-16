@@ -20,6 +20,7 @@ members = [
     "apps/char_count",
     "apps/regex-test",
     "apps/transfer",
+    "apps/base256",
 ]
 
 [[bin]]

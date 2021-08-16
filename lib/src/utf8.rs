@@ -29,7 +29,7 @@ impl SolvedUtf8Properties {
 /// let r = utf8_size('🍎' as u32);
 /// assert_eq!(r, 4);
 /// ```
-pub fn utf8_size(codepoint: u32) -> u32 {
+pub fn utf8_size(codepoint: u32) -> usize {
     return if codepoint <= 0x7f_u32 {
         1
     } else if codepoint <= 0x7ff_u32 {
@@ -182,7 +182,7 @@ pub fn decode_utf8_with_length(bytes: &[u8], bytes_length: u32) -> SolvedUtf8Pro
 /// assert_eq!(size, 4);
 /// assert_eq!(String::from_utf8(Vec::from(&dest[..size as usize])).unwrap(), "🍎");
 /// ```
-pub fn encode_utf8(codepoint: u32, dest: &mut [u8]) -> u32 {
+pub fn encode_utf8(codepoint: u32, dest: &mut [u8]) -> usize {
     let utf8_size = utf8_size(codepoint);
     match utf8_size {
         1 => {

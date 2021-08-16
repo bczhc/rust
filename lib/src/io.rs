@@ -1,3 +1,4 @@
+use crate::utf8::encode_utf8;
 use std::fs::{File, OpenOptions};
 use std::io::{BufWriter, Cursor, Error, ErrorKind, Read};
 use std::path::Path;
@@ -125,24 +126,49 @@ where
     }
 }
 
-/// Perform a `putchar` in C
+/// Write a byte to [`stdout`] immediately
 /// # Examples
 ///
 /// ```no_run
-/// use bczhc_lib::io::put_char;
+/// use bczhc_lib::io::put_c_char;
 ///
-/// put_char(b'a').unwrap();
+/// put_c_char(b'a').unwrap();
 /// ```
 ///
 /// # Errors
 /// When the C `putchar` returns [`libc::EOF`]
 ///
 #[inline]
-pub fn put_char(c: u8) -> std::io::Result<()> {
+pub fn put_c_char(c: u8) -> std::io::Result<()> {
     unsafe {
-        if libc::putchar(c as libc::c_int) == libc::EOF {
-            return Err(std::io::Error::from(ErrorKind::UnexpectedEof));
-        };
+        let r = libc::write(
+            libc::STDOUT_FILENO,
+            &c as *const u8 as *const libc::c_void,
+            1,
+        );
+        if r != 1 {
+            // TODO: get error kind from `errno`
+            return Err(std::io::Error::from(ErrorKind::Other));
+        }
+    }
+    Ok(())
+}
+
+/// Write a rust [`char`] to [`stdout`] immediately
+///
+/// # Examples
+///
+/// ```no_run
+/// use bczhc_lib::io::put_char;
+///
+/// put_char('ö').unwrap();
+/// ```
+#[inline]
+pub fn put_char(c: char) -> std::io::Result<()> {
+    let mut bytes = [0_u8; 4];
+    let size = encode_utf8(c as u32, &mut bytes);
+    for i in 0..size {
+        put_c_char(bytes[i])?;
     }
     Ok(())
 }
