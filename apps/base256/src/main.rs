@@ -1,9 +1,9 @@
+use bczhc_lib::char::CharsTrait;
 use bczhc_lib::io::put_char;
 use bczhc_lib::utf8::encode_utf8;
 use clap::{App, Arg};
-use std::io::{stdin, stdout, BufReader, Read, Write};
 use std::collections::HashMap;
-use bczhc_lib::char::CharsTrait;
+use std::io::{stdin, stdout, BufReader, Read, Write};
 
 const DICT: &'static str = "abcdefghijklmnopqrstuvwxyz0123456789我的了是不就一有也么这在那个没时好后到还都可要上天他什唉真想看多说然以会能很现觉道知用样学来为得们感自些电间人机下写但又过候面爸开去里啊做种手发东和西ダチヂッツヅテデトドナニヌネノハㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿバパヒビピフブプヘベペホボポマミぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞたАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġ";
 
@@ -65,11 +65,12 @@ fn decode() {
 
     let char_reader = stdin.chars();
     for c in char_reader {
-        let byte = map.get(&(c as u32));
-        if byte == None {
+        if c == '\n' {
             continue;
         }
-        let byte = *byte.unwrap();
+        let byte = *map
+            .get(&(c as u32))
+            .expect(format!("Invalid character: {}", c).as_str());
         buf[0] = byte;
         stdout.write(&buf);
     }
