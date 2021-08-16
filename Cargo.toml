@@ -21,6 +21,7 @@ members = [
     "apps/regex-test",
     "apps/transfer",
     "apps/base256",
+    "apps/wrap",
 ]
 
 [[bin]]

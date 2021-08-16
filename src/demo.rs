@@ -28,7 +28,8 @@ fn my_stdin() -> MyStdin {
 }
 
 fn main() {
-    // set_termios();
+    set_termios();
+    return;
 
     let mut stdin = stdin();
     let mut buf = [0_u8; 5];
