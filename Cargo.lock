@@ -141,6 +141,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "encoding_rs"
+version = "0.8.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80df024fbc5ac80f87dfef0d9f5209a252f2a497f7f42944cff24d8253cac065"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "errno"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -469,6 +478,7 @@ version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "clap",
+ "encoding_rs",
  "errno",
  "libc",
  "num_cpus",
