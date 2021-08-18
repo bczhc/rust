@@ -550,6 +550,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tool"
+version = "1.0.0"
+dependencies = [
+ "bczhc_lib",
+ "clap",
+ "encoding_rs",
+ "errno",
+ "libc",
+ "num_cpus",
+]
+
+[[package]]
 name = "transfer"
 version = "1.0.0"
 dependencies = [
