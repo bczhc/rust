@@ -24,7 +24,7 @@ fn main() {
             count += 1;
             let utf8_properties = decode(first, second);
             result.push((
-                gbk_bytes_to_u32(first, Some(second)),
+                gbk_bytes_to_decimal(first, Some(second)),
                 utf8_properties.codepoint,
             ));
         }
@@ -32,14 +32,14 @@ fn main() {
             count += 1;
             let utf8_properties = decode(first, second);
             result.push((
-                gbk_bytes_to_u32(first, Some(second)),
+                gbk_bytes_to_decimal(first, Some(second)),
                 utf8_properties.codepoint,
             ));
         }
     }
 
     let mut gbk2unicode_map = [0_u32; 0xFFFF];
-    let mut unicode2gbk_map = [0_u32; 0xFFFF];
+    let mut unicode2gbk_map = [0_u16; 0xFFFF];
     for (gbk_dec, codepoint) in result {
         gbk2unicode_map[gbk_dec as usize] = codepoint;
         unicode2gbk_map[codepoint as usize] = gbk_dec;
@@ -47,20 +47,21 @@ fn main() {
     // ASCII
     for i in 0..=0x7f {
         gbk2unicode_map[i] = i as u32;
-        unicode2gbk_map[i] = i as u32;
+        unicode2gbk_map[i] = i as u16;
     }
+    println!("Total: {}", count);
     export(&gbk2unicode_map, &unicode2gbk_map);
     test(&gbk2unicode_map, &unicode2gbk_map);
 }
 
-fn gbk_bytes_to_u32(first: u8, second: Option<u8>) -> u32 {
+fn gbk_bytes_to_decimal(first: u8, second: Option<u8>) -> u16 {
     match second {
-        None => first as u32,
-        Some(second) => (second as u32) + ((first as u32) << 8),
+        None => first as u16,
+        Some(second) => (second as u16) + ((first as u16) << 8),
     }
 }
 
-fn u32_to_gbk_bytes(dec: u32) -> (u8, Option<u8>) {
+fn u32_to_gbk_bytes(dec: u16) -> (u8, Option<u8>) {
     if dec <= 0x7f {
         (dec as u8, None)
     } else {
@@ -68,7 +69,7 @@ fn u32_to_gbk_bytes(dec: u32) -> (u8, Option<u8>) {
     }
 }
 
-fn export(gbk2unicode_map: &[u32], unicode2gbk_map: &[u32]) {
+fn export(gbk2unicode_map: &[u32], unicode2gbk_map: &[u16]) {
     let gbk2unicode_map_string = format!("{:?}", gbk2unicode_map);
     let unicode2gbk_map_string = format!("{:?}", unicode2gbk_map);
 
@@ -78,7 +79,7 @@ fn export(gbk2unicode_map: &[u32], unicode2gbk_map: &[u32]) {
     file.write(unicode2gbk_map_string.as_bytes());
 }
 
-fn test(gbk2unicode_map: &[u32], unicode2gbk_map: &[u32]) {
+fn test(gbk2unicode_map: &[u32], unicode2gbk_map: &[u16]) {
     let str = "这是一段测试文本，，害。。abcdefg123456!!!!!!OK";
     let mut result = Vec::new();
 
