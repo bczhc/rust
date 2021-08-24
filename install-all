@@ -3,3 +3,5 @@
 for d in apps/*; do
   cargo install --path "$d" "$@"
 done
+
+cargo install --path . "$@"
