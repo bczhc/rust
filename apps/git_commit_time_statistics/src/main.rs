@@ -1,7 +1,7 @@
 use bczhc_lib::io::ReadLine;
 use chrono::format::Fixed::{TimezoneName, TimezoneOffset};
 use chrono::format::Numeric::Timestamp;
-use chrono::{Date, DateTime, FixedOffset, Local, NaiveDate, TimeZone, Timelike, Utc};
+use chrono::{Date, DateTime, FixedOffset, Local, NaiveDate, TimeZone, Timelike, Utc, Offset};
 use clap::{App, Arg};
 use std::env::current_dir;
 use std::fs::File;
@@ -11,6 +11,9 @@ use std::process::{Command, Stdio};
 use std::time::SystemTime;
 
 fn main() -> MyResult<()> {
+    let default_timezone_num = Local.timestamp(0, 0).offset().fix().local_minus_utc() / 3600;
+    let default_timezone_num_string = default_timezone_num.to_string();
+
     let matches = App::new("git-commit-time")
         .author("bczhc <bczhc0@126.com>")
         .about("List the hours of the git commits author time")
@@ -21,10 +24,10 @@ fn main() -> MyResult<()> {
         )
         .arg(
             Arg::with_name("timezone")
-                .default_value("0")
+                .default_value(default_timezone_num_string.as_str())
                 .short("t")
                 .long("timezone")
-                .help("Used time zone (UTC+<num>), format e.g.: -6, 0, or 8"),
+                .help("Used time zone (UTC+<num>), format e.g.: -6, 0, or 8. The default is the local time zone"),
         )
         .get_matches();
 
