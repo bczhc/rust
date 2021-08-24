@@ -3,10 +3,12 @@ use chrono::format::Fixed::{TimezoneName, TimezoneOffset};
 use chrono::format::Numeric::Timestamp;
 use chrono::{Date, DateTime, FixedOffset, Local, NaiveDate, Offset, TimeZone, Timelike, Utc};
 use clap::{App, Arg};
+use git2::{Repository, RepositoryOpenFlags, Worktree};
 use std::env::current_dir;
 use std::fs::File;
 use std::io::{Cursor, Read, Stdin};
 use std::num::ParseIntError;
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::SystemTime;
 
@@ -21,6 +23,8 @@ fn main() -> MyResult<()> {
         )
         .get_matches();
 
+    let mut frequency_arr = [0_usize; 24];
+
     let repository_dir = if matches.is_present("repo-path") {
         String::from(matches.value_of("repo-path").unwrap())
     } else {
@@ -28,44 +32,22 @@ fn main() -> MyResult<()> {
         String::from(current_dir.to_str().unwrap())
     };
 
-    let mut process = Command::new("git")
-        .args(&["log", "--format=%ad", "--date=raw"])
-        .current_dir(repository_dir)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
-    let mut stdout = process.stdout.unwrap();
+    let repository = open_repo_including_parents(&repository_dir)?;
 
-    let mut frequency_arr = [0_usize; 24];
-    let mut process_date = |timestamp: i64, timezone_offset_secs: i32| {
+    let mut walker = repository.revwalk()?;
+    walker.push_head()?;
+    for oid in walker {
+        let oid = oid?;
+        let commit = repository.find_commit(oid)?;
+        let author = commit.author();
+        let author_time = author.when();
+        let timezone_offset_secs = author_time.offset_minutes() * 60;
+        let timestamp = author_time.seconds();
+
         let timezone = FixedOffset::east(timezone_offset_secs);
         let time = Utc.timestamp(timestamp as i64, 0).with_timezone(&timezone);
         let hour = time.hour();
         frequency_arr[hour as usize] += 1;
-    };
-
-    loop {
-        let read = stdout.read_line_without_line_terminator();
-        match read {
-            None => {
-                break;
-            }
-            Some(line) => {
-                let (timestamp_str, timezone_num_str) = line.split_at(line.find(' ').unwrap());
-                let timezone_num: i32 = (&timezone_num_str[1..]).parse().unwrap();
-                let timezone_offset_secs = (timezone_num / 100 * 3600) + (timezone_num & 100 * 60);
-                process_date(timestamp_str.parse().unwrap(), timezone_offset_secs);
-            }
-        }
-    }
-
-    let mut stderr = process.stderr.unwrap();
-
-    let mut stderr_string = String::new();
-    stderr.read_to_string(&mut stderr_string);
-    if !stderr_string.is_empty() {
-        return Err(Error::GitError(stderr_string));
     }
 
     for i in 0..frequency_arr.len() {
@@ -73,6 +55,33 @@ fn main() -> MyResult<()> {
     }
 
     Ok(())
+}
+
+fn open_repo_including_parents(path: &str) -> MyResult<Repository> {
+    let mut repository_path = Path::new(&path);
+    let mut dir = path;
+    loop {
+        let repo = Repository::open(dir);
+        if let Ok(repo) = repo {
+            return Ok(repo);
+        }
+
+        let parent = repository_path.parent();
+        match parent {
+            None => {
+                break;
+            }
+            Some(parent) => {
+                // TODO: invalid UTF-8 check (Option `None` value)
+                dir = parent.to_str().unwrap();
+                repository_path = parent;
+            }
+        }
+    }
+    // not found the git repository (including parent directories)
+    Err(Error::GitError(String::from(
+        "not a git repository (or any of the parent directories): .git",
+    )))
 }
 
 type MyResult<T> = Result<T, Error>;
@@ -91,5 +100,11 @@ enum Error {
 impl From<std::io::Error> for Error {
     fn from(e: std::io::Error) -> Self {
         Error::IOError(e)
+    }
+}
+
+impl From<git2::Error> for Error {
+    fn from(e: git2::Error) -> Self {
+        Error::GitError(String::from(e.message()))
     }
 }
