@@ -30,14 +30,17 @@ where
     T: Read,
 {
     fn read_line_without_line_terminator(&mut self) -> Option<String> {
-        // TODO: not read the last line when files don't have EOL
         let mut read: Vec<u8> = Vec::new();
         let mut buf = [0_u8];
         loop {
             let result = self.read_exact(&mut buf);
             if let Err(e) = result {
                 if let ErrorKind::UnexpectedEof = e.kind() {
-                    return None;
+                    return if read.len() == 0 {
+                        None
+                    } else {
+                        Some(String::from_utf8(read).unwrap())
+                    };
                 } else {
                     panic!("{}", e.to_string());
                 }
@@ -141,11 +144,7 @@ where
 #[inline]
 pub fn put_c_char(c: u8) -> std::io::Result<()> {
     unsafe {
-        let r = libc::write(
-            1,
-            &c as *const u8 as *const libc::c_void,
-            1,
-        );
+        let r = libc::write(1, &c as *const u8 as *const libc::c_void, 1);
         if r != 1 {
             // TODO: get error kind from `errno`
             return Err(std::io::Error::from(ErrorKind::Other));
