@@ -21,6 +21,7 @@ members = [
     "apps/transfer",
     "apps/base256",
     "apps/wrap",
+    "apps/git_commit_time_statistics",
 ]
 
 [[bin]]
