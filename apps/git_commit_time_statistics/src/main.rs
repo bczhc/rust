@@ -124,7 +124,12 @@ fn print_frequency(arr: &[usize]) {
         max_commit_count = max_commit_count.max(arr[i]);
     }
 
-    let mut proper_width = terminal_size.unwrap().0 .0 - max_left_string_len as u16;
+    let mut proper_width = terminal_size.unwrap().0 .0 as i32 - max_left_string_len as i32;
+    if proper_width < 0 {
+        plain_print();
+        return;
+    }
+    let proper_width = proper_width as u16;
     for i in 0..arr.len() {
         let left_string = format!("{}: {}", i, arr[i]);
         print!("{}", left_string);
@@ -132,6 +137,10 @@ fn print_frequency(arr: &[usize]) {
         let mut space_string = String::with_capacity(space_count as usize);
         for _ in 0..space_count {
             space_string.push(' ');
+        }
+        let indent_count = max_left_string_len - left_string.len();
+        for _ in 0..indent_count {
+            print!("{}", ' ');
         }
         println!("{}", Color::Black.on(Color::White).paint(space_string));
     }
