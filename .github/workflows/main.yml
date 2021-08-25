@@ -15,7 +15,8 @@ jobs:
 
       - name: Install Rust
         run: |
-          sudo apt install rustc -y
+          sudo apt update
+          sudo apt install rustc -y --fix-missing
           rustc --version
       - name: Build
         run: cargo build -j4 --workspace
