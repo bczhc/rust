@@ -10,3 +10,5 @@ bczhc_lib = { path = "../../lib", version = "1.0.0" }
 clap = "2.33.3"
 chrono = "0.4.19"
 git2 = "0.13.21"
+ansi_term = "0.12.1"
+terminal_size = "0.1.17"

@@ -1,8 +1,9 @@
+use ansi_term::Color;
 use bczhc_lib::io::ReadLine;
 use chrono::format::Fixed::{TimezoneName, TimezoneOffset};
 use chrono::format::Numeric::Timestamp;
 use chrono::{Date, DateTime, FixedOffset, Local, NaiveDate, Offset, TimeZone, Timelike, Utc};
-use clap::{App, Arg};
+use clap::{App, Arg, ArgMatches};
 use git2::{Repository, RepositoryOpenFlags, Worktree};
 use std::env::current_dir;
 use std::fs::File;
@@ -11,6 +12,11 @@ use std::num::ParseIntError;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::SystemTime;
+use terminal_size::{Height, Width};
+
+struct Options {
+    show_commits: bool,
+}
 
 fn main() -> MyResult<()> {
     let matches = App::new("git-commit-time")
@@ -20,6 +26,11 @@ fn main() -> MyResult<()> {
             Arg::with_name("repo-path")
                 .required(false)
                 .help("Path of a git repository"),
+        )
+        .arg(
+            Arg::with_name("show-commits")
+                .short("c")
+                .long("show-commits"),
         )
         .get_matches();
 
@@ -33,6 +44,8 @@ fn main() -> MyResult<()> {
     };
 
     let repository = open_repo_including_parents(&repository_dir)?;
+
+    let options = read_options(&matches);
 
     let mut walker = repository.revwalk()?;
     walker.push_head()?;
@@ -50,11 +63,15 @@ fn main() -> MyResult<()> {
         frequency_arr[hour as usize] += 1;
     }
 
-    for i in 0..frequency_arr.len() {
-        println!("{}: {}", i, frequency_arr[i]);
-    }
+    print_frequency(&frequency_arr);
 
     Ok(())
+}
+
+fn read_options(matches: &ArgMatches) -> Options {
+    Options {
+        show_commits: matches.is_present("show-commits"),
+    }
 }
 
 fn open_repo_including_parents(path: &str) -> MyResult<Repository> {
@@ -82,6 +99,42 @@ fn open_repo_including_parents(path: &str) -> MyResult<Repository> {
     Err(Error::GitError(String::from(
         "not a git repository (or any of the parent directories): .git",
     )))
+}
+
+fn print_frequency(arr: &[usize]) {
+    let mut max_commit_count = 0;
+    let plain_print = || {
+        for i in 0..arr.len() {
+            let left_string = format!("{}: {}", i, arr[i]);
+            println!("{}", left_string);
+        }
+    };
+
+    let terminal_size = terminal_size::terminal_size();
+
+    if let None = terminal_size {
+        plain_print();
+        return;
+    }
+
+    let mut max_left_string_len = 0;
+    for i in 0..arr.len() {
+        let left_string = format!("{}: {}", i, arr[i]);
+        max_left_string_len = max_left_string_len.max(left_string.len());
+        max_commit_count = max_commit_count.max(arr[i]);
+    }
+
+    let mut proper_width = terminal_size.unwrap().0 .0 - max_left_string_len as u16;
+    for i in 0..arr.len() {
+        let left_string = format!("{}: {}", i, arr[i]);
+        print!("{}", left_string);
+        let space_count = (arr[i] as f64 / max_commit_count as f64 * proper_width as f64) as u16;
+        let mut space_string = String::with_capacity(space_count as usize);
+        for _ in 0..space_count {
+            space_string.push(' ');
+        }
+        println!("{}", Color::Black.on(Color::White).paint(space_string));
+    }
 }
 
 type MyResult<T> = Result<T, Error>;
