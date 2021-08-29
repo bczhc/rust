@@ -1,5 +1,5 @@
 [package]
-name = "file_and_bitmap_streamed_converter"
+name = "file_bitmap_codec"
 version = "1.0.0"
 edition = "2018"
 
