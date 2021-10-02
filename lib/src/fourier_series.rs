@@ -28,8 +28,11 @@ pub fn fourier_series_calc<F: 'static, R: 'static>(
             let an = complex_integral(integral_segments, -half_period, half_period, |t| {
                 ComplexValueF64::from_exponent_form(-(n as f64) * omega * t) * function(t)
             }) / period;
-            let w = (n as f64) * omega;
-            result_callback(Epicycle { n, a: an, w });
+            result_callback(Epicycle {
+                n,
+                a: an,
+                p: ((n as f64) * omega),
+            });
         });
     }
     pool.join();
