@@ -55,7 +55,7 @@ fn fraction_part(t: f64) -> f64 {
     }
 }
 
-pub trait PathEvaluator {
+pub trait EvaluatePath {
     /// t is in \[0, 1\]
     fn evaluate(&self, t: f64) -> PointF64;
 }
@@ -96,7 +96,7 @@ impl<'a> LinearPath<'a> {
     }
 }
 
-impl<'a> PathEvaluator for LinearPath<'a> {
+impl<'a> EvaluatePath for LinearPath<'a> {
     // TODO can use binary search
     fn evaluate(&self, t: f64) -> PointF64 {
         let t = fraction_part(t);
@@ -134,7 +134,7 @@ fn linear_bezier(p0: &PointF64, p1: &PointF64, t: f64) -> Point<f64> {
 mod test {
     use crate::complex_num::ComplexValueF64;
     use crate::epicycle::Epicycle;
-    use crate::fourier_series::{fourier_series_calc, fraction_part, LinearPath, PathEvaluator};
+    use crate::fourier_series::{fourier_series_calc, fraction_part, LinearPath, EvaluatePath};
     use crate::point::PointF64;
     use std::sync::Mutex;
 
@@ -259,7 +259,7 @@ impl<'a> TimePath<'a> {
     }
 }
 
-impl<'a> PathEvaluator for TimePath<'a> {
+impl<'a> EvaluatePath for TimePath<'a> {
     /// `t` is in \[0, 1\]
     fn evaluate(&self, t: f64) -> PointF64 {
         let t = fraction_part(t);

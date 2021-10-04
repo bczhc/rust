@@ -1,6 +1,6 @@
 use bczhc_lib::complex_num::ComplexValueF64;
 use bczhc_lib::epicycle::Epicycle;
-use bczhc_lib::fourier_series::{fourier_series_calc, LinearPath, PathEvaluator};
+use bczhc_lib::fourier_series::{fourier_series_calc, LinearPath, EvaluatePath};
 use bczhc_lib::point::PointF64;
 use clap::{App, Arg};
 use std::f64::consts::PI;

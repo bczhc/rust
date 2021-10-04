@@ -1,4 +1,4 @@
-use bczhc_lib::fourier_series::{PathEvaluator, TimePath};
+use bczhc_lib::fourier_series::{EvaluatePath, TimePath};
 use bczhc_lib::point::PointF64;
 use std::io::{stdin, Read};
 
