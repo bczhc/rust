@@ -72,28 +72,28 @@ impl<'a> LinearPath<'a> {
         }
     }
 
+    /// t is in \[0, 1\]
     #[inline]
-    fn period_limit(mut t: f64, period: f64) -> f64 {
-        let x = t / period;
-        if (x as i32 as f64) == x {
-            // t is divisible by period (x is integer)
-            t = 0.0;
+    fn fraction_part(t: f64) -> f64 {
+        if (t as i32 as f64) == t {
+            // `t` is a integer
+            0.0
         } else {
-            if x > 0.0 {
-                t -= x.floor() * period;
+            // get the fraction part of `t`
+            if t > 0.0 {
+                t - t.floor()
             } else {
                 // x < 0.0
-                t += -x.floor() * period;
+                (-t).ceil() + t
             }
         }
-        t
     }
 
-    /// the main period range of t is in `[0, period]`
+    /// the main period range of t is in \[0, 1\]
     // TODO can use binary search
     pub fn evaluate_path(&self, mut t: f64) -> PointF64 {
-        t = LinearPath::period_limit(t, self.period);
-        let len_in_total_len = t / self.period * self.lines_len_sum;
+        t = LinearPath::fraction_part(t);
+        let len_in_total_len = t * self.lines_len_sum;
 
         let mut count = 0.0;
         let mut i = 0;
@@ -118,7 +118,25 @@ impl<'a> LinearPath<'a> {
     }
 }
 
-/// t is in `[0, 1]`
+/// t is in \[0, 1\]
 fn linear_bezier(p0: &PointF64, p1: &PointF64, t: f64) -> Point<f64> {
     *p0 + (*p1 - *p0) * t
+}
+
+#[cfg(test)]
+mod test {
+    use crate::fourier_series::LinearPath;
+
+    #[test]
+    fn fraction_part_test() {
+        let mut f = -10.0;
+        while f < 10.0 {
+            assert_eq!(LinearPath::fraction_part(f), 0.0);
+            f += 1.0;
+        }
+        float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(3.2), 0.2);
+        float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(12345.54321), 0.54321, epsilon = 0.00002);
+        float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(-4.3), 0.7);
+        float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(-54321.12345), 1.0 - 0.12345, epsilon = 0.00002);
+    }
 }

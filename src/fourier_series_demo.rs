@@ -55,7 +55,7 @@ fn main() {
         integral_segments,
         move |t| unsafe {
             let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
-            let point = path_evaluator.evaluate_path(t);
+            let point = path_evaluator.evaluate_path(t / period);
             ComplexValueF64::new(point.x, point.y)
         },
         move |r| unsafe {
