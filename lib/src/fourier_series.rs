@@ -38,12 +38,33 @@ pub fn fourier_series_calc<F: 'static, R: 'static>(
     pool.join();
 }
 
+/// t is in \[0, 1\]
+#[inline]
+fn fraction_part(t: f64) -> f64 {
+    if (t as i32 as f64) == t {
+        // `t` is a integer
+        0.0
+    } else {
+        // get the fraction part of `t`
+        if t > 0.0 {
+            t - t.floor()
+        } else {
+            // x < 0.0
+            (-t).ceil() + t
+        }
+    }
+}
+
+pub trait PathEvaluator {
+    /// t is in \[0, 1\]
+    fn evaluate(&self, t: f64) -> PointF64;
+}
+
 pub struct LinearPath<'a> {
     lines_len_sum: f64,
     points_vec: &'a Vec<PointF64>,
     lines_len_vec: Vec<f64>,
     lines_len_sum_vec: Vec<f64>,
-    period: f64,
 }
 
 #[inline]
@@ -52,8 +73,11 @@ fn line_length(p0: &PointF64, p1: &PointF64) -> f64 {
 }
 
 impl<'a> LinearPath<'a> {
-    pub fn new(input: &'a Vec<PointF64>, period: f64) -> LinearPath {
+    pub fn new(input: &'a Vec<PointF64>) -> LinearPath {
         let len = input.len();
+        if len <= 1 {
+            panic!("The points length must be > 1")
+        }
         let mut len_sum = 0.0;
         let mut len_vec = Vec::with_capacity(len - 1);
         let mut lines_len_sum_vec = Vec::with_capacity(len - 1);
@@ -68,31 +92,14 @@ impl<'a> LinearPath<'a> {
             points_vec: input,
             lines_len_vec: len_vec,
             lines_len_sum_vec,
-            period,
         }
     }
+}
 
-    /// t is in \[0, 1\]
-    #[inline]
-    fn fraction_part(t: f64) -> f64 {
-        if (t as i32 as f64) == t {
-            // `t` is a integer
-            0.0
-        } else {
-            // get the fraction part of `t`
-            if t > 0.0 {
-                t - t.floor()
-            } else {
-                // x < 0.0
-                (-t).ceil() + t
-            }
-        }
-    }
-
-    /// the main period range of t is in \[0, 1\]
+impl<'a> PathEvaluator for LinearPath<'a> {
     // TODO can use binary search
-    pub fn evaluate_path(&self, mut t: f64) -> PointF64 {
-        t = LinearPath::fraction_part(t);
+    fn evaluate(&self, t: f64) -> PointF64 {
+        let t = fraction_part(t);
         let len_in_total_len = t * self.lines_len_sum;
 
         let mut count = 0.0;
@@ -127,7 +134,7 @@ fn linear_bezier(p0: &PointF64, p1: &PointF64, t: f64) -> Point<f64> {
 mod test {
     use crate::complex_num::ComplexValueF64;
     use crate::epicycle::Epicycle;
-    use crate::fourier_series::{fourier_series_calc, LinearPath};
+    use crate::fourier_series::{fourier_series_calc, fraction_part, LinearPath, PathEvaluator};
     use crate::point::PointF64;
     use std::sync::Mutex;
 
@@ -135,20 +142,15 @@ mod test {
     fn fraction_part_test() {
         let mut f = -10.0;
         while f < 10.0 {
-            assert_eq!(LinearPath::fraction_part(f), 0.0);
+            assert_eq!(fraction_part(f), 0.0);
             f += 1.0;
         }
-        float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(3.2), 0.2);
+        float_cmp::assert_approx_eq!(f64, fraction_part(3.2), 0.2);
+        float_cmp::assert_approx_eq!(f64, fraction_part(12345.54321), 0.54321, epsilon = 0.00002);
+        float_cmp::assert_approx_eq!(f64, fraction_part(-4.3), 0.7);
         float_cmp::assert_approx_eq!(
             f64,
-            LinearPath::fraction_part(12345.54321),
-            0.54321,
-            epsilon = 0.00002
-        );
-        float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(-4.3), 0.7);
-        float_cmp::assert_approx_eq!(
-            f64,
-            LinearPath::fraction_part(-54321.12345),
+            fraction_part(-54321.12345),
             1.0 - 0.12345,
             epsilon = 0.00002
         );
@@ -168,7 +170,7 @@ mod test {
             vec.push(PointF64::new(x, y));
         }
 
-        let path_evaluator = LinearPath::new(&vec, 100.0);
+        let path_evaluator = LinearPath::new(&vec);
         let path_evaluator_pointer = &path_evaluator as *const LinearPath as usize;
 
         let mut vec: Vec<Epicycle> = Vec::new();
@@ -183,7 +185,7 @@ mod test {
             10000,
             move |t| unsafe {
                 let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
-                let point = path_evaluator.evaluate_path(t / period);
+                let point = path_evaluator.evaluate(t / period);
                 ComplexValueF64::new(point.x, point.y)
             },
             move |r| unsafe {
@@ -229,5 +231,47 @@ mod test {
             let found = find_result(epicycle.n);
             assert!(cmp_epicycle(*epicycle, *found));
         }
+    }
+}
+
+pub struct TimePath<'a> {
+    points: &'a Vec<PointF64>,
+    segments_num: usize,
+    segment_time: f64,
+    points_len_minus_1: usize,
+}
+
+impl<'a> TimePath<'a> {
+    pub fn new(points: &'a Vec<PointF64>) -> TimePath<'a> {
+        let len = points.len();
+        if len <= 1 {
+            panic!("The points length must be > 1");
+        }
+        let segments_num = len - 1;
+        let segment_time = 1.0 / segments_num as f64;
+
+        Self {
+            points,
+            segments_num,
+            segment_time,
+            points_len_minus_1: points.len() - 1,
+        }
+    }
+}
+
+impl<'a> PathEvaluator for TimePath<'a> {
+    /// `t` is in \[0, 1\]
+    fn evaluate(&self, t: f64) -> PointF64 {
+        let t = fraction_part(t);
+        let segment_index = (t / self.segment_time).floor() as usize;
+        if segment_index == self.points_len_minus_1 {
+            return self.points[self.points_len_minus_1];
+        }
+        let in_segment_t = t - (segment_index as f64) * self.segment_time;
+        linear_bezier(
+            &self.points[segment_index],
+            &self.points[segment_index + 1],
+            in_segment_t / self.segment_time,
+        )
     }
 }

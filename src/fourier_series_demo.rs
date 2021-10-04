@@ -1,6 +1,6 @@
 use bczhc_lib::complex_num::ComplexValueF64;
 use bczhc_lib::epicycle::Epicycle;
-use bczhc_lib::fourier_series::{fourier_series_calc, LinearPath};
+use bczhc_lib::fourier_series::{fourier_series_calc, LinearPath, PathEvaluator};
 use bczhc_lib::point::PointF64;
 use clap::{App, Arg};
 use std::f64::consts::PI;
@@ -41,7 +41,7 @@ fn main() {
         vec.push(PointF64::new(x, y));
     }
 
-    let path_evaluator = LinearPath::new(&vec, 100.0);
+    let path_evaluator = LinearPath::new(&vec);
     let path_evaluator_pointer = &path_evaluator as *const LinearPath as usize;
 
     let mut vec = Vec::new();
@@ -55,7 +55,7 @@ fn main() {
         integral_segments,
         move |t| unsafe {
             let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
-            let point = path_evaluator.evaluate_path(t / period);
+            let point = path_evaluator.evaluate(t / period);
             ComplexValueF64::new(point.x, point.y)
         },
         move |r| unsafe {

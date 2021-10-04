@@ -1,14 +1,19 @@
+use bczhc_lib::fourier_series::{PathEvaluator, TimePath};
+use bczhc_lib::point::PointF64;
 use std::io::{stdin, Read};
 
 fn main() {
-    let mut s = String::new();
-    stdin().read_to_string(&mut s);
+    let points = vec![
+        PointF64::new(0.0, 10.0),
+        PointF64::new(0.0, 0.0),
+        PointF64::new(5.0, 0.0),
+        PointF64::new(10.0, 0.0),
+    ];
+    let path_evaluator = TimePath::new(&points);
 
-    let chars = s.chars();
-    let mut size = 0_usize;
-    for _ in chars {
-        size += 1;
+    let mut f = -10.0;
+    while f <= 10.0 {
+        println!("{} {:?}", f, path_evaluator.evaluate(f));
+        f += 0.01;
     }
-
-    println!("{}", size);
 }
