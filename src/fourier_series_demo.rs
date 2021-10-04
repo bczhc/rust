@@ -33,7 +33,7 @@ fn main() {
 
     let mut vec = Vec::new();
 
-    let read = include_str!("data.txt");
+    let read = include_str!("../lib/data/fourier-series-data.txt");
     for line in read.lines() {
         let mut split = line.split(", ");
         let x: f64 = split.next().unwrap().parse().unwrap();

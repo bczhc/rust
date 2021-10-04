@@ -125,7 +125,11 @@ fn linear_bezier(p0: &PointF64, p1: &PointF64, t: f64) -> Point<f64> {
 
 #[cfg(test)]
 mod test {
-    use crate::fourier_series::LinearPath;
+    use crate::complex_num::ComplexValueF64;
+    use crate::epicycle::Epicycle;
+    use crate::fourier_series::{fourier_series_calc, LinearPath};
+    use crate::point::PointF64;
+    use std::sync::Mutex;
 
     #[test]
     fn fraction_part_test() {
@@ -135,8 +139,95 @@ mod test {
             f += 1.0;
         }
         float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(3.2), 0.2);
-        float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(12345.54321), 0.54321, epsilon = 0.00002);
+        float_cmp::assert_approx_eq!(
+            f64,
+            LinearPath::fraction_part(12345.54321),
+            0.54321,
+            epsilon = 0.00002
+        );
         float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(-4.3), 0.7);
-        float_cmp::assert_approx_eq!(f64, LinearPath::fraction_part(-54321.12345), 1.0 - 0.12345, epsilon = 0.00002);
+        float_cmp::assert_approx_eq!(
+            f64,
+            LinearPath::fraction_part(-54321.12345),
+            1.0 - 0.12345,
+            epsilon = 0.00002
+        );
+    }
+
+    #[test]
+    fn fourier_series_compute() {
+        let mut vec = Vec::new();
+        let read = include_str!("../data/fourier-series-data.txt");
+        for line in read.lines() {
+            let mut split = line.split(", ");
+            let split: Vec<&str> = split.collect();
+            assert_eq!(split.len(), 2);
+
+            let x: f64 = split[0].parse().unwrap();
+            let y: f64 = split[1].parse().unwrap();
+            vec.push(PointF64::new(x, y));
+        }
+
+        let path_evaluator = LinearPath::new(&vec, 100.0);
+        let path_evaluator_pointer = &path_evaluator as *const LinearPath as usize;
+
+        let mut vec: Vec<Epicycle> = Vec::new();
+        let vec_mutex = Mutex::new(vec);
+        let p = &vec_mutex as *const Mutex<Vec<Epicycle>> as usize;
+
+        let period = 100.0;
+        fourier_series_calc(
+            100,
+            100.0,
+            4,
+            10000,
+            move |t| unsafe {
+                let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
+                let point = path_evaluator.evaluate_path(t / period);
+                ComplexValueF64::new(point.x, point.y)
+            },
+            move |r| unsafe {
+                let mut guard = (&mut *(p as *mut Mutex<Vec<Epicycle>>)).lock().unwrap();
+                guard.push(r);
+            },
+        );
+
+        let guard = vec_mutex.lock().unwrap();
+
+        let mut result_vec = Vec::new();
+
+        let result_text = include_str!("../data/fourier-series-result.txt");
+        for line in result_text.lines() {
+            let split = line.split(" ");
+            let split: Vec<&str> = split.collect();
+            assert_eq!(split.len(), 4);
+
+            result_vec.push(Epicycle {
+                n: split[0].parse().unwrap(),
+                a: ComplexValueF64::new(split[1].parse().unwrap(), split[2].parse().unwrap()),
+                p: split[3].parse().unwrap(),
+            })
+        }
+
+        let find_result = |n: i32| {
+            for r in &result_vec {
+                if r.n == n {
+                    return r;
+                }
+            }
+            unreachable!()
+        };
+
+        let cmp_epicycle = |e1: Epicycle, e2: Epicycle| {
+            return e1.n == e2.n
+                || float_cmp::approx_eq!(f64, e1.a.re, e2.a.re)
+                || float_cmp::approx_eq!(f64, e1.a.im, e2.a.im)
+                || float_cmp::approx_eq!(f64, e1.p, e2.p);
+        };
+
+        for epicycle in &*guard {
+            let found = find_result(epicycle.n);
+            assert!(cmp_epicycle(*epicycle, *found));
+        }
     }
 }
