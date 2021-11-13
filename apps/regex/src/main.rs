@@ -15,7 +15,7 @@ type RetErrType = RetErr<regex::Error, pcre2::Error, String>;
 
 fn main() -> Result<(), RetErrType> {
     // regex test REGEX TEXT...
-    // regex match REGEX TEXT
+    // regex match REGEX TEXT [-s X,Y]
     // -e, --engine <engine>
     // engine: rust|pcre (default: pcre)
 
@@ -55,7 +55,17 @@ fn main() -> Result<(), RetErrType> {
             SubCommand::with_name("match")
                 .conf_engine_arg()
                 .arg(Arg::with_name("regex").value_name("regex").required(true))
-                .arg(Arg::with_name("text").value_name("text").required(true)),
+                .arg(Arg::with_name("text").value_name("text").required(true))
+                .arg(
+                    Arg::with_name("seek")
+                        .long("seek")
+                        .short("s")
+                        .value_name("seek")
+                        .help("Print the matched result with a specified position")
+                        .long_help(
+                            "Format: M,G. M is the index in matches; G is the index in groups.",
+                        ),
+                ),
         )
         .get_matches();
 
@@ -110,10 +120,32 @@ fn main() -> Result<(), RetErrType> {
             let matcher = matcher.unwrap();
             let text = matcher.value_of("text").unwrap();
             let regex = matcher.value_of("regex").unwrap();
+            let matches_seek = matcher.value_of("seek");
+
             let engine = get_engine(matcher.value_of("engine").unwrap())?;
             let regex = get_regex(engine, regex)?;
             let regex = regex.as_ref() as &dyn Regex;
-            regex.print_matches(text);
+            let matches = regex.capture(text);
+
+            match matches_seek {
+                Some(seek) => {
+                    let seek_matches = RustRegex::new("([0-9]+)(, *| +)([0-9]+)")
+                        .unwrap()
+                        .capture(seek);
+                    let format_check = seek_matches.len() > 0;
+                    if !format_check {
+                        return Err(RetErr::Text(String::from("Wrong seek format")));
+                    }
+                    let groups = &seek_matches[0];
+                    assert_eq!(groups.len(), 4);
+                    let match_index: usize = groups[1].parse().unwrap();
+                    let group_index: usize = groups.last().unwrap().parse().unwrap();
+                    println!("{}", matches[match_index][group_index]);
+                }
+                None => {
+                    println!("{:#?}", matches);
+                }
+            }
         }
         (_, _) => {}
     }
@@ -124,7 +156,7 @@ fn main() -> Result<(), RetErrType> {
 trait Regex {
     fn test(&self, text: &str) -> bool;
 
-    fn print_matches(&self, text: &str);
+    fn capture(&self, text: &str) -> Vec<Vec<String>>;
 }
 
 struct RustRegex {
@@ -143,19 +175,17 @@ impl Regex for RustRegex {
         self.regex.is_match(text)
     }
 
-    fn print_matches(&self, text: &str) {
+    fn capture(&self, text: &str) -> Vec<Vec<String>> {
+        let mut result = Vec::new();
         let matches = self.regex.captures_iter(text);
         for groups in matches {
-            let len = groups.len();
-            print!("[");
-            if len != 0 {
-                print!("{}", groups.get(0).unwrap().as_str());
-                for i in 1..len {
-                    print!(", {}", groups.get(i).unwrap().as_str());
-                }
+            let mut v = Vec::new();
+            for captured in groups.iter() {
+                v.push(String::from(captured.unwrap().as_str()));
             }
-            println!("]");
+            result.push(v);
         }
+        result
     }
 }
 
@@ -176,26 +206,20 @@ impl Regex for PcreRegex {
         self.regex.is_match(text.as_bytes()).unwrap()
     }
 
-    fn print_matches(&self, text: &str) {
+    fn capture(&self, text: &str) -> Vec<Vec<String>> {
+        let mut result = Vec::new();
         let matches = self.regex.captures_iter(text.as_bytes());
-        for x in matches {
-            let groups = x.unwrap();
+        for groups in matches {
+            let groups = groups.unwrap();
             let len = groups.len();
-            print!("[");
-            if len != 0 {
-                print!(
-                    "{}",
-                    String::from_utf8_lossy(groups.get(0).unwrap().as_bytes())
-                );
-                for i in 1..len {
-                    print!(
-                        ", {}",
-                        String::from_utf8_lossy(groups.get(i).unwrap().as_bytes())
-                    );
-                }
+            let mut v = Vec::new();
+            for i in 0..len {
+                let matched = groups.get(i).unwrap();
+                v.push(String::from_utf8_lossy(matched.as_bytes()).to_string());
             }
-            println!("]");
+            result.push(v);
         }
+        result
     }
 }
 
