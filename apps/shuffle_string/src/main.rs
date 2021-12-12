@@ -1,4 +1,4 @@
-use bczhc_lib::io::ReadLine;
+use bczhc_lib::io::ReadLines;
 use rand::{thread_rng, Rng};
 use std::env::args;
 use std::io::{stdin, Read};
@@ -35,17 +35,12 @@ fn main() -> Result<(), String> {
     match shuffle_mode {
         ShuffleMode::Line => {
             let mut stdin = stdin();
-            loop {
-                let read = stdin.read_line_without_line_terminator();
-                if let Some(line) = read {
-                    shuffle_string_and_print(&line);
-                    // newline and refresh the buffer
-                    println!();
-                } else {
-                    // no data to read
-                    break;
-                }
+            let lines = stdin.lines();
+            for line in lines {
+                shuffle_string_and_print(&line);
             }
+            // newline to flush the stdout buffer
+            println!();
         }
         ShuffleMode::All => {
             let mut s = String::new();

@@ -11,7 +11,7 @@ pub mod send;
 
 pub mod lib {
     use crate::{Error, MyResult, check_option};
-    use bczhc_lib::io::{OpenOrCreate, ReadLine};
+    use bczhc_lib::io::{OpenOrCreate};
     use std::fs::{create_dir, create_dir_all, File};
     use std::io::{stdin, stdout, Read, Seek, SeekFrom, Write};
     use std::iter::{Map, Scan};

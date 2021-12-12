@@ -4,25 +4,56 @@ use std::io::{BufWriter, Cursor, Error, ErrorKind, Read};
 use std::path::Path;
 use std::sync::mpsc::RecvError;
 
-pub trait ReadLine {
+trait ReadLine {
     /// Read lines without the end newline mark (CR and/or LF)
+    fn read_line_without_line_terminator(&mut self) -> Option<String>;
+}
+
+pub struct Lines<'a, T>
+where
+    T: Read,
+{
+    readable: &'a mut T,
+}
+
+pub trait ReadLines<T>
+where
+    T: Read,
+{
+    /// Read lines from the readable stream
     ///
     /// # Examples
     /// ```no_run
-    /// use std::fs::File;
-    /// use bczhc_lib::io::ReadLine;
+    /// use bczhc_lib::io::ReadLines;
+    /// use std::io::stdin;
     ///
-    /// let mut file = File::open("a.txt").expect("Failed to open file");
-    /// loop {
-    ///     let result = file.read_line_without_line_terminator();
-    ///     if let Some(line) = result {
-    ///         println!("{}", line);
-    ///     } else {
-    ///         break;
-    ///     }
+    /// let mut stdin = stdin();
+    /// let lines = stdin.lines();
+    /// for line in lines {
+    ///     println!("{}", line);
     /// }
     /// ```
-    fn read_line_without_line_terminator(&mut self) -> Option<String>;
+    fn lines(&mut self) -> Lines<T>;
+}
+
+impl<T> Iterator for Lines<'_, T>
+where
+    T: Read,
+{
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        super::io::ReadLine::read_line_without_line_terminator(self.readable)
+    }
+}
+
+impl<T> ReadLines<T> for T
+where
+    T: Read,
+{
+    fn lines(&mut self) -> Lines<T> {
+        Lines { readable: self }
+    }
 }
 
 impl<T> ReadLine for T

@@ -1,9 +1,9 @@
 extern crate bczhc_lib;
 
-use bczhc_lib::io::ReadLine;
 use std::env::args;
 use std::io::{stdin, Read};
 use std::path::Path;
+use bczhc_lib::io::ReadLines;
 
 fn main() -> Result<(), String> {
     let mut args: Vec<String> = args().collect();
@@ -46,15 +46,9 @@ fn main() -> Result<(), String> {
     match arguments.reverse_mode {
         ReverseMode::Line => {
             let mut stdin = stdin();
-            loop {
-                let read = stdin.read_line_without_line_terminator();
-                if let Some(line) = read {
-                    let reversed = reverse_string(&line);
-                    println!("{}", reversed);
-                } else {
-                    // None
-                    break;
-                }
+            let lines = stdin.lines();
+            for line in lines {
+                println!("{}", reverse_string(&line));
             }
         }
         ReverseMode::All => {
