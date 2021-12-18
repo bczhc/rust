@@ -35,7 +35,7 @@ fn main() -> Result<(), String> {
     match shuffle_mode {
         ShuffleMode::Line => {
             let mut stdin = stdin();
-            let lines = stdin.lines();
+            let lines = ReadLines::lines(&mut stdin);
             for line in lines {
                 shuffle_string_and_print(&line);
             }

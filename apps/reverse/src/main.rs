@@ -46,7 +46,7 @@ fn main() -> Result<(), String> {
     match arguments.reverse_mode {
         ReverseMode::Line => {
             let mut stdin = stdin();
-            let lines = stdin.lines();
+            let lines = ReadLines::lines(&mut stdin);
             for line in lines {
                 println!("{}", reverse_string(&line));
             }

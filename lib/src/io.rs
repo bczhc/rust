@@ -22,6 +22,8 @@ where
 {
     /// Read lines from the readable stream
     ///
+    /// The std lib implementation: [`Stdin::lines`]
+    ///
     /// # Examples
     /// ```no_run
     /// use bczhc_lib::io::ReadLines;
