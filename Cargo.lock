@@ -62,7 +62,7 @@ name = "base256"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap",
+ "clap 2.33.3",
 ]
 
 [[package]]
@@ -72,6 +72,16 @@ dependencies = [
  "float-cmp",
  "libc",
  "threadpool",
+]
+
+[[package]]
+name = "binary-wav-codec"
+version = "1.0.0"
+dependencies = [
+ "bczhc_lib",
+ "byteorder",
+ "clap 3.0.10",
+ "hound",
 ]
 
 [[package]]
@@ -146,10 +156,25 @@ dependencies = [
  "ansi_term 0.11.0",
  "atty",
  "bitflags",
- "strsim",
- "textwrap",
+ "strsim 0.8.0",
+ "textwrap 0.11.0",
  "unicode-width",
  "vec_map",
+]
+
+[[package]]
+name = "clap"
+version = "3.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a30c3bf9ff12dfe5dae53f0a96e0febcd18420d1c0e7fad77796d9d5c4b5375"
+dependencies = [
+ "atty",
+ "bitflags",
+ "indexmap",
+ "os_str_bytes",
+ "strsim 0.10.0",
+ "termcolor",
+ "textwrap 0.14.2",
 ]
 
 [[package]]
@@ -209,7 +234,7 @@ dependencies = [
  "bczhc_lib",
  "bmp",
  "byteorder",
- "clap",
+ "clap 2.33.3",
 ]
 
 [[package]]
@@ -264,7 +289,7 @@ dependencies = [
  "ansi_term 0.12.1",
  "bczhc_lib",
  "chrono",
- "clap",
+ "clap 2.33.3",
  "git2",
  "terminal_size",
 ]
@@ -321,6 +346,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "hound"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a164bb2ceaeff4f42542bdb847c41517c78a60f5649671b2a07312b6e117549"
+
+[[package]]
 name = "idna"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -329,6 +360,16 @@ dependencies = [
  "matches",
  "unicode-bidi",
  "unicode-normalization",
+]
+
+[[package]]
+name = "indexmap"
+version = "1.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "282a6247722caba404c065016bbfa522806e51714c34f5dfc3e4a3a46fcb4223"
+dependencies = [
+ "autocfg",
+ "hashbrown",
 ]
 
 [[package]]
@@ -517,6 +558,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "os_str_bytes"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "pcre2"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -601,7 +651,7 @@ dependencies = [
 name = "regex"
 version = "1.0.0"
 dependencies = [
- "clap",
+ "clap 2.33.3",
  "pcre2",
  "regex 1.5.4",
 ]
@@ -650,13 +700,16 @@ name = "rust"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap",
+ "byteorder",
+ "clap 2.33.3",
  "errno",
+ "hound",
  "libc",
  "num_cpus",
  "rand",
  "regex 1.5.4",
  "rusqlite",
+ "terminal_size",
 ]
 
 [[package]]
@@ -704,6 +757,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
+name = "strsim"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+
+[[package]]
+name = "termcolor"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
+dependencies = [
+ "winapi-util",
+]
+
+[[package]]
 name = "terminal_size"
 version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -721,6 +789,12 @@ checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
 dependencies = [
  "unicode-width",
 ]
+
+[[package]]
+name = "textwrap"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0066c8d12af8b5acd21e00547c3797fde4e8677254a7ee429176ccebbe93dd80"
 
 [[package]]
 name = "thread_local"
@@ -772,7 +846,7 @@ version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "byteorder",
- "clap",
+ "clap 2.33.3",
  "home",
  "sha1",
 ]
@@ -821,7 +895,7 @@ name = "utf-converter"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap",
+ "clap 2.33.3",
 ]
 
 [[package]]
@@ -865,6 +939,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
 
 [[package]]
+name = "winapi-util"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70ec6ce85bb158151cae5e5c87f95a8e97d2c0c4b001223f33a334e3ce5de178"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -875,5 +958,5 @@ name = "wrap"
 version = "0.1.0"
 dependencies = [
  "bczhc_lib",
- "clap",
+ "clap 2.33.3",
 ]

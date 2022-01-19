@@ -15,8 +15,10 @@ jobs:
 
       - name: Install Rust
         run: |
-          sudo apt update
-          sudo apt install rustc -y --fix-missing
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer
+          chmod +x installer
+          ./installer -y
+          rustup default nightly
           rustc --version
       - name: Build
         run: cargo build -j4 --workspace
@@ -55,6 +57,7 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer
           chmod +x installer
           ./installer --default-host x86_64-pc-windows-gnu -y
+          rustup default nightly
           rustc --version
       - name: Build
         run: cargo build -j4 --workspace
@@ -71,6 +74,7 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer
           chmod +x installer
           ./installer -y
+          rustup default nightly
           rustc --version
       - name: Build
         run: cargo build -j4 --workspace

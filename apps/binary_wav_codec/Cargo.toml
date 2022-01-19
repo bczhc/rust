@@ -1,0 +1,12 @@
+[package]
+name = "binary-wav-codec"
+version = "1.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = "3.0.10"
+hound = "3.4.0"
+byteorder = "1.4.3"
+bczhc_lib = { path = "../../lib", version = "1.0.0" }

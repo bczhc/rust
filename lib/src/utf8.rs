@@ -100,7 +100,7 @@ pub fn decode_utf8(bytes: &[u8]) -> SolvedUtf8Properties {
 
 /// Decode UTF-8 with a given length
 ///
-/// Notice the given length must is the result of [`utf8_bytes_length`]
+/// Notice the given length must be the result of [`utf8_bytes_length`]
 ///
 /// # Examples
 /// ```

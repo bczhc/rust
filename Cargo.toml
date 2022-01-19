@@ -22,6 +22,7 @@ members = [
     "apps/base256",
     "apps/wrap",
     "apps/git_commit_time_statistics",
+    "apps/binary_wav_codec",
 ]
 
 [[bin]]
@@ -41,3 +42,6 @@ num_cpus = "1.13.0"
 regex = "1.5.4"
 rusqlite = "0.26.3"
 rand = "0.8.4"
+terminal_size = "0.1.17"
+hound = "3.4.0"
+byteorder = "1.4.3"
