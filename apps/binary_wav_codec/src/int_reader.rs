@@ -8,6 +8,8 @@ pub struct FileIntReader {}
 impl FileIntReader {
     /// # Examples
     /// ```
+    /// #![feature(generic_const_exprs)]
+    ///
     /// use std::io::Cursor;
     /// use binary_wav_codec::int_reader::FileIntReader;
     /// use binary_wav_codec::int_reader::int_type;

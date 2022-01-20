@@ -22,8 +22,10 @@ jobs:
           rustc --version
       - name: Build
         run: cargo build -j4 --workspace
-      - name: Test lib
-        run: cargo test -p bczhc_lib
+      - name: Test
+        run: |
+          cargo test --workspace -j4
+          cargo test --workspace --release -j4
       - name: Generate documentation
         run: |
           cargo doc -j4
@@ -61,8 +63,11 @@ jobs:
           rustc --version
       - name: Build
         run: cargo build -j4 --workspace
-      - name: Test lib
-        run: cargo test -p bczhc_lib
+      - name: Test
+        run: |
+          cargo test --workspace -j4
+          cargo test --workspace --release -j4
+
 
   macos:
     runs-on: macos-latest
@@ -78,5 +83,7 @@ jobs:
           rustc --version
       - name: Build
         run: cargo build -j4 --workspace
-      - name: Test lib
-        run: cargo test -p bczhc_lib
+      - name: Test
+        run: |
+          cargo test --workspace -j4
+          cargo test --workspace --release -j4
