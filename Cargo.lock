@@ -581,6 +581,11 @@ dependencies = [
  "git2",
  "libc",
  "num_cpus",
+ "rand",
+ "regex 1.5.4",
+ "rusqlite",
+ "terminal_size",
+ "threadpool",
 ]
 
 [[package]]

@@ -32,6 +32,10 @@ name = "demo"
 path = "src/fourier_series_demo.rs"
 name = "fourier-series-demo"
 
+[[bin]]
+path = "src/demo1.rs"
+name = "demo1"
+
 [dependencies]
 bczhc_lib = { path = "./lib", version = "1.0.0" }
 libc = "0.2.95"
@@ -40,3 +44,10 @@ clap = "2.33.3"
 num_cpus = "1.13.0"
 encoding_rs = "0.8.28"
 git2 = "0.13.21"
+regex = "1.5.4"
+rusqlite = "0.26.3"
+rand = "0.8.4"
+terminal_size = "0.1.17"
+hound = "3.4.0"
+byteorder = "1.4.3"
+threadpool = "1.8.1"
