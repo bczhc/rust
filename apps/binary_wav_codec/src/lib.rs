@@ -112,3 +112,29 @@ fn compose_three_i24_to_u64(a: (i32, i32, i32)) -> u64 {
     assert_eq!(buf[8], 0);
     Endianness::read_u64(&buf)
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{decode_stream, encode_stream};
+    use std::io::{Cursor, Seek, SeekFrom};
+
+    #[test]
+    fn test() {
+        let data_vec = (1..=100)
+            .map(|x| (1..=x).collect::<Vec<_>>())
+            .collect::<Vec<_>>();
+
+        for vec in data_vec {
+            let mut output = Cursor::new(Vec::new());
+            let mut reader = Cursor::new(&vec[..]);
+            encode_stream(&mut reader, &mut output).unwrap();
+            output.seek(SeekFrom::Start(0)).unwrap();
+
+            let mut writer = Cursor::new(Vec::new());
+            decode_stream(&mut output, &mut writer).unwrap();
+            writer.seek(SeekFrom::Start(0)).unwrap();
+
+            assert_eq!(writer.into_inner(), vec);
+        }
+    }
+}
