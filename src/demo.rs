@@ -111,13 +111,13 @@ struct Config {
     src: String,
     dest: String,
     series_n: u32,
-    integral_segments: u32,
+    integral_segments_1s: u32,
 }
 
 fn main() {
     let args = get_args_without_self_path();
     if args.len() == 0 {
-        println!("Usage: Command <src> <dest> <series-counts> <integral-segments>");
+        println!("Usage: Command <src> <dest> <series-counts> <integral-segments-in-1s>");
         return;
     }
 
@@ -125,7 +125,7 @@ fn main() {
         src: args[0].clone(),
         dest: args[1].clone(),
         series_n: args[2].parse().unwrap(),
-        integral_segments: args[3].parse().unwrap(),
+        integral_segments_1s: args[3].parse().unwrap(),
     };
 
     let mut reader = WavReader::open(&config.src).unwrap();
@@ -139,6 +139,8 @@ fn main() {
     let sample_rate = reader.spec().sample_rate as usize;
     let samples_len = samples.len();
     println!("Total samples: {}", samples_len);
+
+    let total_period_integral_segments = (samples_len as f64 / sample_rate as f64) * config.integral_segments_1s as f64 as u32;
 
     // t is in 0..samples_len
     let p = samples.as_ptr() as usize;
@@ -164,7 +166,7 @@ fn main() {
         move |t| interpolation(t),
         samples_len as f64,
         config.series_n,
-        config.integral_segments,
+        total_period_integral_segments,
         num_cpus::get(),
     );
 
