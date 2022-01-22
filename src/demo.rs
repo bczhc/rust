@@ -1,3 +1,4 @@
+use bczhc_lib::utils::get_args_without_self_path;
 use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
 use std::f64::consts::PI;
 use std::sync::{Arc, Mutex};
@@ -106,10 +107,28 @@ fn linear_interpolate(a: f64, b: f64, t: f64) -> f64 {
     a + (b - a) * t
 }
 
-fn main() {
-    let sample_rate = 1000_usize;
+struct Config {
+    src: String,
+    dest: String,
+    series_n: u32,
+    integral_segments: u32,
+}
 
-    let mut reader = WavReader::open("/home/bczhc/w-1000.wav").unwrap();
+fn main() {
+    let args = get_args_without_self_path();
+    if args.len() == 0 {
+        println!("Usage: Command <src> <dest> <series-counts> <integral-segments>");
+        return;
+    }
+
+    let config = Config {
+        src: args[0].clone(),
+        dest: args[1].clone(),
+        series_n: args[2].parse().unwrap(),
+        integral_segments: args[3].parse().unwrap(),
+    };
+
+    let mut reader = WavReader::open(&config.src).unwrap();
     let samples: Vec<_> = reader
         .samples::<i32>()
         .collect::<Vec<_>>()
@@ -117,15 +136,16 @@ fn main() {
         .map(|x| x.unwrap() as f64 / i32::MAX as f64)
         .collect();
 
-    let samples_1s = &samples[..sample_rate];
-    println!("{:?}", samples_1s);
+    let sample_rate = reader.spec().sample_rate as usize;
+    let samples_len = samples.len();
+    println!("Total samples: {}", samples_len);
 
-    // t is in 0..sample_rate
-    let p = samples_1s.as_ptr() as usize;
+    // t is in 0..samples_len
+    let p = samples.as_ptr() as usize;
     let interpolation = move |mut t: f64| {
         let mut i = f64::floor(t) as usize;
-        if i + 1 >= sample_rate {
-            i = sample_rate - 2;
+        if i + 1 >= samples_len {
+            i = samples_len - 2;
         }
         if i <= 0 {
             i = 0;
@@ -134,24 +154,22 @@ fn main() {
         let out = t - f64::floor(t);
         assert!(out >= 0.0 && out <= 1.0);
 
-        let samples_1s = unsafe { std::slice::from_raw_parts(p as *const f64, sample_rate) };
-        linear_interpolate(samples_1s[i], samples_1s[i + 1], out)
+        let samples = unsafe { std::slice::from_raw_parts(p as *const f64, samples_len) };
+        linear_interpolate(samples[i], samples[i + 1], out)
     };
 
     println!("Audio Fourier series:");
 
     let coefficients = trig_fourier_series_calc(
         move |t| interpolation(t),
-        sample_rate as f64,
-        10000,
-        (sample_rate * 100) as u32,
+        samples_len as f64,
+        config.series_n,
+        config.integral_segments,
         num_cpus::get(),
     );
 
-    println!("{:?}", coefficients);
-
     let mut writer = WavWriter::create(
-        "/home/bczhc/a.wav",
+        &config.dest,
         WavSpec {
             channels: 1,
             sample_rate: sample_rate as u32,
@@ -161,12 +179,13 @@ fn main() {
     )
     .unwrap();
 
-    for i in 0..sample_rate {
+    for i in 0..samples_len {
         writer
             .write_sample(
-                (fourier_series_evaluate(&coefficients, sample_rate as f64, i as f64)
+                (fourier_series_evaluate(&coefficients, samples_len as f64, i as f64)
                     * i32::MAX as f64) as i32,
             )
             .unwrap();
     }
+    println!("Done");
 }
