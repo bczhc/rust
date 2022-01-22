@@ -140,7 +140,7 @@ fn main() {
     let samples_len = samples.len();
     println!("Total samples: {}", samples_len);
 
-    let total_period_integral_segments = (samples_len as f64 / sample_rate as f64) * config.integral_segments_1s as f64 as u32;
+    let total_period_integral_segments = ((samples_len as f64 / sample_rate as f64) * config.integral_segments_1s as f64) as u32;
 
     // t is in 0..samples_len
     let p = samples.as_ptr() as usize;
