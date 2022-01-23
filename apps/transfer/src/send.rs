@@ -7,6 +7,7 @@ use bczhc_lib::fs::ForeachDir;
 use bczhc_lib::io::ReadAll;
 use byteorder::{BigEndian, ByteOrder, WriteBytesExt};
 use clap::ArgMatches;
+use once_cell::sync::Lazy;
 use std::borrow::Borrow;
 use std::env::args;
 use std::fs::{DirEntry, File, Permissions};
@@ -15,13 +16,20 @@ use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, TcpStream};
 use std::path::{Path, PathBuf};
 use std::ptr::null_mut;
 use std::rc::Rc;
+use std::sync::Mutex;
 
 #[derive(Debug)]
 struct Options {
     verbose: bool,
 }
 
-static mut OPTIONS: Options = Options { verbose: false };
+static OPTIONS: Lazy<Mutex<Options>> = Lazy::new(|| Mutex::new(Options { verbose: false }));
+
+macro_rules! static_var {
+    ($x:expr) => {
+        &mut *($x.lock().unwrap())
+    };
+}
 
 pub fn run(matches: &ArgMatches) -> MyResult<()> {
     // send:
@@ -32,9 +40,7 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     let stream_mode = matches.is_present("stream-mode");
     let files = matches.values_of("file");
 
-    unsafe {
-        OPTIONS.verbose = verbose;
-    };
+    static_var!(OPTIONS).verbose = verbose;
 
     let config = read_config_file()?;
     let result = search_config(&config, Configs::DestinationIP.key());
@@ -139,7 +145,7 @@ fn send_file<R>(connection: &mut TcpStream, input: &mut R, path: &str) -> MyResu
 where
     R: Read,
 {
-    if unsafe { OPTIONS.verbose } {
+    if static_var!(OPTIONS).verbose {
         println!("{}", path);
     }
 
