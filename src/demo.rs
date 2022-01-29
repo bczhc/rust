@@ -1,8 +1,16 @@
 use bczhc_lib::utils::get_args_without_self_path;
 use clap::{App, Arg};
 use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
+use num::{FromPrimitive, Integer};
+use std::alloc::Layout;
+use std::convert::TryFrom;
 use std::f64::consts::PI;
+use std::io::{stdout, Write};
+use std::iter::Sum;
+use std::ops::{AddAssign, Deref, Div, Range, RangeBounds, RangeInclusive, Sub};
+use std::process::Output;
 use std::sync::{Arc, Mutex};
+use std::thread::spawn;
 use threadpool::ThreadPool;
 
 fn definite_integrate<F>(f: F, bounds: (f64, f64), segments: u32) -> f64
@@ -21,8 +29,15 @@ where
     sum
 }
 
-#[derive(Debug)]
-struct SeriesCoefficients(Vec<f64>, Vec<f64>);
+#[derive(Debug, Clone)]
+struct SeriesCoefficient(f64, f64);
+
+impl Default for SeriesCoefficient {
+    #[inline]
+    fn default() -> Self {
+        Self(0.0, 0.0)
+    }
+}
 
 fn trig_fourier_series_calc<F>(
     f: F,
@@ -30,12 +45,11 @@ fn trig_fourier_series_calc<F>(
     series_n: u32,
     integral_segments: u32,
     threads: usize,
-) -> SeriesCoefficients
+) -> Vec<SeriesCoefficient>
 where
     F: Fn(f64) -> f64 + Sync + 'static + Send + Copy,
 {
-    let mut an = vec![0.0; series_n as usize + 1];
-    let mut bn = vec![0.0; series_n as usize + 1];
+    let mut coefficients = vec![SeriesCoefficient::default(); series_n as usize + 1];
     let omega = 2.0 * PI / period;
 
     let calc_an = move |n: u32| {
@@ -57,23 +71,18 @@ where
 
     let pool = ThreadPool::new(threads);
 
-    let an_arc = Arc::new(Mutex::new(an));
-    let bn_arc = Arc::new(Mutex::new(bn));
-
+    let co_arc = Arc::new(Mutex::new(coefficients));
     let i_arc = Arc::new(Mutex::new(0));
 
     for n in 0..=series_n {
-        let an = an_arc.clone();
-        let bn = bn_arc.clone();
         let i = i_arc.clone();
+        let co = co_arc.clone();
         pool.execute(move || {
             let an_result = calc_an(n);
             let bn_result = calc_bn(n);
 
-            let mut an_guard = an.lock().unwrap();
-            let mut bn_guard = bn.lock().unwrap();
-            (&mut *an_guard)[n as usize] = an_result;
-            (&mut *bn_guard)[n as usize] = bn_result;
+            let mut co_guard = co.lock().unwrap();
+            (&mut *co_guard)[n as usize] = SeriesCoefficient(an_result, bn_result);
 
             let mut i_guard = i.lock().unwrap();
             *i_guard += 1;
@@ -85,20 +94,16 @@ where
         });
     }
     pool.join();
-
-    let an = Arc::try_unwrap(an_arc).unwrap().into_inner().unwrap();
-    let bn = Arc::try_unwrap(bn_arc).unwrap().into_inner().unwrap();
-    SeriesCoefficients(an, bn)
+    Arc::try_unwrap(co_arc).unwrap().into_inner().unwrap()
 }
 
-fn fourier_series_evaluate(coefficients: &SeriesCoefficients, period: f64, t: f64) -> f64 {
-    let a = &coefficients.0;
-    let b = &coefficients.1;
+fn fourier_series_evaluate(coefficients: &Vec<SeriesCoefficient>, period: f64, t: f64) -> f64 {
     let omega = 2.0 * PI / period;
 
-    let mut result = a[0] / 2.0;
-    for n in 1..a.len() {
-        result += a[n] * f64::cos(n as f64 * omega * t) + b[n] * f64::sin(n as f64 * omega * t);
+    let mut result = coefficients[0].0 / 2.0;
+    for n in 1..coefficients.len() {
+        result += coefficients[n].0 * f64::cos(n as f64 * omega * t)
+            + coefficients[n].1 * f64::sin(n as f64 * omega * t);
     }
     result
 }
@@ -196,13 +201,88 @@ fn main() {
     )
     .unwrap();
 
-    for i in 0..samples_len {
-        writer
-            .write_sample(
-                (fourier_series_evaluate(&coefficients, samples_len as f64, i as f64)
-                    * i32::MAX as f64) as i32,
-            )
-            .unwrap();
+    println!("Evaluating Fourier series...");
+
+    let ranges = separate_range(0..=(samples_len - 1), config.thread_num);
+
+    let mut thread_handlers = Vec::with_capacity(ranges.len());
+
+    let coefficient_p = &coefficients as *const Vec<SeriesCoefficient> as usize;
+
+    let progress_i = Arc::new(Mutex::new(0_usize));
+
+    let progress_display_divisor = samples_len / 1000;
+
+    for i in 0..ranges.len() {
+        let range = ranges[i].clone();
+        let mut progress_i = progress_i.clone();
+        let handler = spawn(move || {
+            let coefficients = unsafe { &*(coefficient_p as *const Vec<SeriesCoefficient>) };
+
+            let mut samples = Vec::with_capacity(range.clone().count());
+            for j in range.clone() {
+                let sample = (fourier_series_evaluate(coefficients, samples_len as f64, j as f64)
+                    * i32::MAX as f64) as i32;
+                samples.push(sample);
+
+                let mut progress_i = progress_i.lock().unwrap();
+                if *progress_i % progress_display_divisor == 0 {
+                    println!(
+                        "Progress: {}%",
+                        *progress_i as f64 / samples_len as f64 * 100.0
+                    );
+                }
+                *progress_i += 1;
+            }
+            assert_eq!(samples.len(), range.clone().count());
+            (i, samples)
+        });
+        thread_handlers.push(handler);
     }
+
+    let mut result_samples_vec = Vec::with_capacity(ranges.len());
+    for handler in thread_handlers {
+        result_samples_vec.push(handler.join().unwrap());
+    }
+
+    result_samples_vec.sort_by(|o1, o2| o1.0.cmp(&o2.0));
+
+    println!("Writing wav...");
+
+    for r in result_samples_vec {
+        let r = r.1;
+        for sample in r {
+            writer.write_sample(sample).unwrap();
+        }
+    }
+
     println!("Done");
+}
+
+fn separate_range<Idx>(range: RangeInclusive<Idx>, mut segments: Idx) -> Vec<RangeInclusive<Idx>>
+where
+    Idx: num::ToPrimitive + Integer + Clone + Copy + FromPrimitive + Sum + AddAssign<Idx>,
+{
+    let len: Idx = range.end().clone() - range.start().clone() + Idx::from_i32(1).unwrap();
+
+    if len < segments {
+        segments = len;
+    }
+
+    let base: Idx = len / segments;
+
+    let mut range_lengths = vec![base; segments.to_usize().unwrap()];
+    *range_lengths.last_mut().unwrap() = Idx::from_u64(
+        len.to_u64().unwrap() - base.to_u64().unwrap() * (range_lengths.len() - 1) as u64,
+    )
+    .unwrap();
+
+    let mut result = Vec::with_capacity(range_lengths.len());
+
+    let mut start = range.start().clone();
+    for length in range_lengths {
+        result.push(start..=(start + length - Idx::from_i32(1).unwrap()));
+        start += length;
+    }
+    result
 }
