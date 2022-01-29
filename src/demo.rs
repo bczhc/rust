@@ -1,4 +1,5 @@
 use bczhc_lib::utils::get_args_without_self_path;
+use clap::{App, Arg};
 use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
 use std::f64::consts::PI;
 use std::sync::{Arc, Mutex};
@@ -112,20 +113,33 @@ struct Config {
     dest: String,
     series_n: u32,
     integral_segments_1s: u32,
+    thread_num: usize,
 }
 
 fn main() {
-    let args = get_args_without_self_path();
-    if args.len() == 0 {
-        println!("Usage: Command <src> <dest> <series-counts> <integral-segments-in-1s>");
-        return;
-    }
+    let cpu_num_string = num_cpus::get().to_string();
+    let matches = App::new("audio-fourier-series")
+        .arg(Arg::with_name("src").required(true))
+        .arg(Arg::with_name("dest").required(true))
+        .arg(Arg::with_name("series-count").required(true))
+        .arg(Arg::with_name("integral-segments-in-1s").required(true))
+        .arg(
+            Arg::with_name("thread-num")
+                .required(false)
+                .default_value(cpu_num_string.as_str()),
+        )
+        .get_matches();
 
     let config = Config {
-        src: args[0].clone(),
-        dest: args[1].clone(),
-        series_n: args[2].parse().unwrap(),
-        integral_segments_1s: args[3].parse().unwrap(),
+        src: String::from(matches.value_of("src").unwrap()),
+        dest: String::from(matches.value_of("dest").unwrap()),
+        series_n: matches.value_of("series-count").unwrap().parse().unwrap(),
+        integral_segments_1s: matches
+            .value_of("integral-segments-in-1s")
+            .unwrap()
+            .parse()
+            .unwrap(),
+        thread_num: matches.value_of("thread-num").unwrap().parse().unwrap(),
     };
 
     let mut reader = WavReader::open(&config.src).unwrap();
@@ -140,7 +154,8 @@ fn main() {
     let samples_len = samples.len();
     println!("Total samples: {}", samples_len);
 
-    let total_period_integral_segments = ((samples_len as f64 / sample_rate as f64) * config.integral_segments_1s as f64) as u32;
+    let total_period_integral_segments =
+        ((samples_len as f64 / sample_rate as f64) * config.integral_segments_1s as f64) as u32;
 
     // t is in 0..samples_len
     let p = samples.as_ptr() as usize;
@@ -167,7 +182,7 @@ fn main() {
         samples_len as f64,
         config.series_n,
         total_period_integral_segments,
-        num_cpus::get(),
+        config.thread_num,
     );
 
     let mut writer = WavWriter::create(
