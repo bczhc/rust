@@ -97,7 +97,7 @@ fn fourier_series_evaluate(coefficients: &SeriesCoefficients, period: f64, t: f6
     let omega = 2.0 * PI / period;
 
     let mut result = a[0] / 2.0;
-    for n in 0..a.len() {
+    for n in 1..a.len() {
         result += a[n] * f64::cos(n as f64 * omega * t) + b[n] * f64::sin(n as f64 * omega * t);
     }
     result
