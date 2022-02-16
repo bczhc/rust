@@ -80,7 +80,7 @@ fn scan_key() -> Result<u8> {
     let mut new_settings = saved_settings.clone();
 
     new_settings.c_lflag &= !(termios::ICANON | termios::ECHO);
-    new_settings.c_cc[termios::VMIN] == 1;
+    new_settings.c_cc[termios::VMIN] = 1;
     termios::tcsetattr(stdin_fd, termios::TCSANOW, &new_settings)?;
 
     let c = unsafe { libc::getchar() };
