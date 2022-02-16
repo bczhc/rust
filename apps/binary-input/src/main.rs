@@ -20,10 +20,8 @@ fn main() -> Result<()> {
 
     let mut stdout = stdout();
 
-    let mut lead_byte_bits = Vec::with_capacity(8);
-    let mut tail_byte_bits = Vec::new();
-    let mut tail_input = false;
-    let mut tail_bytes_count = 0_u32;
+    let mut input_bits = Vec::with_capacity(8);
+    let mut utf8_length = 0_u32;
 
     loop {
         let c = scan_key()?;
@@ -31,44 +29,30 @@ fn main() -> Result<()> {
         if num != 0 && num != 1 {
             continue;
         }
+        input_bits.push(num);
 
-        if !tail_input {
-            lead_byte_bits.push(num);
-
-            if lead_byte_bits.len() == 8 {
-                let byte = bits_to_byte(&lead_byte_bits[..]);
-                tail_bytes_count = utf8_bytes_length(byte) - 1;
-
-                if tail_bytes_count == 0 {
-                    // it's an one-byte utf-8 encoded character
-                    stdout.write_all(&[byte])?;
-                    stdout.flush()?;
-                    lead_byte_bits.clear();
-                    continue;
-                }
-
-                tail_input = true;
-            }
-        } else {
-            tail_byte_bits.push(num);
-            if tail_byte_bits.len() == (tail_bytes_count * u8::BITS) as usize {
-                let mut cursor = Cursor::new(&tail_byte_bits);
-                let mut buf = [0_u8; 8];
-                let mut tail_bytes = Vec::new();
-                for _ in 0..tail_bytes_count {
-                    cursor.read_exact(&mut buf)?;
-                    let byte = bits_to_byte(&buf);
-                    tail_bytes.push(byte);
-                }
-                stdout.write_all(&[bits_to_byte(&lead_byte_bits[..])])?;
-                stdout.write_all(&tail_bytes[..])?;
+        if input_bits.len() == 8 {
+            let lead_byte = bits_to_byte(&input_bits[..]);
+            let utf8_len = utf8_bytes_length(lead_byte);
+            if utf8_len == 1 {
+                // it's a one-byte utf8-encoded character
+                stdout.write_all(&[lead_byte])?;
                 stdout.flush()?;
-
-                lead_byte_bits.clear();
-                tail_byte_bits.clear();
-
-                tail_input = false;
+                input_bits.clear();
             }
+            utf8_length = utf8_len;
+        }
+        if input_bits.len() == (utf8_length * u8::BITS) as usize {
+            let mut cursor = Cursor::new(&input_bits);
+            let mut buf = [0_u8; 8];
+            let mut char_utf_bytes = vec![0_u8; utf8_length as usize];
+            for _ in 0..utf8_length {
+                cursor.read_exact(&mut buf)?;
+                char_utf_bytes.push(bits_to_byte(&buf));
+            }
+            stdout.write_all(&char_utf_bytes[..])?;
+            stdout.flush()?;
+            input_bits.clear();
         }
     }
 }
