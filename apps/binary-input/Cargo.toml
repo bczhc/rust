@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libc = "0.2.118"
-termios = "0.3.3"
 quick-error = "2.0.1"
 bczhc_lib = {path = "../../lib"}
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.118"
+termios = "0.3.3"
 console = "0.15.0"
