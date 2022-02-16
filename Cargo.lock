@@ -79,6 +79,7 @@ name = "binary-input"
 version = "0.1.0"
 dependencies = [
  "bczhc_lib",
+ "console",
  "libc",
  "quick-error",
  "termios",
@@ -188,11 +189,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "console"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a28b32d32ca44b70c3e4acd7db1babf555fa026e385fb95f18028f88848b3c31"
+dependencies = [
+ "encode_unicode",
+ "libc",
+ "once_cell",
+ "regex 1.5.4",
+ "terminal_size",
+ "unicode-width",
+ "winapi",
+]
+
+[[package]]
 name = "cpu-loop"
 version = "0.1.0"
 dependencies = [
  "num_cpus",
 ]
+
+[[package]]
+name = "encode_unicode"
+version = "0.3.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 
 [[package]]
 name = "errno"
@@ -718,6 +740,7 @@ dependencies = [
  "bczhc_lib",
  "byteorder",
  "clap 2.33.3",
+ "console",
  "errno",
  "hound",
  "libc",

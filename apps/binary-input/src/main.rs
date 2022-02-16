@@ -4,6 +4,7 @@ extern crate quick_error;
 mod errors;
 
 use bczhc_lib::utf8::utf8_bytes_length;
+use console::{Style, Term};
 use errors::*;
 use std::fs::File;
 use std::io::{stdin, stdout, Cursor, Read, Stdin, Stdout, Write};
@@ -18,10 +19,13 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let mut stdout = stdout();
+    let mut stdout = Term::stdout();
 
     let mut input_bits = Vec::with_capacity(8);
     let mut utf8_length = 0_u32;
+
+    let bits_compose_style = Style::new().dim();
+    let mut composed_chars_bytes = Vec::new();
 
     loop {
         let c = scan_key()?;
@@ -31,16 +35,12 @@ fn main() -> Result<()> {
         }
         input_bits.push(num);
 
+        let bit_compose_string = format!("{}", bits_compose_style.apply_to(num.to_string()));
+        stdout.write_all(bit_compose_string.as_bytes())?;
+
         if input_bits.len() == 8 {
             let lead_byte = bits_to_byte(&input_bits[..]);
-            let utf8_len = utf8_bytes_length(lead_byte);
-            if utf8_len == 1 {
-                // it's a one-byte utf8-encoded character
-                stdout.write_all(&[lead_byte])?;
-                stdout.flush()?;
-                input_bits.clear();
-            }
-            utf8_length = utf8_len;
+            utf8_length = utf8_bytes_length(lead_byte);
         }
         if input_bits.len() == (utf8_length * u8::BITS) as usize {
             let mut cursor = Cursor::new(&input_bits);
@@ -48,9 +48,13 @@ fn main() -> Result<()> {
             let mut char_utf_bytes = vec![0_u8; utf8_length as usize];
             for _ in 0..utf8_length {
                 cursor.read_exact(&mut buf)?;
-                char_utf_bytes.push(bits_to_byte(&buf));
+                let byte = bits_to_byte(&buf);
+                char_utf_bytes.push(byte);
+                composed_chars_bytes.push(byte);
             }
-            stdout.write_all(&char_utf_bytes[..])?;
+
+            stdout.clear_line()?;
+            stdout.write_all(&composed_chars_bytes[..])?;
             stdout.flush()?;
             input_bits.clear();
         }
@@ -64,6 +68,14 @@ fn bits_to_byte(bits: &[u8]) -> u8 {
         byte |= bit << (7 - i);
     }
     byte
+}
+
+fn to_bits_string(bits: &[u8]) -> String {
+    let mut string = String::with_capacity(bits.len());
+    for b in bits {
+        string.push(if *b == 0 { '0' } else { '1' });
+    }
+    string
 }
 
 fn scan_key() -> Result<u8> {
