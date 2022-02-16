@@ -23,6 +23,7 @@ members = [
     "apps/wrap",
     "apps/git_commit_time_statistics",
     "apps/binary_wav_codec",
+    "apps/binary-input",
 ]
 
 [[bin]]
