@@ -28,21 +28,37 @@ jobs:
           cargo test --workspace --release -j4
       - name: Generate documentation
         run: |
-          cargo doc -j4
-          tar -cvzf documentation.tgz target/doc/*
-      - name: Deploy documentation and push to rust-lib-doc repository
+          RUSTDOCFLAGS="--enable-index-page -Z unstable-options" cargo doc --workspace -j4
+          cd target/doc
+          tar -czf ../../documentation.tgz *
+          cd ../..
+      - name: Deploy documentation
         env:
-          ACTION_PAT: ${{ secrets.ACTION_PAT }}
+          SSH_PRK: ${{ secrets.SSH_PRK }}
         run: |
-          ACCESSABLE_REMOTE="https://bczhc:$ACTION_PAT@github.com/bczhc/rust-lib-doc"
-          git clone "$ACCESSABLE_REMOTE"
+          REMOTE_URL='git@github.com:bczhc/rust-lib-doc'
+
+          if [ ! -d ~/.ssh ]; then
+              mkdir ~/.ssh
+          fi
+          ssh-keyscan gitlab.com 2> /dev/null >> ~/.ssh/known_hosts
+          echo $SSH_PRK | base64 -d > ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
+          ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
+
+          git config --global user.name "bczhc"
+          git config --global user.email "bczhc0@126.com"
+          
+          mkdir rust-lib-doc
           cd rust-lib-doc
-          git config user.name "bczhc"
-          git config user.email "bczhc0@126.com"
-          cp -r ../target/doc/* .
+          tar -xzf ../documentation.tgz
+          git init
           git add --all
-          if [[ `git commit -m update | grep "working tree clean"` != "" ]]; then exit; fi
-          git push origin gh-pages
+          git commit -m update
+          git branch -m master gh-pages
+          
+          git remote add origin "$REMOTE_URL"
+          git push origin gh-pages -f
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
