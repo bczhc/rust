@@ -50,6 +50,7 @@ jobs:
           mkdir rust-lib-doc
           cd rust-lib-doc
           tar -xzf ../documentation.tgz
+          git init
           git add --all
           git commit -m update
           git branch -m master gh-pages
