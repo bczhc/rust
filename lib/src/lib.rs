@@ -24,3 +24,5 @@ pub mod utils;
 pub mod fs;
 
 pub mod libc;
+
+pub mod lazy;
