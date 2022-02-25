@@ -14,7 +14,7 @@ pub struct MsgPrinter {
 
 impl MsgPrinter {
     pub fn new(help_msg: String) -> MsgPrinter {
-        return Self { help_msg };
+        Self { help_msg }
     }
 
     pub fn show_msg(&self, msg_type: MsgType) -> Result<(), String> {
@@ -24,28 +24,28 @@ impl MsgPrinter {
                 Ok(())
             }
             MsgType::InvalidArgumentCount(count) => {
-                return Err(String::from(format!("Invalid argument count: {}", count)));
+                return Err(format!("Invalid argument count: {}", count));
             }
             MsgType::UnknownOption(option) => {
-                return Err(String::from(format!("Unknown option: {}", option)));
+                return Err(format!("Unknown option: {}", option));
             }
         };
     }
 }
 
 pub fn get_file_name() -> String {
-    let file_path = args().nth(0).unwrap();
+    let file_path = args().next().unwrap();
     let file_name = OsString::from(Path::new(&file_path).file_name().unwrap())
         .into_string()
         .unwrap();
-    return String::from(file_name);
+    file_name
 }
 
 pub fn get_args_without_self_path() -> Vec<String> {
     let args = args();
     let mut c: Vec<String> = args.collect();
     c.remove(0);
-    return c;
+    c
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

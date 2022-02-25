@@ -52,7 +52,7 @@ fn main() -> Result<(), String> {
     } else {
         println!("{}", size_sum);
     }
-    return Ok(());
+    Ok(())
 }
 
 enum MsgType<'a> {
@@ -65,7 +65,7 @@ fn show_msg(msg_type: MsgType) -> Result<(), String> {
     return match msg_type {
         MsgType::Help => {
             let mut args = args();
-            let file_path = args.nth(0).unwrap();
+            let file_path = args.next().unwrap();
             let file_name = Path::new(&file_path).file_name().unwrap().to_str().unwrap();
 
             println!(

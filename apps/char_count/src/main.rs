@@ -16,7 +16,7 @@ where
     let mut c = 0_i32;
     loop {
         let result = reader.read_exact(&mut buf[0..1]);
-        if let Err(_) = result {
+        if result.is_err() {
             break;
         }
 

@@ -1,10 +1,5 @@
-use bczhc_lib::point::PointU32;
-use bmp::Pixel;
-use byteorder::{LittleEndian, ReadBytesExt};
 use clap::{App, Arg};
 use file_bitmap_codec::errors::Result;
-use std::fs::OpenOptions;
-use std::io::{BufWriter, Cursor, Write};
 
 fn main() -> Result<()> {
     let matches = App::new("bmp2file")

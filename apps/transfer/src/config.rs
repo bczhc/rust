@@ -1,5 +1,5 @@
 use crate::lib::{read_config_file, search_config, search_config_index, write_config_file};
-use crate::{Configs, Error, MyResult, check_option};
+use crate::{check_option, Configs, Error, MyResult};
 use clap::ArgMatches;
 
 pub fn run(matches: &ArgMatches) -> MyResult<()> {

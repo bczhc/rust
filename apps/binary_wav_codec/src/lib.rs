@@ -1,9 +1,10 @@
+#![allow(incomplete_features, const_evaluatable_unchecked)]
 #![feature(generic_const_exprs)]
 
 use crate::errors::FormatError;
 use crate::int_reader::FileIntReader;
-use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
-use hound::{Error, SampleFormat, WavReader, WavSpec, WavWriter};
+use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
+use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
 use std::io::{Cursor, Read, Seek, Write};
 
 type Endianness = LittleEndian;
@@ -69,7 +70,7 @@ where
                 if j != 0 {
                     // new loop comes, meaning it not reach the end
                     // flush the writing buffer
-                    writer.write(&write_buf)?;
+                    writer.write_all(&write_buf)?;
                 }
 
                 let sample = i?;
@@ -88,7 +89,7 @@ where
     let remain_len = 3_usize - (data_sample_length * 3 - data_length as usize);
     assert!(remain_len > 0 && remain_len <= 3);
 
-    writer.write(&write_buf[0..remain_len])?;
+    writer.write_all(&write_buf[0..remain_len])?;
 
     Ok(())
 }

@@ -16,8 +16,8 @@
 //! | Header (8) | ContentLength (4) | Digest | Content |
 //!
 //!
-use clap::{App, Arg, ArgGroup};
-use std::fs::{create_dir, DirEntry, File};
+use clap::{App, Arg};
+
 use transfer::{Error, MyResult};
 
 fn main() -> MyResult<()> {
@@ -68,8 +68,7 @@ fn main() -> MyResult<()> {
                 .about("Set up configurations")
                 .arg(Arg::with_name("key").required(true))
                 .arg(Arg::with_name("value").required(false))
-                .arg(Arg::with_name("list").required(false).long("list"))
-                // TODO: separate usage: transfer config --list
+                .arg(Arg::with_name("list").required(false).long("list")), // TODO: separate usage: transfer config --list
         )
         .get_matches();
 

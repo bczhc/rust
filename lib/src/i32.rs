@@ -20,7 +20,7 @@ impl ToStringRadix for i32 {
     fn to_string_radix(&self, radix: i32) -> Result<String, String> {
         let mut i = *self;
 
-        if radix < 2 || radix > 36 {
+        if !(2..=36).contains(&radix) {
             return Err(String::from("Invalid radix"));
         }
 
@@ -39,7 +39,7 @@ impl ToStringRadix for i32 {
         while i <= -radix {
             buf[char_pos] = DIGITS[-(i % radix) as usize];
             char_pos -= 1;
-            i = i / radix;
+            i /= radix;
         }
         buf[char_pos] = DIGITS[-i as usize];
 
@@ -50,16 +50,14 @@ impl ToStringRadix for i32 {
 
         let size = 33 - char_pos;
         let mut c = vec![0_u8; size];
-        for i in 0..size {
-            c[i] = buf[char_pos + i];
-        }
+        c[..size].copy_from_slice(&buf[char_pos..(size + char_pos)]);
         let result = String::from_utf8(c);
-        return if let Ok(v) = result {
+        if let Ok(v) = result {
             Ok(v)
         } else if let Err(e) = result {
             Err(e.to_string())
         } else {
             panic!();
-        };
+        }
     }
 }

@@ -1,18 +1,21 @@
-use crate::{compute_sha1, compute_sha1_with_str, read_header, Error, MyResult, Type, Configs, check_option, parse_port_str};
-use bczhc_lib::io::{put_c_char, OpenOrCreate, ReadAll};
+use crate::{
+    check_option, compute_sha1, compute_sha1_with_str, parse_port_str, read_header, Configs, Error,
+    MyResult, Type,
+};
+use bczhc_lib::io::{put_c_char, OpenOrCreate};
 use byteorder::{BigEndian, ReadBytesExt};
 use clap::ArgMatches;
 use std::fs::{create_dir, File};
-use std::io::{stdout, BufReader, BufWriter, Cursor, ErrorKind, Read, Write};
+use std::io::{stdout, ErrorKind, Read, Write};
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
-use std::path::Path;
+
 use crate::lib::{read_config_file, search_config};
 
 pub fn run(matches: &ArgMatches) -> MyResult<()> {
     // receive:
     // transfer receive [-s]
 
-    let verbose = matches.is_present("verbose");
+    let _verbose = matches.is_present("verbose");
     let stream_mode = matches.is_present("stream-mode");
 
     let config = read_config_file()?;
@@ -25,7 +28,7 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
         println!("Listening at port {}", port);
     }
 
-    let (mut tcp_stream, socket_addr) = listener.accept()?;
+    let (mut tcp_stream, _) = listener.accept()?;
     if stream_mode {
         return receive_stream_mode(&mut tcp_stream);
     }

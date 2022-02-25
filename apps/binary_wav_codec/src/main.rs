@@ -1,10 +1,12 @@
+#![allow(const_evaluatable_unchecked)]
+#![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 
 use bczhc_lib::io::OpenOrCreate;
 use binary_wav_codec::errors::Error;
 use binary_wav_codec::*;
 use clap::{App, Arg, ArgMatches};
-use hound::WavWriter;
+
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
@@ -36,7 +38,7 @@ fn main() -> Result<()> {
         .get_matches();
 
     let subcommand = matches.subcommand();
-    if let None = subcommand {
+    if subcommand.is_none() {
         return Err(Error::UsageError(String::from("Subcommand needed")));
     }
 

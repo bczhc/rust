@@ -13,7 +13,7 @@ pub struct Point<T> {
 impl<T> Point<T> {
     #[inline]
     pub fn new(x: T, y: T) -> Point<T> {
-        return Self { x, y };
+        Self { x, y }
     }
 }
 
@@ -36,10 +36,10 @@ impl Add<&Self> for Point<f64> {
 
     #[inline]
     fn add(self, rhs: &Point<f64>) -> Self::Output {
-        return Self {
+        Self {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
-        };
+        }
     }
 }
 
@@ -48,7 +48,7 @@ impl Add for Point<f64> {
 
     #[inline]
     fn add(self, rhs: Self) -> Self::Output {
-        return self.add(&rhs);
+        self.add(&rhs)
     }
 }
 
@@ -72,7 +72,7 @@ impl Sub for Point<f64> {
 
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
-        return self.sub(&rhs);
+        self.sub(&rhs)
     }
 }
 
@@ -81,10 +81,10 @@ impl Sub<&Self> for Point<f64> {
 
     #[inline]
     fn sub(self, rhs: &Point<f64>) -> Self::Output {
-        return Self {
+        Self {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
-        };
+        }
     }
 }
 
@@ -108,7 +108,7 @@ impl Mul for Point<f64> {
 
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
-        return self.mul(&rhs);
+        self.mul(&rhs)
     }
 }
 
@@ -117,10 +117,10 @@ impl Mul<&Self> for Point<f64> {
 
     #[inline]
     fn mul(self, rhs: &Point<f64>) -> Self::Output {
-        return Self {
+        Self {
             x: self.x * rhs.x - self.y * rhs.y,
             y: self.x * rhs.y + self.y * rhs.x,
-        };
+        }
     }
 }
 
@@ -164,7 +164,7 @@ impl Div for Point<f64> {
 
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
-        return self.div(&rhs);
+        self.div(&rhs)
     }
 }
 
@@ -174,10 +174,10 @@ impl Div<&Self> for Point<f64> {
     #[inline]
     fn div(self, rhs: &Point<f64>) -> Self::Output {
         let a = rhs.x.powi(2) + rhs.y.powi(2);
-        return Self {
+        Self {
             x: (self.x * rhs.x + self.y * rhs.y) / a,
             y: (self.y * rhs.x - self.x * rhs.y) / a,
-        };
+        }
     }
 }
 

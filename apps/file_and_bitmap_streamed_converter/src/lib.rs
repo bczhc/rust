@@ -31,7 +31,7 @@ pub fn decode(input_path: &str, output_path: &str) -> Result<()> {
 
     for point in positioner {
         let pixel = image.get_pixel(point.x, point.y);
-        output.write(&[pixel.r, pixel.g, pixel.b])?;
+        output.write_all(&[pixel.r, pixel.g, pixel.b])?;
     }
 
     output.flush()?;

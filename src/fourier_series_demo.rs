@@ -1,13 +1,9 @@
 use bczhc_lib::complex_num::ComplexValueF64;
 use bczhc_lib::epicycle::Epicycle;
-use bczhc_lib::fourier_series::{fourier_series_calc, LinearPath, EvaluatePath};
+use bczhc_lib::fourier_series::{fourier_series_calc, EvaluatePath, LinearPath};
 use bczhc_lib::point::PointF64;
 use clap::{App, Arg};
-use std::f64::consts::PI;
-use std::fs::File;
-use std::io::Read;
 use std::sync::Mutex;
-use std::thread::spawn;
 
 fn main() {
     let thread_count_string = num_cpus::get().to_string();
@@ -44,7 +40,7 @@ fn main() {
     let path_evaluator = LinearPath::new(&vec);
     let path_evaluator_pointer = &path_evaluator as *const LinearPath as usize;
 
-    let mut vec = Vec::new();
+    let vec = Vec::new();
     let vec_mutex = Mutex::new(vec);
 
     let p = &vec_mutex as *const Mutex<Vec<Epicycle>> as usize;
@@ -59,7 +55,7 @@ fn main() {
             ComplexValueF64::new(point.x, point.y)
         },
         move |r| unsafe {
-            let mut guard = (&mut *(p as *mut Mutex<Vec<Epicycle>>)).lock().unwrap();
+            let mut guard = (&*(p as *mut Mutex<Vec<Epicycle>>)).lock().unwrap();
             println!("{:?}", r);
             guard.push(r);
         },

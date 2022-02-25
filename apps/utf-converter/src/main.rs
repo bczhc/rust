@@ -1,26 +1,26 @@
-use clap::{App, Arg};
 use bczhc_lib::byteorder::{get_endianness, Endianness};
 use bczhc_lib::utf8;
 use bczhc_lib::utf8::{decode_utf8, utf8_bytes_length};
+use clap::{App, Arg};
 use std::fs::OpenOptions;
 use std::io::{stdin, stdout, BufReader, BufWriter, ErrorKind, Read, Write};
 
 fn main() -> Result<(), String> {
     let mut m = Main::new();
-    return m.run();
+    m.run()
 }
 
 /// returns: bytes size
 #[inline]
 fn unicode_to_utf8(codepoint: u32, dest: &mut [u8]) -> usize {
-    return utf8::encode_utf8(codepoint, dest);
+    utf8::encode_utf8(codepoint, dest)
 }
 
 /// returns: bytes size
 #[inline]
 fn unicode_to_utf16_machine_endianness(codepoint: u32, dest: &mut [u8]) -> usize {
-    return if codepoint <= 0xffff {
-        let codepoint = (codepoint & 0b1111_1111_1111_1111__u32) as u16;
+    if codepoint <= 0xffff {
+        let codepoint = (codepoint & 0b1111_1111_1111_1111_u32) as u16;
         unsafe {
             let mut p = &codepoint as *const u16 as *const u8;
             dest[0] = *p;
@@ -42,7 +42,7 @@ fn unicode_to_utf16_machine_endianness(codepoint: u32, dest: &mut [u8]) -> usize
             dest[3] = *p;
         }
         4
-    };
+    }
 }
 
 /// returns: bytes size
@@ -60,19 +60,19 @@ fn unicode_to_utf16_reversed_machine_endianness(codepoint: u32, dest: &mut [u8])
         dest[2] = t[3];
         dest[3] = t[2];
     }
-    return r;
+    r
 }
 
 #[inline]
 fn unicode_to_utf32_machine_endianness(codepoint: u32, dest: &mut [u8]) -> usize {
     unsafe {
         let p = &codepoint as *const u32 as *const u8;
-        dest[0] = *(((p as usize) + 0) as *const u8);
+        dest[0] = *((p as usize) as *const u8);
         dest[1] = *(((p as usize) + 1) as *const u8);
         dest[2] = *(((p as usize) + 2) as *const u8);
         dest[3] = *(((p as usize) + 3) as *const u8);
     }
-    return 4;
+    4
 }
 
 #[inline]
@@ -83,7 +83,7 @@ fn unicode_to_utf32_reversed_machine_endianness(codepoint: u32, dest: &mut [u8])
     dest[1] = t[2];
     dest[2] = t[1];
     dest[3] = t[0];
-    return 4;
+    4
 }
 
 struct Main {
@@ -94,10 +94,10 @@ struct Main {
 impl Main {
     #[inline]
     fn new() -> Self {
-        return Self {
+        Self {
             input_stream: Box::new(stdin()),
             output_stream: Box::new(stdout()),
-        };
+        }
     }
 
     fn run(&mut self) -> Result<(), String> {
@@ -150,8 +150,8 @@ impl Main {
             .unwrap_or("8192")
             .parse()
             .unwrap();
-        let mut input_file_path = matches.value_of("inputPath");
-        let mut output_file_path = matches.value_of("outputPath");
+        let input_file_path = matches.value_of("inputPath");
+        let output_file_path = matches.value_of("outputPath");
 
         let from = matches.value_of("from").unwrap();
         let to = matches.value_of("to").unwrap();
@@ -177,33 +177,31 @@ impl Main {
             self.output_stream = Box::new(BufWriter::new(f));
         }
 
-        let converter: fn(u32, &mut [u8]) -> usize;
-
-        match to.to_ascii_lowercase().as_str() {
-            "utf8" => converter = unicode_to_utf8,
+        let converter = match to.to_ascii_lowercase().as_str() {
+            "utf8" => unicode_to_utf8,
             "utf16be" | "utf-16be" => {
-                converter = if self_endianness == Endianness::BigEndian {
+                if self_endianness == Endianness::BigEndian {
                     unicode_to_utf16_machine_endianness
                 } else {
                     unicode_to_utf16_reversed_machine_endianness
                 }
             }
             "utf16le" | "utf-16le" => {
-                converter = if self_endianness == Endianness::LittleEndian {
+                if self_endianness == Endianness::LittleEndian {
                     unicode_to_utf16_machine_endianness
                 } else {
                     unicode_to_utf16_reversed_machine_endianness
                 }
             }
             "utf32be" | "utf-32be" => {
-                converter = if self_endianness == Endianness::BigEndian {
+                if self_endianness == Endianness::BigEndian {
                     unicode_to_utf32_machine_endianness
                 } else {
                     unicode_to_utf32_reversed_machine_endianness
                 }
             }
             "utf32le" | "utf-32le" => {
-                converter = if self_endianness == Endianness::LittleEndian {
+                if self_endianness == Endianness::LittleEndian {
                     unicode_to_utf32_machine_endianness
                 } else {
                     unicode_to_utf32_reversed_machine_endianness
@@ -212,7 +210,7 @@ impl Main {
             _ => {
                 return Err(format!("Unknown <to> encode: {}", to));
             }
-        }
+        };
 
         match from.to_ascii_lowercase().as_str() {
             "utf8" => self.process_utf8_input(&converter),
@@ -251,7 +249,7 @@ impl Main {
         }
 
         self.output_stream.flush().unwrap();
-        return Ok(());
+        Ok(())
     }
 
     fn process_utf8_input(&mut self, unicode_converter: &fn(u32, &mut [u8]) -> usize) {
@@ -275,7 +273,7 @@ impl Main {
             }
             let solved = decode_utf8(&read);
             let size = unicode_converter(solved.codepoint, &mut out_buf) as usize;
-            self.output_stream.write(&out_buf[..size]).unwrap();
+            self.output_stream.write_all(&out_buf[..size]).unwrap();
         }
     }
 
@@ -302,11 +300,11 @@ impl Main {
                     let trail = *(((p as usize) + 2) as *const u16);
                     let unicode = utf8::surrogate_pair_to_unicode(lead, trail);
                     let size = unicode_converter(unicode, &mut buf) as usize;
-                    self.output_stream.write(&buf[..size]).unwrap();
+                    self.output_stream.write_all(&buf[..size]).unwrap();
                 } else {
                     let unicode = *p as u32;
                     let size = unicode_converter(unicode, &mut buf) as usize;
-                    self.output_stream.write(&buf[..size]).unwrap();
+                    self.output_stream.write_all(&buf[..size]).unwrap();
                 }
             }
         }
@@ -327,25 +325,21 @@ impl Main {
                 }
             }
             unsafe {
-                let t = buf[0];
-                buf[0] = buf[1];
-                buf[1] = t;
+                buf.swap(0, 1);
                 let p = &buf as *const u8 as *const u16;
                 if *p >= 0xd800 && *p <= 0xdb7f {
                     // use surrogate pair, need to read rwo more bytes
                     self.input_stream.read_exact(&mut buf[2..]).unwrap();
-                    let t = buf[2];
-                    buf[2] = buf[3];
-                    buf[3] = t;
+                    buf.swap(2, 3);
                     let lead = *p;
                     let trail = *(((p as usize) + 2) as *const u16);
                     let unicode = utf8::surrogate_pair_to_unicode(lead, trail);
                     let size = unicode_converter(unicode, &mut buf) as usize;
-                    self.output_stream.write(&buf[..size]).unwrap();
+                    self.output_stream.write_all(&buf[..size]).unwrap();
                 } else {
                     let unicode = *p as u32;
                     let size = unicode_converter(unicode, &mut buf) as usize;
-                    self.output_stream.write(&buf[..size]).unwrap();
+                    self.output_stream.write_all(&buf[..size]).unwrap();
                 }
             }
         }
@@ -368,7 +362,7 @@ impl Main {
             let unicode;
             unsafe { unicode = *(&buf as *const u8 as *const u32) }
             let size = unicode_converter(unicode, &mut buf) as usize;
-            self.output_stream.write(&buf[..size]).unwrap();
+            self.output_stream.write_all(&buf[..size]).unwrap();
         }
     }
 
@@ -396,7 +390,7 @@ impl Main {
                 unicode = *(&buf as *const u8 as *const u32)
             }
             let size = unicode_converter(unicode, &mut buf) as usize;
-            self.output_stream.write(&buf[..size]).unwrap();
+            self.output_stream.write_all(&buf[..size]).unwrap();
         }
     }
 }

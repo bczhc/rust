@@ -1,21 +1,20 @@
-use byteorder::{ReadBytesExt, WriteBytesExt};
 use sha1::Sha1;
-use std::io::{Cursor, ErrorKind, Read, Write};
+use std::fmt::Debug;
+use std::io::Read;
 use std::num::ParseIntError;
 use std::string::FromUtf8Error;
-use std::fmt::{Debug, Formatter};
 
 pub mod config;
 pub mod receive;
 pub mod send;
 
 pub mod lib {
-    use crate::{Error, MyResult, check_option};
-    use bczhc_lib::io::{OpenOrCreate};
-    use std::fs::{create_dir, create_dir_all, File};
-    use std::io::{stdin, stdout, Read, Seek, SeekFrom, Write};
-    use std::iter::{Map, Scan};
-    use std::path::{Path, PathBuf};
+    use crate::{check_option, Error, MyResult};
+    use bczhc_lib::io::OpenOrCreate;
+    use std::fs::File;
+    use std::io::{Read, Seek, SeekFrom, Write};
+
+    use std::path::PathBuf;
 
     #[inline]
     fn home_dir() -> Option<PathBuf> {
@@ -55,10 +54,10 @@ pub mod lib {
 
         let mut file = File::open(file_path.unwrap())?;
         let mut read_str = String::new();
-        file.read_to_string(&mut read_str);
+        file.read_to_string(&mut read_str)?;
 
         for line in read_str.lines() {
-            let find = line.find("=");
+            let find = line.find('=');
             match find {
                 None => {
                     continue;
@@ -75,7 +74,7 @@ pub mod lib {
         Ok(vec)
     }
 
-    pub fn write_config_file(pairs: &Vec<(String, String)>) -> MyResult<()> {
+    pub fn write_config_file(pairs: &[(String, String)]) -> MyResult<()> {
         check_config_file()?;
 
         let result = config_file_path();
@@ -124,10 +123,8 @@ pub mod lib {
         None
     }
 
-    pub fn search_config_index(vec: &Vec<(String, String)>, key: &str) -> Option<usize> {
-        let len = vec.len();
-        for i in 0..len {
-            let (k, _) = &vec[i];
+    pub fn search_config_index(vec: &[(String, String)], key: &str) -> Option<usize> {
+        for (i, (k, _)) in vec.iter().enumerate() {
             if k.as_str() == key {
                 return Some(i);
             }
@@ -135,8 +132,8 @@ pub mod lib {
         None
     }
 
-    pub fn split_ipv4_string(ip: &String) -> Option<(u8, u8, u8, u8)> {
-        let split = ip.split(".");
+    pub fn split_ipv4_string(ip: &str) -> Option<(u8, u8, u8, u8)> {
+        let split = ip.split('.');
         let split: Vec<&str> = split.collect();
         if split.len() != 4 {
             None
@@ -198,9 +195,7 @@ impl Type {
 
 pub fn make_header(file_type: Type) -> [u8; 8] {
     let mut header = [0_u8; 8];
-    for i in 0..5 {
-        header[i] = HEADER_PREFIX[i];
-    }
+    header[..5].copy_from_slice(&HEADER_PREFIX[..5]);
     header[5] = file_type.value();
     header
 }
@@ -221,7 +216,7 @@ where
     }
 
     let result = Type::value_of(data[5]);
-    if let None = result {
+    if result.is_none() {
         return Err(Error::InvalidType);
     }
     let file_type = result.unwrap();

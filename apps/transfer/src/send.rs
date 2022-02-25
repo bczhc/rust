@@ -1,21 +1,20 @@
 use crate::lib::{read_config_file, search_config, split_ipv4_string};
 use crate::{
     check_option, compute_sha1, compute_sha1_with_str, make_header, parse_port_str, Configs, Error,
-    MyResult, Type, HEADER_PREFIX,
+    MyResult, Type,
 };
 use bczhc_lib::fs::ForeachDir;
 use bczhc_lib::io::ReadAll;
-use byteorder::{BigEndian, ByteOrder, WriteBytesExt};
+use byteorder::BigEndian;
+use byteorder::WriteBytesExt;
 use clap::ArgMatches;
 use once_cell::sync::Lazy;
-use std::borrow::Borrow;
-use std::env::args;
-use std::fs::{DirEntry, File, Permissions};
-use std::io::{stdin, BufReader, BufWriter, ErrorKind, Read, Write};
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4, TcpStream};
-use std::path::{Path, PathBuf};
-use std::ptr::null_mut;
-use std::rc::Rc;
+
+use std::fs::{DirEntry, File};
+use std::io::{stdin, Read, Write};
+use std::net::{Ipv4Addr, SocketAddrV4, TcpStream};
+use std::path::Path;
+
 use std::sync::Mutex;
 
 #[derive(Debug)]
@@ -89,7 +88,7 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
 fn handle_path_dir(path: &Path, tcp_stream: &mut TcpStream) -> MyResult<()> {
     let abs_path = path.canonicalize()?;
     let result = abs_path.to_str();
-    if let None = result {
+    if result.is_none() {
         return Err(Error::InvalidUTF8);
     }
     let prefix = result.unwrap();
@@ -119,7 +118,7 @@ fn handle_file_in_dir(tcp_stream: &mut TcpStream, prefix: &str, d: &DirEntry) ->
     let mut file = File::open(cloned)?;
 
     let result = path_diff.to_str();
-    if let None = result {
+    if result.is_none() {
         return Err(Error::InvalidUTF8);
     }
     let path_diff = result.unwrap();
@@ -131,7 +130,7 @@ fn handle_file_in_dir(tcp_stream: &mut TcpStream, prefix: &str, d: &DirEntry) ->
 
 fn handle_path_file(file_path: &Path, tcp_stream: &mut TcpStream) -> MyResult<()> {
     let result = file_path.to_str();
-    if let None = result {
+    if result.is_none() {
         return Err(Error::InvalidUTF8);
     }
     let path = result.unwrap();
@@ -174,6 +173,7 @@ where
     Ok(())
 }
 
+#[allow(unused)]
 fn send_dir(connection: &mut TcpStream, path: &str) {
     // Header
     connection.write_all(&make_header(Type::Directory)).unwrap();

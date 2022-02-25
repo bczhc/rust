@@ -48,15 +48,15 @@ fn main() -> Result<(), String> {
             shuffle_string_and_print(&s);
         }
     }
-    return Ok(());
+    Ok(())
 }
 
-fn shuffle_string_and_print(s: &String) {
+fn shuffle_string_and_print(s: &str) {
     let mut rng = thread_rng();
 
     let chars = s.chars();
     let mut chars: Vec<char> = chars.collect();
-    while chars.len() != 0 {
+    while !chars.is_empty() {
         let c = chars.remove(rng.gen_range(0..chars.len()));
         print!("{}", c);
     }
@@ -76,7 +76,7 @@ enum ShuffleMode {
 fn show_msg(msg_type: MsgType) -> Result<(), String> {
     return match msg_type {
         MsgType::Help => {
-            let file_path = args().nth(0).unwrap();
+            let file_path = args().next().unwrap();
             let file_name = Path::new(&file_path).file_name().unwrap().to_str().unwrap();
             let help_msg = format!(
                 "Shuffle string read from stdin.
@@ -91,10 +91,10 @@ Options:
             Ok(())
         }
         MsgType::InvalidArgumentCount(count) => {
-            return Err(String::from(format!("Invalid argument count: {}", count)));
+            return Err(format!("Invalid argument count: {}", count));
         }
         MsgType::UnknownOption(option) => {
-            return Err(String::from(format!("Unknown option: {}", option)));
+            return Err(format!("Unknown option: {}", option));
         }
     };
 }

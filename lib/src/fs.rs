@@ -1,5 +1,4 @@
 use std::fs::{read_dir, DirEntry};
-use std::io::ErrorKind;
 use std::path::Path;
 
 pub trait ForeachDir {

@@ -1,13 +1,9 @@
-use std::env::Args;
-use std::fmt::Error;
-use std::fs::File;
-
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, Arg, SubCommand};
 
 #[derive(Debug)]
 enum RetErr<A, B, C> {
     Rust(A),
-    PCRE(B),
+    Pcre(B),
     Text(C),
 }
 
@@ -78,10 +74,10 @@ fn main() -> Result<(), RetErrType> {
                 }
                 Ok(Box::new(r.unwrap()) as Box<dyn Regex>)
             }
-            Engine::PCRE => {
+            Engine::Pcre => {
                 let r = PcreRegex::new(regex);
                 if let Err(e) = r {
-                    return Err(RetErr::PCRE(e));
+                    return Err(RetErr::Pcre(e));
                 }
                 Ok(Box::new(r.unwrap()) as Box<dyn Regex>)
             }
@@ -91,7 +87,7 @@ fn main() -> Result<(), RetErrType> {
     let get_engine = |engine: &str| -> Result<Engine, RetErrType> {
         match engine.to_lowercase().as_str() {
             "rust" => Ok(Engine::Rust),
-            "pcre" => Ok(Engine::PCRE),
+            "pcre" => Ok(Engine::Pcre),
             _ => Err(RetErr::Text(format!("Unknown engine: {}", engine))),
         }
     };
@@ -106,7 +102,7 @@ fn main() -> Result<(), RetErrType> {
             let regex = regex.as_ref() as &dyn Regex;
 
             let texts = matcher.values_of("texts");
-            if let None = texts {
+            if texts.is_none() {
                 return Ok(());
             }
             let texts = texts.unwrap();
@@ -132,7 +128,7 @@ fn main() -> Result<(), RetErrType> {
                     let seek_matches = RustRegex::new("([0-9]+)(, *| +)([0-9]+)")
                         .unwrap()
                         .capture(seek);
-                    let format_check = seek_matches.len() > 0;
+                    let format_check = !seek_matches.is_empty();
                     if !format_check {
                         return Err(RetErr::Text(String::from("Wrong seek format")));
                     }
@@ -225,5 +221,5 @@ impl Regex for PcreRegex {
 
 enum Engine {
     Rust,
-    PCRE,
+    Pcre,
 }

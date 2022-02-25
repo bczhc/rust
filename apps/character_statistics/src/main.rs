@@ -1,13 +1,12 @@
 use bczhc_lib::char::han_char_range;
 use bczhc_lib::utf8::{decode_utf8, utf8_bytes_length};
 use bczhc_lib::utils::{get_args_without_self_path, get_file_name, MsgPrinter, MsgType};
-use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::io::{stdin, BufReader, Read};
 
 fn main() -> Result<(), String> {
     let mut m = Main::new();
-    return m.run();
+    m.run()
 }
 
 struct Argument {
@@ -31,10 +30,10 @@ Options:
             get_file_name()
         );
 
-        return Self {
+        Self {
             msg_printer: MsgPrinter::new(help_msg),
             argument: Argument { han_mode: false },
-        };
+        }
     }
 
     fn run(&mut self) -> Result<(), String> {
@@ -62,7 +61,7 @@ Options:
         }
 
         self.do_statistics();
-        return Ok(());
+        Ok(())
     }
 
     fn do_statistics(&self) {
@@ -73,7 +72,7 @@ Options:
 
         loop {
             let r = reader.read_exact(&mut buf[0..1]);
-            if let Err(_) = r {
+            if r.is_err() {
                 break;
             }
 
@@ -83,23 +82,15 @@ Options:
             let solved = decode_utf8(&buf);
             let c = std::char::from_u32(solved.codepoint).unwrap();
 
-            if map.contains_key(&c) {
-                *map.get_mut(&c).unwrap() += 1;
+            if let std::collections::hash_map::Entry::Vacant(e) = map.entry(c) {
+                e.insert(1);
             } else {
-                map.insert(c, 1);
+                *map.get_mut(&c).unwrap() += 1;
             }
         }
 
         let mut chars_vec: Vec<_> = map.iter().collect();
-        chars_vec.sort_by(|&a, &b| {
-            return if a.1 > b.1 {
-                Ordering::Greater
-            } else if a.1 == b.1 {
-                Ordering::Equal
-            } else {
-                Ordering::Less
-            };
-        });
+        chars_vec.sort_by(|&a, &b| a.1.cmp(b.1));
 
         if self.argument.han_mode {
             let mut count = 0;

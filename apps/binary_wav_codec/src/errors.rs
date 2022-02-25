@@ -3,7 +3,7 @@ pub enum Error {
     IoError(std::io::Error),
     FormatError(FormatError),
     WavError(hound::Error),
-    UsageError(String)
+    UsageError(String),
 }
 
 impl From<std::io::Error> for Error {

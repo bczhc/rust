@@ -1,18 +1,13 @@
 use ansi_term::Color;
-use chrono::format::Fixed::{TimezoneName, TimezoneOffset};
-use chrono::format::Numeric::Timestamp;
-use chrono::{Date, DateTime, FixedOffset, Local, NaiveDate, Offset, TimeZone, Timelike, Utc};
-use clap::{App, Arg, ArgMatches};
-use git2::{Repository, RepositoryOpenFlags, Worktree};
-use std::env::current_dir;
-use std::fs::File;
-use std::io::{Cursor, Read, Stdin};
-use std::num::ParseIntError;
-use std::path::Path;
-use std::process::{Command, Stdio};
-use std::time::SystemTime;
-use terminal_size::{Height, Width};
 
+use chrono::{FixedOffset, TimeZone, Timelike, Utc};
+use clap::{App, Arg, ArgMatches};
+use git2::Repository;
+use std::env::current_dir;
+
+use std::path::Path;
+
+#[allow(unused)]
 struct Options {
     show_commits: bool,
 }
@@ -44,7 +39,7 @@ fn main() -> MyResult<()> {
 
     let repository = open_repo_including_parents(&repository_dir)?;
 
-    let options = read_options(&matches);
+    let _options = read_options(&matches);
 
     let mut walker = repository.revwalk()?;
     walker.push_head()?;
@@ -103,43 +98,42 @@ fn open_repo_including_parents(path: &str) -> MyResult<Repository> {
 fn print_frequency(arr: &[usize]) {
     let mut max_commit_count = 0;
     let plain_print = || {
-        for i in 0..arr.len() {
-            let left_string = format!("{}: {}", i, arr[i]);
-            println!("{}", left_string);
+        for (hour, count) in arr.iter().enumerate() {
+            println!("{}: {}", hour, count);
         }
     };
 
     let terminal_size = terminal_size::terminal_size();
 
-    if let None = terminal_size {
+    if terminal_size.is_none() {
         plain_print();
         return;
     }
 
     let mut max_left_string_len = 0;
-    for i in 0..arr.len() {
-        let left_string = format!("{}: {}", i, arr[i]);
+    for (hour, count) in arr.iter().enumerate() {
+        let left_string = format!("{}: {}", hour, count);
         max_left_string_len = max_left_string_len.max(left_string.len());
-        max_commit_count = max_commit_count.max(arr[i]);
+        max_commit_count = max_commit_count.max(*count);
     }
 
-    let mut proper_width = terminal_size.unwrap().0 .0 as i32 - max_left_string_len as i32;
+    let proper_width = terminal_size.unwrap().0 .0 as i32 - max_left_string_len as i32;
     if proper_width < 0 {
         plain_print();
         return;
     }
     let proper_width = proper_width as u16;
-    for i in 0..arr.len() {
-        let left_string = format!("{}: {}", i, arr[i]);
+    for (hour, count) in arr.iter().enumerate() {
+        let left_string = format!("{}: {}", hour, count);
         print!("{}", left_string);
-        let space_count = (arr[i] as f64 / max_commit_count as f64 * proper_width as f64) as u16;
+        let space_count = (*count as f64 / max_commit_count as f64 * proper_width as f64) as u16;
         let mut space_string = String::with_capacity(space_count as usize);
         for _ in 0..space_count {
             space_string.push(' ');
         }
         let indent_count = max_left_string_len - left_string.len();
         for _ in 0..indent_count {
-            print!("{}", ' ');
+            print!(" ");
         }
         println!("{}", Color::Black.on(Color::White).paint(space_string));
     }
@@ -148,6 +142,7 @@ fn print_frequency(arr: &[usize]) {
 type MyResult<T> = Result<T, Error>;
 
 #[derive(Debug)]
+#[allow(unused)]
 enum ParseError {
     ParseIntError(std::num::ParseIntError),
 }

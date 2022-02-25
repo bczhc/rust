@@ -11,24 +11,24 @@ pub struct ComplexValue<T> {
 impl<T> ComplexValue<T> {
     #[inline]
     pub fn new(re: T, im: T) -> ComplexValue<T> {
-        return Self { re, im };
+        Self { re, im }
     }
 }
 
 impl ComplexValueF64 {
     #[inline]
     pub fn module(&self) -> f64 {
-        return f64::sqrt(f64::powi(self.re, 2) + self.im.powi(2));
+        f64::sqrt(f64::powi(self.re, 2) + self.im.powi(2))
     }
 
     /// Definition: `r`e<sup>i&theta;</sup>
     pub fn from_exponent_form_with_r(r: f64, theta: f64) -> ComplexValueF64 {
-        return ComplexValueF64::from_exponent_form(theta) * r;
+        ComplexValueF64::from_exponent_form(theta) * r
     }
 
     /// Definition: e<sup>i&theta;</sup>
     pub fn from_exponent_form(theta: f64) -> ComplexValueF64 {
-        return ComplexValueF64::new(f64::cos(theta), f64::sin(theta));
+        ComplexValueF64::new(f64::cos(theta), f64::sin(theta))
     }
 
     pub fn set(&mut self, re: f64, im: f64) {
@@ -42,10 +42,10 @@ impl Add<&Self> for ComplexValueF64 {
 
     #[inline]
     fn add(self, rhs: &ComplexValueF64) -> Self::Output {
-        return Self {
+        Self {
             re: self.re + rhs.re,
             im: self.im + rhs.im,
-        };
+        }
     }
 }
 
@@ -54,7 +54,7 @@ impl Add for ComplexValueF64 {
 
     #[inline]
     fn add(self, rhs: Self) -> Self::Output {
-        return self.add(&rhs);
+        self.add(&rhs)
     }
 }
 
@@ -78,7 +78,7 @@ impl Sub for ComplexValueF64 {
 
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
-        return self.sub(&rhs);
+        self.sub(&rhs)
     }
 }
 
@@ -87,10 +87,10 @@ impl Sub<&Self> for ComplexValueF64 {
 
     #[inline]
     fn sub(self, rhs: &ComplexValueF64) -> Self::Output {
-        return Self {
+        Self {
             re: self.re - rhs.re,
             im: self.im - rhs.im,
-        };
+        }
     }
 }
 
@@ -114,7 +114,7 @@ impl Mul for ComplexValueF64 {
 
     #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
-        return self.mul(&rhs);
+        self.mul(&rhs)
     }
 }
 
@@ -123,10 +123,10 @@ impl Mul<&Self> for ComplexValueF64 {
 
     #[inline]
     fn mul(self, rhs: &ComplexValueF64) -> Self::Output {
-        return Self {
+        Self {
             re: self.re * rhs.re - self.im * rhs.im,
             im: self.re * rhs.im + self.im * rhs.re,
-        };
+        }
     }
 }
 
@@ -134,10 +134,10 @@ impl Mul<f64> for ComplexValueF64 {
     type Output = Self;
 
     fn mul(self, rhs: f64) -> Self::Output {
-        return Self {
+        Self {
             re: self.re * rhs,
             im: self.im * rhs,
-        };
+        }
     }
 }
 
@@ -170,7 +170,7 @@ impl Div for ComplexValueF64 {
 
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
-        return self.div(&rhs);
+        self.div(&rhs)
     }
 }
 
@@ -178,10 +178,10 @@ impl Div<f64> for ComplexValueF64 {
     type Output = Self;
 
     fn div(self, rhs: f64) -> Self::Output {
-        return Self {
+        Self {
             re: self.re / rhs,
             im: self.im / rhs,
-        };
+        }
     }
 }
 
@@ -191,10 +191,10 @@ impl Div<&Self> for ComplexValueF64 {
     #[inline]
     fn div(self, rhs: &ComplexValueF64) -> Self::Output {
         let a = rhs.re.powi(2) + rhs.im.powi(2);
-        return Self {
+        Self {
             re: (self.re * rhs.re + self.im * rhs.im) / a,
             im: (self.im * rhs.re - self.re * rhs.im) / a,
-        };
+        }
     }
 }
 

@@ -134,7 +134,7 @@ fn linear_bezier(p0: &PointF64, p1: &PointF64, t: f64) -> Point<f64> {
 mod test {
     use crate::complex_num::ComplexValueF64;
     use crate::epicycle::Epicycle;
-    use crate::fourier_series::{fourier_series_calc, fraction_part, LinearPath, EvaluatePath};
+    use crate::fourier_series::{fourier_series_calc, fraction_part, EvaluatePath, LinearPath};
     use crate::point::PointF64;
     use std::sync::Mutex;
 
@@ -161,7 +161,7 @@ mod test {
         let mut vec = Vec::new();
         let read = include_str!("../data/fourier-series-data.txt");
         for line in read.lines() {
-            let mut split = line.split(", ");
+            let split = line.split(", ");
             let split: Vec<&str> = split.collect();
             assert_eq!(split.len(), 2);
 
@@ -173,7 +173,7 @@ mod test {
         let path_evaluator = LinearPath::new(&vec);
         let path_evaluator_pointer = &path_evaluator as *const LinearPath as usize;
 
-        let mut vec: Vec<Epicycle> = Vec::new();
+        let vec: Vec<Epicycle> = Vec::new();
         let vec_mutex = Mutex::new(vec);
         let p = &vec_mutex as *const Mutex<Vec<Epicycle>> as usize;
 
@@ -189,7 +189,7 @@ mod test {
                 ComplexValueF64::new(point.x, point.y)
             },
             move |r| unsafe {
-                let mut guard = (&mut *(p as *mut Mutex<Vec<Epicycle>>)).lock().unwrap();
+                let mut guard = (&*(p as *mut Mutex<Vec<Epicycle>>)).lock().unwrap();
                 guard.push(r);
             },
         );
@@ -200,7 +200,7 @@ mod test {
 
         let result_text = include_str!("../data/fourier-series-result.txt");
         for line in result_text.lines() {
-            let split = line.split(" ");
+            let split = line.split(' ');
             let split: Vec<&str> = split.collect();
             assert_eq!(split.len(), 4);
 
@@ -221,10 +221,10 @@ mod test {
         };
 
         let cmp_epicycle = |e1: Epicycle, e2: Epicycle| {
-            return e1.n == e2.n
+            e1.n == e2.n
                 || float_cmp::approx_eq!(f64, e1.a.re, e2.a.re)
                 || float_cmp::approx_eq!(f64, e1.a.im, e2.a.im)
-                || float_cmp::approx_eq!(f64, e1.p, e2.p);
+                || float_cmp::approx_eq!(f64, e1.p, e2.p)
         };
 
         for epicycle in &*guard {
@@ -236,7 +236,6 @@ mod test {
 
 pub struct TimePath<'a> {
     points: &'a Vec<PointF64>,
-    segments_num: usize,
     segment_time: f64,
     points_len_minus_1: usize,
 }
@@ -252,7 +251,6 @@ impl<'a> TimePath<'a> {
 
         Self {
             points,
-            segments_num,
             segment_time,
             points_len_minus_1: points.len() - 1,
         }

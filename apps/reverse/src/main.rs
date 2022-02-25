@@ -1,9 +1,9 @@
 extern crate bczhc_lib;
 
+use bczhc_lib::io::ReadLines;
 use std::env::args;
 use std::io::{stdin, Read};
 use std::path::Path;
-use bczhc_lib::io::ReadLines;
 
 fn main() -> Result<(), String> {
     let mut args: Vec<String> = args().collect();
@@ -60,7 +60,7 @@ fn main() -> Result<(), String> {
         }
     }
 
-    return Ok(());
+    Ok(())
 }
 
 enum MsgType<'a> {
@@ -72,7 +72,7 @@ enum MsgType<'a> {
 fn show_msg(msg_type: MsgType) -> Result<(), String> {
     return match msg_type {
         MsgType::Help => {
-            let file_path = args().nth(0).unwrap();
+            let file_path = args().next().unwrap();
             let file_name = Path::new(&file_path).file_name().unwrap().to_str().unwrap();
             println!(
                 "Reverse string read from stdin.
@@ -90,8 +90,8 @@ Options:
     };
 }
 
-fn reverse_string(s: &String) -> String {
-    if s.len() == 0 {
+fn reverse_string(s: &str) -> String {
+    if s.is_empty() {
         return String::from("");
     }
     let chars: Vec<char> = s.chars().collect();
@@ -105,5 +105,5 @@ fn reverse_string(s: &String) -> String {
         r.push(chars[i]);
         i -= 1;
     }
-    return r;
+    r
 }

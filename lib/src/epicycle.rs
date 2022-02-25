@@ -1,4 +1,4 @@
-use crate::complex_num::{ComplexValue, ComplexValueF64};
+use crate::complex_num::ComplexValueF64;
 
 /// Struct for an epicycle in Fourier series
 /// -----

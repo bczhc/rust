@@ -1,11 +1,11 @@
 use bczhc_lib::char::CharsTrait;
-use bczhc_lib::io::put_char;
+
 use bczhc_lib::utf8::encode_utf8;
 use clap::{App, Arg};
 use std::collections::HashMap;
-use std::io::{stdin, stdout, BufReader, Read, Write};
+use std::io::{stdin, stdout, Read, Write};
 
-const DICT: &'static str = "abcdefghijklmnopqrstuvwxyz0123456789我的了是不就一有也么这在那个没时好后到还都可要上天他什唉真想看多说然以会能很现觉道知用样学来为得们感自些电间人机下写但又过候面爸开去里啊做种手发东和西ダチヂッツヅテデトドナニヌネノハㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿバパヒビピフブプヘベペホボポマミぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞたАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġ";
+const DICT: &str = "abcdefghijklmnopqrstuvwxyz0123456789我的了是不就一有也么这在那个没时好后到还都可要上天他什唉真想看多说然以会能很现觉道知用样学来为得们感自些电间人机下写但又过候面爸开去里啊做种手发东和西ダチヂッツヅテデトドナニヌネノハㇰㇱㇲㇳㇴㇵㇶㇷㇸㇹㇺㇻㇼㇽㇾㇿバパヒビピフブプヘベペホボポマミぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞたАБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġ";
 
 fn main() {
     let matches = App::new("base256")
@@ -24,7 +24,6 @@ fn main() {
     }
     if decode_flag {
         decode();
-        return;
     }
 }
 
@@ -39,26 +38,24 @@ fn encode() {
 
     loop {
         let result = stdin.read_exact(&mut buf);
-        if let Err(_) = result {
+        if result.is_err() {
             break;
         }
         let char = dict[buf[0] as usize];
         let size = encode_utf8(char as u32, &mut out_bytes);
-        stdout.write(&out_bytes[..size]);
+        stdout.write_all(&out_bytes[..size]).unwrap();
     }
 }
 
 fn decode() {
     let mut map = HashMap::new();
     let chars = DICT.chars();
-    let mut i = 0_usize;
-    for c in chars {
+    for (i, c) in chars.enumerate() {
         map.insert(c as u32, i as u8);
-        i += 1;
     }
 
-    let mut stdin = stdin();
-    let mut stdin = stdin.lock();
+    let stdin = stdin();
+    let stdin = stdin.lock();
     let mut buf = [0_u8; 1];
     let stdout = stdout();
     let mut stdout = stdout.lock();
@@ -70,8 +67,8 @@ fn decode() {
         }
         let byte = *map
             .get(&(c as u32))
-            .expect(format!("Invalid character: {}", c).as_str());
+            .unwrap_or_else(|| panic!("Invalid character: {}", c));
         buf[0] = byte;
-        stdout.write(&buf);
+        stdout.write_all(&buf).unwrap();
     }
 }

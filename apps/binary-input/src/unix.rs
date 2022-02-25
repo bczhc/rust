@@ -1,9 +1,9 @@
 use crate::errors::*;
 use bczhc_lib::utf8::utf8_bytes_length;
 use console::{Style, Term};
-use std::fs::File;
-use std::io::{stdin, stdout, Cursor, Read, Stdin, Stdout, Write};
-use std::os::unix::io::AsRawFd;
+
+use std::io::{Cursor, Read, Write};
+
 use termios::Termios;
 
 const STDIN_FD: i32 = 0;
@@ -58,13 +58,14 @@ pub fn main() -> Result<()> {
 
 fn bits_to_byte(bits: &[u8]) -> u8 {
     let mut byte = 0_u8;
-    for i in 0..8 {
-        let bit = if bits[i] == 0 { 0_u8 } else { 1_u8 };
+    for (i, bit) in bits.iter().enumerate().take(8) {
+        let bit = if *bit == 0 { 0_u8 } else { 1_u8 };
         byte |= bit << (7 - i);
     }
     byte
 }
 
+#[allow(unused)]
 fn to_bits_string(bits: &[u8]) -> String {
     let mut string = String::with_capacity(bits.len());
     for b in bits {
@@ -77,7 +78,7 @@ fn scan_key() -> Result<u8> {
     let stdin_fd = STDIN_FD;
 
     let saved_settings = Termios::from_fd(stdin_fd)?;
-    let mut new_settings = saved_settings.clone();
+    let mut new_settings = saved_settings;
 
     new_settings.c_lflag &= !(termios::ICANON | termios::ECHO);
     new_settings.c_cc[termios::VMIN] = 1;

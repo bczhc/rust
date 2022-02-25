@@ -14,7 +14,7 @@ Options:
 
     let args = get_args_without_self_path();
 
-    if args.len() == 0 {
+    if args.is_empty() {
         return msg_printer.show_msg(MsgType::Help);
     }
 
@@ -28,7 +28,7 @@ Options:
 
     if args.len() == 1 {
         let argv = &args[0];
-        if argv.starts_with("-") {
+        if argv.starts_with('-') {
             // interpreted as an option
             match_option(&msg_printer, &mut arguments, argv)?;
         } else {
@@ -53,7 +53,7 @@ Options:
     if args.len() == 3 {
         // (option) -- <file-path>
         if &args[1] != "--" {
-            return Err(String::from(format!("Unknown parameter: {}", &args[1])));
+            return Err(format!("Unknown parameter: {}", &args[1]));
         }
         let option = &args[0];
         let file_path = &args[2];
@@ -62,7 +62,7 @@ Options:
         return print_file_size(file_path, arguments.human_readable);
     }
 
-    return Ok(());
+    Ok(())
 }
 
 fn match_option(
@@ -81,10 +81,10 @@ fn match_option(
             return msg_printer.show_msg(MsgType::UnknownOption(option));
         }
     }
-    return Ok(());
+    Ok(())
 }
 
-fn print_file_size(file_path: &String, human_readable: bool) -> Result<(), String> {
+fn print_file_size(file_path: &str, human_readable: bool) -> Result<(), String> {
     unsafe {
         let fp = libc::fopen(string_to_c_str(file_path), str_to_c_str("rb"));
         if fp.is_null() {
@@ -104,7 +104,7 @@ fn print_file_size(file_path: &String, human_readable: bool) -> Result<(), Strin
         } else {
             println!("{}", size);
         }
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -112,8 +112,8 @@ fn str_to_c_str(s: &str) -> *const libc::c_char {
     return s.as_bytes().as_ptr() as *const libc::c_char;
 }
 
-fn string_to_c_str(s: &String) -> *const libc::c_char {
-    return str_to_c_str(s.as_str());
+fn string_to_c_str(s: &str) -> *const libc::c_char {
+    str_to_c_str(s)
 }
 
 #[cfg(target_family = "windows")]
@@ -128,12 +128,12 @@ fn portable_fseek(fp: *mut libc::FILE, offset: libc::c_long, whence: libc::c_int
 
 #[cfg(target_family = "unix")]
 fn portable_ftell(fp: *mut libc::FILE) -> libc::off_t {
-    return unsafe { libc::ftello(fp) };
+    unsafe { libc::ftello(fp) }
 }
 
 #[cfg(target_family = "unix")]
 fn portable_fseek(fp: *mut libc::FILE, offset: libc::c_long, whence: libc::c_int) -> libc::c_int {
-    return unsafe { libc::fseeko(fp, offset, whence) };
+    unsafe { libc::fseeko(fp, offset, whence) }
 }
 
 struct Arguments {

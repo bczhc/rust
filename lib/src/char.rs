@@ -11,31 +11,31 @@ use std::io::Read;
 /// assert_eq!(han_char_range('哈' as u32), true);
 /// ```
 pub fn han_char_range(codepoint: u32) -> bool {
-    if codepoint >= 0x4e00 && codepoint <= 0x9fff {
+    if (0x4e00..=0x9fff).contains(&codepoint) {
         return true;
     }
-    if codepoint >= 0x3400 && codepoint <= 0x4dbf {
+    if (0x3400..=0x4dbf).contains(&codepoint) {
         return true;
     }
-    if codepoint >= 0x20000 && codepoint <= 0x2a6df {
+    if (0x20000..=0x2a6df).contains(&codepoint) {
         return true;
     }
-    if codepoint >= 0x2a700 && codepoint <= 0x2b73f {
+    if (0x2a700..=0x2b73f).contains(&codepoint) {
         return true;
     }
-    if codepoint >= 0x2b740 && codepoint <= 0x2b81f {
+    if (0x2b740..=0x2b81f).contains(&codepoint) {
         return true;
     }
-    if codepoint >= 0x2b820 && codepoint <= 0x2ceaf {
+    if (0x2b820..=0x2ceaf).contains(&codepoint) {
         return true;
     }
-    if codepoint >= 0xf900 && codepoint <= 0xfaff {
+    if (0xf900..=0xfaff).contains(&codepoint) {
         return true;
     }
-    if codepoint >= 0x2f800 && codepoint <= 0x2fa1f {
+    if (0x2f800..=0x2fa1f).contains(&codepoint) {
         return true;
     }
-    return false;
+    false
 }
 
 /// # Examples
@@ -100,13 +100,13 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         let result = self.reader.read_exact(&mut self.buf[0..1]);
-        if let Err(_) = result {
+        if result.is_err() {
             return None;
         }
 
         let len = utf8_bytes_length(self.buf[0]);
         let result = self.reader.read_exact(&mut self.buf[1..len as usize]);
-        if let Err(_) = result {
+        if result.is_err() {
             panic!("Invalid UTF-8 bytes");
         }
 

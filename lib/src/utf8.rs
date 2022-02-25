@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SolvedUtf8Properties {
     pub bytes_length: u32,
     pub codepoint: u32,
@@ -6,10 +6,10 @@ pub struct SolvedUtf8Properties {
 
 impl SolvedUtf8Properties {
     pub fn new() -> SolvedUtf8Properties {
-        return Self {
+        Self {
             bytes_length: 0,
             codepoint: 0,
-        };
+        }
     }
 }
 
@@ -30,7 +30,7 @@ impl SolvedUtf8Properties {
 /// assert_eq!(r, 4);
 /// ```
 pub fn utf8_size(codepoint: u32) -> usize {
-    return if codepoint <= 0x7f_u32 {
+    if codepoint <= 0x7f_u32 {
         1
     } else if codepoint <= 0x7ff_u32 {
         2
@@ -40,7 +40,7 @@ pub fn utf8_size(codepoint: u32) -> usize {
         4
     } else {
         panic!("codepoint range error");
-    };
+    }
 }
 
 /// # Examples
@@ -56,17 +56,17 @@ pub fn utf8_size(codepoint: u32) -> usize {
 /// assert_eq!(utf8_bytes_length("🍎".as_bytes()[0]), 4);
 /// ```
 pub fn utf8_bytes_length(first_byte: u8) -> u32 {
-    return if first_byte & 0b1000_0000__u8 == 0b0000_0000__u8 {
+    if first_byte & 0b1000_0000_u8 == 0b0000_0000_u8 {
         1
-    } else if first_byte & 0b1110_0000__u8 == 0b1100_0000__u8 {
+    } else if first_byte & 0b1110_0000_u8 == 0b1100_0000_u8 {
         2
-    } else if first_byte & 0b1111_0000__u8 == 0b1110_0000__u8 {
+    } else if first_byte & 0b1111_0000_u8 == 0b1110_0000_u8 {
         3
-    } else if first_byte & 0b1111_1000__u8 == 0b1111_0000__u8 {
+    } else if first_byte & 0b1111_1000_u8 == 0b1111_0000_u8 {
         4
     } else {
         panic!("Invalid first byte");
-    };
+    }
 }
 
 /// # Examples
@@ -154,10 +154,10 @@ pub fn decode_utf8_with_length(bytes: &[u8], bytes_length: u32) -> SolvedUtf8Pro
         }
     };
 
-    return SolvedUtf8Properties {
+    SolvedUtf8Properties {
         codepoint,
         bytes_length,
-    };
+    }
 }
 
 /// # Examples
@@ -189,25 +189,25 @@ pub fn encode_utf8(codepoint: u32, dest: &mut [u8]) -> usize {
             dest[0] = codepoint as u8;
         }
         2 => {
-            dest[1] = 0b1000_0000__u8 | ((codepoint & 0b0011_1111__u32) as u8);
-            dest[0] = 0b1100_0000__u8 | (((codepoint >> 6) & 0b0001_1111__u32) as u8);
+            dest[1] = 0b1000_0000_u8 | ((codepoint & 0b0011_1111_u32) as u8);
+            dest[0] = 0b1100_0000_u8 | (((codepoint >> 6) & 0b0001_1111_u32) as u8);
         }
         3 => {
-            dest[2] = 0b1000_0000__u8 | ((codepoint & 0b0011_1111__u32) as u8);
-            dest[1] = 0b1000_0000__u8 | (((codepoint >> 6) & 0b0011_1111__u32) as u8);
-            dest[0] = 0b1110_0000__u8 | (((codepoint >> 12) & 0b0000_1111__u32) as u8);
+            dest[2] = 0b1000_0000_u8 | ((codepoint & 0b0011_1111_u32) as u8);
+            dest[1] = 0b1000_0000_u8 | (((codepoint >> 6) & 0b0011_1111_u32) as u8);
+            dest[0] = 0b1110_0000_u8 | (((codepoint >> 12) & 0b0000_1111_u32) as u8);
         }
         4 => {
-            dest[3] = 0b1000_0000__u8 | ((codepoint & 0b0011_1111__u32) as u8);
-            dest[2] = 0b1000_0000__u8 | (((codepoint >> 6) & 0b0011_1111__u32) as u8);
-            dest[1] = 0b1000_0000__u8 | (((codepoint >> 12) & 0b0011_1111__u32) as u8);
-            dest[0] = 0b1111_0000__u8 | (((codepoint >> 18) & 0b0000_0111__u32) as u8);
+            dest[3] = 0b1000_0000_u8 | ((codepoint & 0b0011_1111_u32) as u8);
+            dest[2] = 0b1000_0000_u8 | (((codepoint >> 6) & 0b0011_1111_u32) as u8);
+            dest[1] = 0b1000_0000_u8 | (((codepoint >> 12) & 0b0011_1111_u32) as u8);
+            dest[0] = 0b1111_0000_u8 | (((codepoint >> 18) & 0b0000_0111_u32) as u8);
         }
         _ => {
             panic!();
         }
     }
-    return utf8_size;
+    utf8_size
 }
 
 /// The UTF-16 surrogate pair struct
@@ -228,9 +228,9 @@ pub struct Surrogate {
 /// assert_eq!(std::char::from_u32(unicode).unwrap(), '🍇');
 /// ```
 pub fn surrogate_pair_to_unicode(lead: u16, trail: u16) -> u32 {
-    return (((((lead - 0xd800_u16) & 0b11_1111_1111__u16) as u32) << 10u32)
-        | (((trail - 0xdc00_u16) & 0b11_1111_1111__u16) as u32))
-        + 0x10000;
+    (((((lead - 0xd800_u16) & 0b11_1111_1111_u16) as u32) << 10u32)
+        | (((trail - 0xdc00_u16) & 0b11_1111_1111_u16) as u32))
+        + 0x10000
 }
 
 /// # Examples
@@ -244,7 +244,7 @@ pub fn surrogate_pair_to_unicode(lead: u16, trail: u16) -> u32 {
 /// ```
 pub fn unicode_to_surrogate_pair(codepoint: u32) -> Surrogate {
     let codepoint = codepoint - 0x10000_u32;
-    let trail = ((codepoint & 0b11_1111_1111__u32) as u16) + 0xdc00_u16;
+    let trail = ((codepoint & 0b11_1111_1111_u32) as u16) + 0xdc00_u16;
     let lead = ((codepoint >> 10_u32) as u16) + 0xd800_u16;
-    return Surrogate { lead, trail };
+    Surrogate { lead, trail }
 }

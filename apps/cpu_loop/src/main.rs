@@ -15,6 +15,7 @@ fn main() {
     println!("count: {}", count);
 
     for _i in 0..count {
+        #[allow(clippy::empty_loop)]
         spawn(|| loop {});
     }
 

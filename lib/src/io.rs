@@ -1,8 +1,7 @@
 use crate::utf8::encode_utf8;
 use std::fs::{File, OpenOptions};
-use std::io::{BufWriter, Cursor, Error, ErrorKind, Read};
+use std::io::{Error, ErrorKind, Read};
 use std::path::Path;
-use std::sync::mpsc::RecvError;
 
 trait ReadLine {
     /// Read lines without the end newline mark (CR and/or LF)
@@ -69,7 +68,7 @@ where
             let result = self.read_exact(&mut buf);
             if let Err(e) = result {
                 if let ErrorKind::UnexpectedEof = e.kind() {
-                    return if read.len() == 0 {
+                    return if read.is_empty() {
                         None
                     } else {
                         Some(String::from_utf8(read).unwrap())
@@ -83,7 +82,7 @@ where
             }
             read.push(buf[0]);
         }
-        return Some(String::from_utf8(read).unwrap());
+        Some(String::from_utf8(read).unwrap())
     }
 }
 
@@ -199,8 +198,8 @@ pub fn put_c_char(c: u8) -> std::io::Result<()> {
 pub fn put_char(c: char) -> std::io::Result<()> {
     let mut bytes = [0_u8; 4];
     let size = encode_utf8(c as u32, &mut bytes);
-    for i in 0..size {
-        put_c_char(bytes[i])?;
+    for b in bytes.iter().take(size) {
+        put_c_char(*b)?;
     }
     Ok(())
 }
