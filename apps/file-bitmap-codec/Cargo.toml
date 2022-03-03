@@ -1,20 +1,13 @@
 [package]
-name = "file-bitmap-codec"
+name = "file-bmp-codec"
 version = "1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[bin]]
-name = "file2bmp"
-path = "src/encode.rs"
-
-[[bin]]
-name = "bmp2file"
-path = "src/decode.rs"
-
 [dependencies]
 bmp = "0.5.0"
+image = "0.24.1"
 byteorder = "1.4.3"
 bczhc_lib = { path = "../../lib", version = "1.0.0" }
-clap = "2.33.3"
+clap = { version = "3.1.2", features = ["derive"] }
