@@ -1,5 +1,5 @@
 [package]
-name = "file_bitmap_codec"
+name = "file-bitmap-codec"
 version = "1.0.0"
 edition = "2021"
 

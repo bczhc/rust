@@ -8,21 +8,21 @@ edition = "2021"
 
 [workspace]
 members = [
-    "apps/character_statistics",
-    "apps/file_size",
+    "apps/character-statistics",
+    "apps/file-size",
     "apps/reverse",
-    "apps/shuffle_string",
-    "apps/stdin_size",
+    "apps/shuffle-string",
+    "apps/stdin-size",
     "apps/utf-converter",
-    "apps/file_and_bitmap_streamed_converter",
-    "apps/cpu_loop",
-    "apps/char_count",
+    "apps/file-bitmap-codec",
+    "apps/cpu-loop",
+    "apps/char-count",
     "apps/regex",
     "apps/transfer",
     "apps/base256",
     "apps/wrap",
-    "apps/git_commit_time_statistics",
-    "apps/binary_wav_codec",
+    "apps/git-commit-time-statistics",
+    "apps/binary-wav-codec",
     "apps/binary-input",
 ]
 
