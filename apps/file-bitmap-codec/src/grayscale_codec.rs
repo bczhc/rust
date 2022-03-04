@@ -15,7 +15,8 @@ pub fn encode(src: &str, dest: &str) -> Result<()> {
     let mut image = GrayImage::new(width as u32, height as u32);
     let mut pixels_mut = image.pixels_mut();
 
-    for b in file.bytes() {
+    let reader = BufReader::new(file);
+    for b in reader.bytes() {
         pixels_mut.next().unwrap().0[0] = b?;
     }
 
