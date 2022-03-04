@@ -83,8 +83,7 @@ fn main() -> Result<()> {
         (CodecType::Grayscale, "encode") => grayscale_codec::encode(src, dest),
         (CodecType::Grayscale, "decode") => grayscale_codec::decode(src, dest),
         _ => {
-            println!("{:?}", subcommand.1.value_of("type"));
-            Ok(())
+            unreachable!()
         }
     }
 }

@@ -1,21 +1,12 @@
-use bmp::BmpError;
-
 pub type Result<R> = std::result::Result<R, Error>;
 
-#[derive(Debug)]
-pub enum Error {
-    BmpError(bmp::BmpError),
-    IoError(std::io::Error),
-}
+use quick_error::quick_error;
 
-impl From<BmpError> for Error {
-    fn from(e: BmpError) -> Self {
-        Error::BmpError(e)
-    }
-}
-
-impl From<std::io::Error> for Error {
-    fn from(e: std::io::Error) -> Self {
-        Error::IoError(e)
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        BmpError(err: bmp::BmpError) { from() }
+        IoError(err: std::io::Error) { from() }
+        ImageError(err: image::ImageError) { from() }
     }
 }

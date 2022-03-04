@@ -393,6 +393,7 @@ dependencies = [
  "byteorder",
  "clap 3.1.5",
  "image",
+ "quick-error",
 ]
 
 [[package]]
