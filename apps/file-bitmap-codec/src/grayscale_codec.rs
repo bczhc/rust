@@ -1,5 +1,6 @@
 use crate::Result;
 use bczhc_lib::io::OpenOrCreate;
+use image::io::Reader;
 use image::GrayImage;
 use image::ImageFormat;
 use std::fs::File;
@@ -27,11 +28,12 @@ pub fn encode(src: &str, dest: &str) -> Result<()> {
 }
 
 pub fn decode(src: &str, dest: &str) -> Result<()> {
-    let mut reader = BufReader::new(File::open(src)?);
+    let mut reader = Reader::new(BufReader::new(File::open(src)?));
+    reader.no_limits();
+    reader.set_format(ImageFormat::Bmp);
+    let image = reader.decode()?.into_luma8();
 
     let mut writer = BufWriter::new(File::open_or_create(dest)?);
-
-    let image = image::load(&mut reader, ImageFormat::Bmp)?.into_luma8();
     for x in image.pixels() {
         writer.write_all(&x.0)?;
     }
