@@ -26,3 +26,5 @@ pub mod fs;
 pub mod libc;
 
 pub mod lazy;
+
+pub mod macros;

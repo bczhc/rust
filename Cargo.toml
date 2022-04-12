@@ -24,6 +24,8 @@ members = [
     "apps/git-commit-time-statistics",
     "apps/binary-wav-codec",
     "apps/binary-input",
+    "apps/forward",
+    "apps/tunnel",
 ]
 
 [[bin]]
