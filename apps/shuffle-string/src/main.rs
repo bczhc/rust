@@ -1,7 +1,7 @@
-use bczhc_lib::io::ReadLines;
-use rand::{thread_rng, Rng};
+use rand::prelude::SliceRandom;
+use rand::thread_rng;
 use std::env::args;
-use std::io::{stdin, Read};
+use std::io::{stdin, stdout, Read, Write};
 use std::path::Path;
 
 fn main() -> Result<(), String> {
@@ -34,38 +34,42 @@ fn main() -> Result<(), String> {
 
     match shuffle_mode {
         ShuffleMode::Line => {
-            let mut stdin = stdin();
-            let lines = ReadLines::lines(&mut stdin);
+            let stdin = stdin();
+            let lines = stdin.lines();
             for line in lines {
-                shuffle_string_and_print(&line);
+                match line {
+                    Ok(line) => {
+                        println!("{}", shuffle_string(&line));
+                    }
+                    Err(e) => {
+                        return show_msg(MsgType::IoError(e));
+                    }
+                }
             }
-            // newline to flush the stdout buffer
-            println!();
         }
         ShuffleMode::All => {
             let mut s = String::new();
             stdin().read_to_string(&mut s).unwrap();
-            shuffle_string_and_print(&s);
+            print!("{}", shuffle_string(&s));
+            stdout().flush().unwrap();
         }
     }
     Ok(())
 }
 
-fn shuffle_string_and_print(s: &str) {
+fn shuffle_string(s: &str) -> String {
     let mut rng = thread_rng();
 
-    let chars = s.chars();
-    let mut chars: Vec<char> = chars.collect();
-    while !chars.is_empty() {
-        let c = chars.remove(rng.gen_range(0..chars.len()));
-        print!("{}", c);
-    }
+    let mut chars = s.chars().collect::<Vec<_>>();
+    chars.shuffle(&mut rng);
+    String::from_iter(chars)
 }
 
 enum MsgType<'a> {
     Help,
     InvalidArgumentCount(usize),
     UnknownOption(&'a String),
+    IoError(std::io::Error),
 }
 
 enum ShuffleMode {
@@ -95,6 +99,9 @@ Options:
         }
         MsgType::UnknownOption(option) => {
             return Err(format!("Unknown option: {}", option));
+        }
+        MsgType::IoError(e) => {
+            return Err(format!("I/O error: {}", e));
         }
     };
 }
