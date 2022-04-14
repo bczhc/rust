@@ -1,11 +1,12 @@
-use bczhc_lib::{rw_read, rw_write};
-use clap::{Arg, Command};
-use forward::errors::*;
-use once_cell::sync::Lazy;
-use std::io::{Read, Write};
-use std::net::{SocketAddrV4, TcpListener, TcpStream};
-use std::sync::{Arc, RwLock};
+use std::net::{SocketAddr, SocketAddrV4, TcpListener, TcpStream, ToSocketAddrs};
+use std::sync::RwLock;
 use std::thread::spawn;
+
+use clap::{Arg, Command};
+use once_cell::sync::Lazy;
+
+use bczhc_lib::{rw_read, rw_write};
+use forward::errors::*;
 
 static ARGUMENTS: Lazy<RwLock<Arguments>> = Lazy::new(|| RwLock::new(Arguments::default()));
 
@@ -18,64 +19,31 @@ fn main() -> Result<()> {
     let address = matches.value_of("address").unwrap();
     let forward_port: u16 = matches.value_of("forward-port").unwrap().parse()?;
 
-    rw_write!(ARGUMENTS).address = Some(String::from(address));
+    let to_addr = address.to_socket_addrs()?.next().unwrap();
+    rw_write!(ARGUMENTS).to_addr = Some(to_addr);
 
     let listener = TcpListener::bind(SocketAddrV4::new("0.0.0.0".parse().unwrap(), forward_port))?;
 
     loop {
         let accept = listener.accept()?;
-        println!("Accept: {:?}", accept);
+        let client_addr = accept.1;
+        println!("Accept: {:?}", client_addr);
         spawn(move || {
             handle_connection(accept.0).unwrap();
+            println!("Disconnected: {:?}", client_addr);
         });
     }
 }
 
 fn handle_connection(access_stream: TcpStream) -> Result<()> {
-    let guard = rw_read!(ARGUMENTS);
-    let address = guard.address.as_ref().unwrap();
+    let to_addr = rw_read!(ARGUMENTS).to_addr.unwrap();
+    let local_stream = TcpStream::connect(to_addr)?;
 
-    let local_stream = TcpStream::connect(address)?;
-
-    let access_stream_arc = Arc::new(access_stream);
-    let local_stream_arc = Arc::new(local_stream);
-
-    let access_stream = Arc::clone(&access_stream_arc);
-    let local_stream = Arc::clone(&local_stream_arc);
-    let t1 = spawn(move || {
-        // copy access_stream to local_stream
-        let mut buf = [0; 1024];
-        loop {
-            let n = access_stream.as_ref().read(&mut buf).unwrap();
-            if n == 0 {
-                break;
-            }
-            println!("access_stream -> local_stream: {:?}", &buf[..n]);
-            local_stream.as_ref().write_all(&buf[..n]).unwrap();
-        }
-    });
-
-    let access_stream = Arc::clone(&access_stream_arc);
-    let local_stream = Arc::clone(&local_stream_arc);
-    let t2 = spawn(move || {
-        // copy local_stream to access_stream
-        let mut buf = [0; 1024];
-        loop {
-            let n = local_stream.as_ref().read(&mut buf).unwrap();
-            if n == 0 {
-                break;
-            }
-            println!("local_stream -> access_stream: {:?}", &buf[..n]);
-            access_stream.as_ref().write_all(&buf[..n]).unwrap();
-        }
-    });
-
-    t1.join()?;
-    t2.join()?;
+    bczhc_lib::io::poll::poll_between_two_streams(&access_stream, &local_stream)?;
     Ok(())
 }
 
 #[derive(Default)]
 struct Arguments {
-    address: Option<String>,
+    to_addr: Option<SocketAddr>,
 }

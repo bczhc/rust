@@ -1,10 +1,11 @@
-pub type Result<T> = std::result::Result<T, Error>;
-
 use std::any::Any;
 use std::fmt::Debug;
 use std::net::AddrParseError;
 use std::num::ParseIntError;
+
 use thiserror::Error;
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -16,6 +17,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("others")]
     Others(Box<dyn Any + Send + 'static>),
+    #[error("{0}")]
+    Errno(#[from] errno::Errno),
 }
 
 impl From<Box<dyn Any + Send + 'static>> for Error {
