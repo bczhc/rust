@@ -1,0 +1,16 @@
+[package]
+name = "ncat"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "my-ncat"
+path = "src/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = "3.1.8"
+thiserror = "1.0.30"
+libc = "0.2.122"
+errno = "0.2.8"

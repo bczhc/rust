@@ -25,7 +25,7 @@ members = [
     "apps/binary-wav-codec",
     "apps/binary-input",
     "apps/forward",
-    "apps/tunnel",
+    "apps/ncat",
 ]
 
 [[bin]]
