@@ -1,6 +1,8 @@
-use clap::{Arg, Command};
-use ncat::errors::*;
 use std::io::{Cursor, Read};
+
+use clap::{Arg, Command};
+
+use ncat::errors::*;
 
 fn main() -> Result<()> {
     let mut app = Command::new("ncat")

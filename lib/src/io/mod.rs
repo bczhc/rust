@@ -3,6 +3,9 @@ use std::fs::{File, OpenOptions};
 use std::io::{Error, ErrorKind, Read};
 use std::path::Path;
 
+pub mod errors;
+pub mod poll;
+
 trait ReadLine {
     /// Read lines without the end newline mark (CR and/or LF)
     fn read_line_without_line_terminator(&mut self) -> Option<String>;
