@@ -41,7 +41,7 @@ pub fn loop_poll(routes: &[PollRoute]) -> Result<()> {
 
     unsafe {
         'poll_loop: loop {
-            let res = poll(fds.as_mut_ptr(), fds.len() as libc::nfds_t, 0);
+            let res = poll(fds.as_mut_ptr(), fds.len() as libc::nfds_t, -1);
             if res == -1 {
                 return Err(errno_error());
             }
