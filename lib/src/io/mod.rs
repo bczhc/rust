@@ -1,10 +1,15 @@
-use crate::utf8::encode_utf8;
 use std::fs::{File, OpenOptions};
-use std::io::{Error, ErrorKind, Read};
+use std::io;
+use std::io::{Error, ErrorKind, Read, Write};
+use std::net::TcpStream;
 use std::path::Path;
+use std::thread::{spawn, JoinHandle};
+
+use cfg_if::cfg_if;
+
+use crate::utf8::encode_utf8;
 
 pub mod errors;
-pub mod poll;
 
 trait ReadLine {
     /// Read lines without the end newline mark (CR and/or LF)
@@ -264,5 +269,140 @@ where
                 }
             }
         }
+    }
+}
+
+pub fn pipe_thread<R, W>(reader: R, writer: W) -> JoinHandle<io::Result<()>>
+where
+    R: Read + Send + 'static,
+    W: Write + Send + 'static,
+{
+    fn pipe<R, W>(mut reader: R, mut writer: W) -> io::Result<()>
+    where
+        R: Read,
+        W: Write,
+    {
+        let mut buf = [0_u8; 4096];
+        loop {
+            let size = reader.read(&mut buf)?;
+            if size == 0 {
+                break;
+            }
+            writer.write_all(&buf[..size])?;
+        }
+        Ok(())
+    }
+
+    spawn(move || pipe(reader, writer))
+}
+
+pub fn attach_tcp_stream_to_stdio(stream: &mut TcpStream) -> io::Result<()> {
+    cfg_if! {
+        if #[cfg(unix)] {
+            unix::attach_tcp_stream_to_stdio(stream)
+        } else {
+            generic::attach_tcp_stream_to_stdio(stream)
+        }
+    }
+}
+
+pub fn interact_two_stream(stream1: &mut TcpStream, stream2: &mut TcpStream) -> io::Result<()> {
+    cfg_if! {
+        if #[cfg(unix)] {
+            unix::interact_two_stream(stream1, stream2)
+        } else {
+            generic::interact_two_stream(stream1, stream2)
+        }
+    }
+}
+
+#[cfg(unix)]
+mod unix {
+    use std::io;
+    use std::io::{stdin, stdout, Read, Write};
+    use std::net::TcpStream;
+
+    use polling::{Event, Poller};
+
+    macro_rules! interact_two_stream_code_gen {
+        ($stream1:expr, $stream2:expr,
+        $stream1_dest:expr, $stream2_dest:expr) => {
+            let stream1_key = 0;
+            let stream2_key = 1;
+
+            let poller = Poller::new()?;
+            poller.add(&*$stream1, Event::readable(stream1_key))?;
+            poller.add(&*$stream2, Event::readable(stream2_key))?;
+
+            let mut events = Vec::new();
+            let mut buf = [0_u8; 4096];
+            'poll_loop: loop {
+                events.clear();
+                poller.wait(&mut events, None)?;
+                for ev in &events {
+                    let key = ev.key;
+                    let readable = ev.readable;
+                    match ev.key {
+                        _ if key == stream1_key && readable => {
+                            let size = $stream1.read(&mut buf)?;
+                            if size == 0 {
+                                break 'poll_loop;
+                            }
+                            $stream1_dest.write_all(&buf[..size])?;
+                        }
+                        _ if key == stream2_key && readable => {
+                            let size = $stream2.read(&mut buf)?;
+                            if size == 0 {
+                                break 'poll_loop;
+                            }
+                            $stream2_dest.write_all(&buf[..size])?;
+                        }
+                        _ => {
+                            unreachable!();
+                        }
+                    }
+                    poller.modify(&*$stream1, Event::readable(stream1_key))?;
+                    poller.modify(&*$stream2, Event::readable(stream2_key))?;
+                }
+            }
+
+            return Ok(())
+        };
+    }
+
+    pub fn attach_tcp_stream_to_stdio(stream: &mut TcpStream) -> io::Result<()> {
+        let stdin = &mut stdin().lock();
+        let stdout = &mut stdout().lock();
+
+        interact_two_stream_code_gen!(stream, stdin, stdout, stream);
+    }
+
+    pub fn interact_two_stream(stream1: &mut TcpStream, stream2: &mut TcpStream) -> io::Result<()> {
+        interact_two_stream_code_gen!(stream1, stream2, stream2, stream1);
+    }
+}
+
+#[cfg(not(unix))]
+mod generic {
+    use std::io;
+    use std::io::{stdin, stdout};
+    use std::net::TcpStream;
+
+    use crate::io::pipe_thread;
+
+    pub fn attach_tcp_stream_to_stdio(stream: &mut TcpStream) -> io::Result<()> {
+        let t1 = pipe_thread(stdin(), stream.try_clone()?);
+        let t2 = pipe_thread(stream.try_clone()?, stdout());
+        t1.join().unwrap()?;
+        t2.join().unwrap()?;
+        Ok(())
+    }
+
+    pub fn interact_two_stream(stream1: &mut TcpStream, stream2: &mut TcpStream) -> io::Result<()> {
+        let t1 = pipe_thread(stream1.try_clone()?, stream2.try_clone()?);
+        let t2 = pipe_thread(stream2.try_clone()?, stream1.try_clone()?);
+        t1.join().unwrap()?;
+        t2.join().unwrap()?;
+        Ok(())
     }
 }
