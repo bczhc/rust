@@ -26,6 +26,7 @@ members = [
     "apps/binary-input",
     "apps/forward",
     "apps/ncat",
+    "apps/http-server"
 ]
 
 [[bin]]
