@@ -1,5 +1,6 @@
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io;
+use std::io::{BufReader, Read, Write};
 use std::net::{SocketAddrV4, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
@@ -43,8 +44,8 @@ fn handle_connection(stream: &mut TcpStream) -> Result<()> {
             let request_header = std::str::from_utf8(&read).unwrap();
             println!("Request header: {request_header}");
 
-            let response = handle_request(request_header);
-            stream.write_all(&response)?;
+            handle_request(request_header, stream)?;
+            stream.flush()?;
             break;
         }
     }
@@ -55,7 +56,7 @@ static HTTP_REQUEST_PATTERN_STR: &str = "^[a-zA-Z]* (.*) HTTP/.*$";
 static HTTP_REQUEST_PATTERN: Lazy<RwLock<Regex>> =
     Lazy::new(|| RwLock::new(Regex::new(HTTP_REQUEST_PATTERN_STR).unwrap()));
 
-fn handle_request(header: &str) -> Vec<u8> {
+fn handle_request(header: &str, stream: &mut TcpStream) -> Result<()> {
     let http_request_pattern = rw_read!(HTTP_REQUEST_PATTERN);
     let root_location_guard = rw_read!(ROOT_LOCATION);
     let root_location = root_location_guard.as_ref().unwrap().as_str();
@@ -63,7 +64,8 @@ fn handle_request(header: &str) -> Vec<u8> {
     let lines = header.lines().collect::<Vec<_>>();
 
     if !http_request_pattern.is_match(lines[0]) {
-        return construct_response_data(400, "Bad Request");
+        stream.write_response_header(400, "Bad Request")?;
+        return Ok(());
     }
     let raw_request_path = http_request_pattern
         .captures(lines[0])
@@ -88,7 +90,8 @@ fn handle_request(header: &str) -> Vec<u8> {
     let request_path = unsafe { std::str::from_utf8_unchecked(&request_path) };
 
     if request_path.as_bytes()[0] != b'/' {
-        return construct_response_data(400, "Bad Request");
+        stream.write_response_header(400, "Bad Request")?;
+        return Ok(());
     }
 
     let mut path_buf = PathBuf::from(root_location);
@@ -97,7 +100,8 @@ fn handle_request(header: &str) -> Vec<u8> {
     let path = path_buf.as_path();
 
     if !path.exists() {
-        return construct_response_data(404, "Not Found");
+        stream.write_response_header(404, "Not Found")?;
+        return Ok(());
     }
     if path.is_dir() {
         let mut index1 = PathBuf::from(path);
@@ -106,51 +110,50 @@ fn handle_request(header: &str) -> Vec<u8> {
         index2.push("index.htm");
 
         if index1.exists() && index1.is_file() {
-            return construct_file_response_data(&index1);
+            stream.write_file_http_response(&index1)?;
+            return Ok(());
         }
         if index2.exists() && index2.is_file() {
-            return construct_file_response_data(&index2);
+            stream.write_file_http_response(&index2)?;
+            return Ok(());
         }
 
-        construct_response_data(403, "Forbidden")
+        stream.write_response_header(403, "Forbidden")?;
+        Ok(())
     } else if path.is_file() {
-        construct_file_response_data(path)
+        stream.write_file_http_response(&path)?;
+        Ok(())
     } else {
-        construct_response_data(403, "Forbidden")
+        stream.write_response_header(403, "Forbidden")?;
+        Ok(())
     }
 }
 
-fn construct_file_response_data<P>(path: P) -> Vec<u8>
+trait WriteHttp {
+    fn write_response_header(&mut self, status_code: u16, status_message: &str) -> io::Result<()>;
+
+    fn write_file_content(&mut self, file: &mut File) -> io::Result<()>;
+
+    fn write_file_http_response<P>(&mut self, path: P) -> io::Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        let mut file = File::open(path)?;
+        self.write_response_header(200, "OK")?;
+        self.write_file_content(&mut file)
+    }
+}
+
+impl<W> WriteHttp for W
 where
-    P: AsRef<Path>,
+    W: Write,
 {
-    let file = File::open(path);
-    if file.is_err() {
-        return construct_response_data(500, "Internal Server Error");
+    fn write_response_header(&mut self, status_code: u16, status_message: &str) -> io::Result<()> {
+        write!(self, "HTTP/1.1 {} {}\r\n\r\n", status_code, status_message)
     }
 
-    let file = file.unwrap();
-    let mut response_data = construct_response_data(200, "OK");
-
-    let result = append_read_file_data(&mut response_data, file);
-    if result.is_err() {
-        return construct_response_data(500, "Internal Server Error");
+    fn write_file_content(&mut self, file: &mut File) -> io::Result<()> {
+        let mut reader = BufReader::new(file);
+        io::copy(&mut reader, self).map(|_| ())
     }
-    response_data
-}
-
-fn construct_response_data(status: u16, msg: &str) -> Vec<u8> {
-    format!("HTTP/1.1 {} {}\r\n\r\n", status, msg).into()
-}
-
-fn append_read_file_data(vec: &mut Vec<u8>, mut file: File) -> Result<()> {
-    let mut buf = [0; 1024];
-    loop {
-        let read = file.read(&mut buf)?;
-        if read == 0 {
-            break;
-        }
-        vec.extend_from_slice(&buf[0..read]);
-    }
-    Ok(())
 }
