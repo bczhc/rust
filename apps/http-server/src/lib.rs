@@ -29,7 +29,7 @@ impl CapitalizeHeader for HeaderName {
     fn to_capitalized(&self) -> String {
         let name = self.as_str();
         let mut capitalized = Vec::with_capacity(name.len());
-        let mut should_capitalize = false;
+        let mut should_capitalize = true;
 
         for c in name.bytes() {
             if should_capitalize {
