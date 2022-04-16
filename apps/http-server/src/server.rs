@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 use std::thread::spawn;
 
+use http::header::CONTENT_TYPE;
 use http::response::Builder;
 use http::{HeaderMap, Response, StatusCode, Version};
 use once_cell::sync::Lazy;
@@ -180,11 +181,19 @@ impl<'a, W> WriteHttpResponse<FileBody<'a>> for W
 where
     W: Write,
 {
-    fn write_response(&mut self, response: Response<FileBody<'a>>) -> io::Result<()> {
+    fn write_response(&mut self, mut response: Response<FileBody<'a>>) -> io::Result<()> {
         self.write_head_line(response.version(), response.status())?;
-        self.write_headers(response.headers())?;
 
         let file_path = response.body().path;
+        let guessed_mime = mime_guess::from_path(file_path);
+
+        let headers = response.headers_mut();
+        for mime in guessed_mime.iter().take(1) {
+            headers.insert(CONTENT_TYPE, mime.as_ref().parse().unwrap());
+        }
+
+        self.write_headers(headers)?;
+
         let file = File::open(file_path)?;
         let mut reader = BufReader::new(file);
         io::copy(&mut reader, self)?;
