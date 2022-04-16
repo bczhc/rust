@@ -6,12 +6,15 @@ use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 use std::thread::spawn;
 
+use http::response::Builder;
+use http::{HeaderMap, Response, StatusCode, Version};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
 use bczhc_lib::{rw_read, rw_write};
 
 use crate::errors::*;
+use crate::{CapitalizeHeader, HttpVersionAsStr};
 
 static ROOT_LOCATION: Lazy<RwLock<Option<String>>> = Lazy::new(|| RwLock::new(None));
 
@@ -64,7 +67,7 @@ fn handle_request(header: &str, stream: &mut TcpStream) -> Result<()> {
     let lines = header.lines().collect::<Vec<_>>();
 
     if !http_request_pattern.is_match(lines[0]) {
-        stream.write_response_header(400, "Bad Request")?;
+        stream.write_response(Response::empty_body(StatusCode::BAD_REQUEST))?;
         return Ok(());
     }
     let raw_request_path = http_request_pattern
@@ -90,7 +93,7 @@ fn handle_request(header: &str, stream: &mut TcpStream) -> Result<()> {
     let request_path = unsafe { std::str::from_utf8_unchecked(&request_path) };
 
     if request_path.as_bytes()[0] != b'/' {
-        stream.write_response_header(400, "Bad Request")?;
+        stream.write_response(Response::empty_body(StatusCode::BAD_REQUEST))?;
         return Ok(());
     }
 
@@ -100,7 +103,7 @@ fn handle_request(header: &str, stream: &mut TcpStream) -> Result<()> {
     let path = path_buf.as_path();
 
     if !path.exists() {
-        stream.write_response_header(404, "Not Found")?;
+        stream.write_response(Response::empty_body(StatusCode::NOT_FOUND))?;
         return Ok(());
     }
     if path.is_dir() {
@@ -110,50 +113,145 @@ fn handle_request(header: &str, stream: &mut TcpStream) -> Result<()> {
         index2.push("index.htm");
 
         if index1.exists() && index1.is_file() {
-            stream.write_file_http_response(&index1)?;
+            stream.write_response(Response::file_body(&index1))?;
             return Ok(());
         }
         if index2.exists() && index2.is_file() {
-            stream.write_file_http_response(&index2)?;
+            stream.write_response(Response::file_body(&index2))?;
             return Ok(());
         }
 
-        stream.write_response_header(403, "Forbidden")?;
+        stream.write_response(Response::empty_body(StatusCode::FORBIDDEN))?;
         Ok(())
     } else if path.is_file() {
-        stream.write_file_http_response(&path)?;
+        stream.write_response(Response::file_body(path))?;
         Ok(())
     } else {
-        stream.write_response_header(403, "Forbidden")?;
+        stream.write_response(Response::empty_body(StatusCode::FORBIDDEN))?;
         Ok(())
     }
 }
 
 trait WriteHttp {
-    fn write_response_header(&mut self, status_code: u16, status_message: &str) -> io::Result<()>;
+    fn write_head_line(&mut self, version: Version, status: StatusCode) -> io::Result<()>;
 
-    fn write_file_content(&mut self, file: &mut File) -> io::Result<()>;
+    fn write_headers(&mut self, headers: &HeaderMap) -> io::Result<()>;
 
-    fn write_file_http_response<P>(&mut self, path: P) -> io::Result<()>
-    where
-        P: AsRef<Path>,
-    {
-        let mut file = File::open(path)?;
-        self.write_response_header(200, "OK")?;
-        self.write_file_content(&mut file)
-    }
+    fn write_crlf(&mut self) -> io::Result<()>;
 }
 
 impl<W> WriteHttp for W
 where
     W: Write,
 {
-    fn write_response_header(&mut self, status_code: u16, status_message: &str) -> io::Result<()> {
-        write!(self, "HTTP/1.1 {} {}\r\n\r\n", status_code, status_message)
+    /// with ending CRLF
+    fn write_head_line(&mut self, version: Version, status: StatusCode) -> io::Result<()> {
+        let head_line = format!(
+            "{} {} {}",
+            version.as_str(),
+            status.as_u16(),
+            status.as_str()
+        );
+        self.write_all(head_line.as_bytes())?;
+        self.write_crlf()
     }
 
-    fn write_file_content(&mut self, file: &mut File) -> io::Result<()> {
+    /// ending with two CRLFs (one empty line), meaning the body can be written immediately
+    fn write_headers(&mut self, headers: &HeaderMap) -> io::Result<()> {
+        for (name, value) in headers {
+            let standard_name = name.to_capitalized();
+            let header_line = format!("{}: {}", standard_name, value.to_str().unwrap());
+            self.write_all(header_line.as_bytes())?;
+            self.write_crlf()?;
+        }
+        self.write_crlf()
+    }
+
+    fn write_crlf(&mut self) -> io::Result<()> {
+        self.write_all(b"\r\n")
+    }
+}
+
+trait WriteHttpResponse<R> {
+    fn write_response(&mut self, response: Response<R>) -> io::Result<()>;
+}
+
+impl<'a, W> WriteHttpResponse<FileBody<'a>> for W
+where
+    W: Write,
+{
+    fn write_response(&mut self, response: Response<FileBody<'a>>) -> io::Result<()> {
+        self.write_head_line(response.version(), response.status())?;
+        self.write_headers(response.headers())?;
+
+        let file_path = response.body().path;
+        let file = File::open(file_path)?;
         let mut reader = BufReader::new(file);
-        io::copy(&mut reader, self).map(|_| ())
+        io::copy(&mut reader, self)?;
+
+        Ok(())
+    }
+}
+
+impl<W> WriteHttpResponse<EmptyBody> for W
+where
+    W: Write,
+{
+    fn write_response(&mut self, response: Response<EmptyBody>) -> io::Result<()> {
+        self.write_head_line(response.version(), response.status())?;
+        self.write_headers(response.headers())
+    }
+}
+
+#[derive(Copy, Clone)]
+struct EmptyBody {}
+
+static EMPTY_BODY: EmptyBody = EmptyBody {};
+
+static HTTP_VERSION: Version = Version::HTTP_11;
+
+trait DefaultBuilder {
+    fn default_builder() -> Builder;
+}
+
+impl<T> DefaultBuilder for Response<T> {
+    fn default_builder() -> Builder {
+        Response::builder().version(HTTP_VERSION)
+    }
+}
+
+trait BuildEmptyBody {
+    fn empty_body(status: StatusCode) -> Response<EmptyBody>;
+}
+
+impl BuildEmptyBody for Response<EmptyBody> {
+    fn empty_body(status: StatusCode) -> Response<EmptyBody> {
+        Response::<EmptyBody>::default_builder()
+            .status(status)
+            .body(EMPTY_BODY)
+            .unwrap()
+    }
+}
+
+trait BuildFileBody {
+    fn file_body(path: &Path) -> Response<FileBody>;
+}
+
+impl<'a> BuildFileBody for Response<FileBody<'a>> {
+    fn file_body(path: &Path) -> Response<FileBody> {
+        Response::<FileBody>::default_builder()
+            .status(StatusCode::OK)
+            .body(FileBody::new(path))
+            .unwrap()
+    }
+}
+
+struct FileBody<'a> {
+    path: &'a Path,
+}
+
+impl<'a> FileBody<'a> {
+    fn new(path: &'a Path) -> Self {
+        FileBody { path }
     }
 }
