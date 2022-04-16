@@ -5,9 +5,5 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[bin]]
-name = "concurrent-test"
-path = "src/concurrent.rs"
-
 [dependencies]
 num_cpus = "1.13.0"
