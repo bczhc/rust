@@ -299,7 +299,7 @@ where
 pub fn attach_tcp_stream_to_stdio(stream: &mut TcpStream) -> io::Result<()> {
     cfg_if! {
         if #[cfg(unix)] {
-            unix::attach_tcp_stream_to_stdio(stream)
+            unix::attach_stream_to_stdio(stream)
         } else {
             generic::attach_tcp_stream_to_stdio(stream)
         }
@@ -317,10 +317,11 @@ pub fn interact_two_stream(stream1: &mut TcpStream, stream2: &mut TcpStream) -> 
 }
 
 #[cfg(unix)]
-mod unix {
+pub mod unix {
     use std::io;
     use std::io::{stdin, stdout, Read, Write};
     use std::net::TcpStream;
+    use std::os::unix::io::AsRawFd;
 
     use polling::{Event, Poller};
 
@@ -370,7 +371,10 @@ mod unix {
         };
     }
 
-    pub fn attach_tcp_stream_to_stdio(stream: &mut TcpStream) -> io::Result<()> {
+    pub fn attach_stream_to_stdio<S>(stream: &mut S) -> io::Result<()>
+    where
+        S: Read + Write + AsRawFd,
+    {
         let stdin = &mut stdin().lock();
         let stdout = &mut stdout().lock();
 
@@ -383,7 +387,7 @@ mod unix {
 }
 
 #[cfg(not(unix))]
-mod generic {
+pub mod generic {
     use std::io;
     use std::io::{stdin, stdout};
     use std::net::TcpStream;
