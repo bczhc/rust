@@ -5,35 +5,25 @@
 use bczhc_lib::io::OpenOrCreate;
 use binary_wav_codec::errors::Error;
 use binary_wav_codec::*;
-use clap::{App, Arg, ArgMatches};
+use clap::{Arg, ArgMatches, Command};
 
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
 
 fn main() -> Result<()> {
-    let matches = App::new("binary-wav-codec")
+    let matches = Command::new("binary-wav-codec")
         .author("bczhc <bczhc0@126.com>")
         .about("Codec between binary data and .wav files")
         .subcommand(
-            App::new("encode")
-                .arg(Arg::new("src").required(true).takes_value(true).name("src"))
-                .arg(
-                    Arg::new("dest")
-                        .required(true)
-                        .takes_value(true)
-                        .name("dest"),
-                ),
+            Command::new("encode")
+                .arg(Arg::new("src").required(true).takes_value(true).id("src"))
+                .arg(Arg::new("dest").required(true).takes_value(true).id("dest")),
         )
         .subcommand(
-            App::new("decode")
-                .arg(Arg::new("src").required(true).takes_value(true).name("src"))
-                .arg(
-                    Arg::new("dest")
-                        .required(true)
-                        .takes_value(true)
-                        .name("dest"),
-                ),
+            Command::new("decode")
+                .arg(Arg::new("src").required(true).takes_value(true).id("src"))
+                .arg(Arg::new("dest").required(true).takes_value(true).id("dest")),
         )
         .get_matches();
 

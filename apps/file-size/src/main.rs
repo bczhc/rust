@@ -118,12 +118,12 @@ fn string_to_c_str(s: &str) -> *const libc::c_char {
 
 #[cfg(target_family = "windows")]
 fn portable_ftell(fp: *mut libc::FILE) -> libc::off_t {
-    return unsafe { libc::ftell(fp) };
+    unsafe { libc::ftell(fp) }
 }
 
 #[cfg(target_family = "windows")]
 fn portable_fseek(fp: *mut libc::FILE, offset: libc::c_long, whence: libc::c_int) -> libc::c_int {
-    return unsafe { return libc::fseek(fp, offset, whence) };
+    unsafe { libc::fseek(fp, offset, whence) }
 }
 
 #[cfg(target_family = "unix")]
