@@ -18,4 +18,10 @@ pub enum Error {
     InvalidCharset,
     #[error("UnknownFilename")]
     UnknownFilename,
+    #[error("InvalidPort")]
+    InvalidPort,
+    #[error("InvalidHeader")]
+    InvalidHeader,
+    #[error("InvalidMark {0}")]
+    InvalidMark(u8),
 }

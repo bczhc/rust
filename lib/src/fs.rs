@@ -1,5 +1,5 @@
 use std::ffi::OsString;
-use std::fs::{create_dir, read_dir, DirEntry};
+use std::fs::{read_dir, DirEntry, File};
 use std::path::{Path, PathBuf};
 
 pub trait ForeachDir {
@@ -76,6 +76,7 @@ where
 {
     let path = path.as_ref();
     if !path.exists() {
+        File::create(path)?;
         return Ok(path.into());
     }
 
@@ -85,7 +86,7 @@ where
         string.push(format!(".{}", counter));
         let new_path = PathBuf::from(&string);
         if !new_path.exists() {
-            create_dir(&new_path)?;
+            File::create(&new_path)?;
             return Ok(new_path);
         }
         counter += 1;

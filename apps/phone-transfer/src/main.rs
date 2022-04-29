@@ -41,13 +41,18 @@ fn main() -> Result<()> {
                 ),
         )
         .subcommand(
-            Command::new("receive").alias("r").arg(
-                Arg::new("output-dir")
-                    .short('o')
-                    .long("output-dir")
-                    .default_value(".")
-                    .help("Output directory (auto create if not exists)"),
-            ),
+            Command::new("receive")
+                .alias("r")
+                .arg(
+                    Arg::new("output-dir")
+                        .short('o')
+                        .long("output-dir")
+                        .default_value(".")
+                        .required(false)
+                        .takes_value(true)
+                        .help("Output directory (auto create if not exists)"),
+                )
+                .arg(Arg::new("port").required(true).help("Listen port")),
         )
         .subcommand_required(true)
         .get_matches();
