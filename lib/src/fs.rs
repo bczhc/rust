@@ -1,5 +1,6 @@
-use std::fs::{read_dir, DirEntry};
-use std::path::Path;
+use std::ffi::OsString;
+use std::fs::{create_dir, read_dir, DirEntry};
+use std::path::{Path, PathBuf};
 
 pub trait ForeachDir {
     /// Traversal a directory recursively
@@ -51,5 +52,42 @@ impl ForeachDir for Path {
         F: Fn(std::io::Result<&DirEntry>) + Clone,
     {
         recursive_traversal_dir(self, callback)
+    }
+}
+
+/// create a file with unique filename for preventing from overwriting existing files
+///
+/// # Examples
+/// ```no_run
+/// use std::path::Path;
+/// use bczhc_lib::fs::new_unique_file;
+///
+/// let path = Path::new("~/hello");
+/// // now `path` doesn't exist; return without any changes
+/// assert_eq!(new_unique_file(path), path);
+///
+/// let new_path = new_unique_file(path);
+/// // the new path contains ".1" suffix
+/// assert_eq!(new_path, Path::new("~/hello.1"))
+/// ```
+pub fn new_unique_file<P>(path: P) -> std::io::Result<PathBuf>
+where
+    P: AsRef<Path>,
+{
+    let path = path.as_ref();
+    if !path.exists() {
+        return Ok(path.into());
+    }
+
+    let mut counter = 1;
+    loop {
+        let mut string = OsString::from(path.as_os_str());
+        string.push(format!(".{}", counter));
+        let new_path = PathBuf::from(&string);
+        if !new_path.exists() {
+            create_dir(&new_path)?;
+            return Ok(new_path);
+        }
+        counter += 1;
     }
 }

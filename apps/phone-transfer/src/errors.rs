@@ -16,4 +16,6 @@ pub enum Error {
     Utf8(#[from] std::str::Utf8Error),
     #[error("InvalidCharset")]
     InvalidCharset,
+    #[error("UnknownFilename")]
+    UnknownFilename,
 }

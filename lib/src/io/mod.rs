@@ -410,3 +410,16 @@ pub mod generic {
         Ok(())
     }
 }
+
+pub trait ReadText
+where
+    Self: Read,
+{
+    fn read_text(&mut self) -> io::Result<String> {
+        let mut s = String::new();
+        self.read_to_string(&mut s)?;
+        Ok(s)
+    }
+}
+
+impl<R: Read> ReadText for R {}

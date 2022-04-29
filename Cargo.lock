@@ -128,7 +128,7 @@ version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "byteorder",
- "clap 3.1.9",
+ "clap 3.1.12",
  "hound",
 ]
 
@@ -236,9 +236,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.9"
+version = "3.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6aad2534fad53df1cc12519c5cda696dd3e20e6118a027e24054aea14a0bdcbe"
+checksum = "7c167e37342afc5f33fd87bbc870cedd020d2a6dffa05d45ccd9241fbdd146db"
 dependencies = [
  "atty",
  "bitflags",
@@ -431,7 +431,7 @@ dependencies = [
  "bczhc_lib",
  "bmp",
  "byteorder",
- "clap 3.1.9",
+ "clap 3.1.12",
  "image",
  "quick-error",
 ]
@@ -513,7 +513,7 @@ name = "forward"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 3.1.9",
+ "clap 3.1.12",
  "errno",
  "once_cell",
  "thiserror",
@@ -666,7 +666,7 @@ name = "http-server"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 3.1.9",
+ "clap 3.1.12",
  "http",
  "mime",
  "mime_guess",
@@ -959,7 +959,7 @@ name = "ncat"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 3.1.9",
+ "clap 3.1.12",
  "errno",
  "libc",
  "polling",
@@ -1134,9 +1134,10 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 name = "phone-transfer"
 version = "1.0.0"
 dependencies = [
+ "bczhc_lib",
  "byteorder",
  "cfg-if",
- "clap 3.1.9",
+ "clap 3.1.12",
  "pathdiff",
  "tar",
  "thiserror",
@@ -1415,7 +1416,7 @@ version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "cfg-if",
- "clap 3.1.9",
+ "clap 3.1.12",
  "polling",
  "serialport",
  "thiserror",
