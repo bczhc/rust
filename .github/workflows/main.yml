@@ -20,6 +20,10 @@ jobs:
           ./installer -y
           rustup default nightly
           rustc --version
+      - name: Install dependencies
+        run: |
+          apt update
+          apt install -y libudev-dev
       - name: Build
         run: cargo build -j4 --workspace
       - name: Test
