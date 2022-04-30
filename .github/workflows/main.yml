@@ -25,14 +25,14 @@ jobs:
           sudo apt update
           sudo apt install -y libudev-dev
       - name: Build
-        run: cargo build -j4 --workspace
+        run: cargo build --workspace
       - name: Test
         run: |
-          cargo test --workspace -j4
-          cargo test --workspace --release -j4
+          cargo test --workspace
+          cargo test --workspace --release
       - name: Generate documentation
         run: |
-          RUSTDOCFLAGS="--enable-index-page -Z unstable-options" cargo doc --workspace -j4
+          RUSTDOCFLAGS="--enable-index-page -Z unstable-options" cargo doc --workspace
           cd target/doc
           tar -czf ../../documentation.tgz *
           cd ../..
@@ -82,11 +82,11 @@ jobs:
           rustup default nightly
           rustc --version
       - name: Build
-        run: cargo build -j4 --workspace
+        run: cargo build --workspace
       - name: Test
         run: |
-          cargo test --workspace -j4
-          cargo test --workspace --release -j4
+          cargo test --workspace
+          cargo test --workspace --release
 
 
   macos:
@@ -102,8 +102,8 @@ jobs:
           rustup default nightly
           rustc --version
       - name: Build
-        run: cargo build -j4 --workspace
+        run: cargo build --workspace
       - name: Test
         run: |
-          cargo test --workspace -j4
-          cargo test --workspace --release -j4
+          cargo test --workspace
+          cargo test --workspace --release
