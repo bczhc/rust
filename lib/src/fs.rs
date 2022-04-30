@@ -64,11 +64,11 @@ impl ForeachDir for Path {
 ///
 /// let path = Path::new("~/hello");
 /// // now `path` doesn't exist; return without any changes
-/// assert_eq!(new_unique_file(path), path);
+/// assert_eq!(new_unique_file(path).unwrap().as_path(), path);
 ///
 /// let new_path = new_unique_file(path);
 /// // the new path contains ".1" suffix
-/// assert_eq!(new_path, Path::new("~/hello.1"))
+/// assert_eq!(new_path.unwrap().as_path(), Path::new("~/hello.1"))
 /// ```
 pub fn new_unique_file<P>(path: P) -> std::io::Result<PathBuf>
 where
