@@ -24,4 +24,6 @@ pub enum Error {
     InvalidHeader,
     #[error("InvalidMark {0}")]
     InvalidMark(u8),
+    #[error("InvalidSelect")]
+    InvalidSelect,
 }

@@ -52,7 +52,14 @@ fn main() -> Result<()> {
                         .takes_value(true)
                         .help("Output directory (auto create if not exists)"),
                 )
-                .arg(Arg::new("port").required(true).help("Listen port")),
+                .arg(Arg::new("port").required(true).help("Listen port"))
+                .arg(
+                    Arg::new("qr-code")
+                        .required(false)
+                        .short('q')
+                        .long("qr-code")
+                        .help("Show QR code"),
+                ),
         )
         .subcommand_required(true)
         .get_matches();

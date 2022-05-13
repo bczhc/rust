@@ -30,6 +30,10 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         .parse::<u16>()
         .map_err(|_| Error::InvalidPort)?;
 
+    if matches.is_present("qr-code") {
+        crate::qr::print_addr_qr(port)?;
+    }
+
     let listener = TcpListener::bind(format!("0.0.0.0:{}", port))?;
 
     println!("Listening on port {}", port);

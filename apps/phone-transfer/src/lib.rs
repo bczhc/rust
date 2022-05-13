@@ -1,5 +1,5 @@
-use std::io::{stdin, Read};
 pub mod errors;
+pub mod qr;
 pub mod receive;
 pub mod send;
 
