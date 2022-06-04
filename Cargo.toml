@@ -28,7 +28,8 @@ members = [
     "apps/ncat",
     "apps/http-server",
     "apps/serial-cat",
-    "apps/phone-transfer"
+    "apps/phone-transfer",
+    "apps/to-human-readable"
 ]
 
 [[bin]]
