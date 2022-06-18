@@ -6,15 +6,16 @@ use std::io::BufReader;
 use std::path::Path;
 use std::str::FromStr;
 
-use btrfs_dedup::errors::*;
 use clap::{Arg, Command};
+use cow_dedup::errors::*;
 use reflink::reflink;
 use sha2::digest::Digest;
 use sha2::Sha256;
 use walkdir::WalkDir;
 
 fn main() {
-    let matches = Command::new("btrfs-dedup")
+    let matches = Command::new("cow-dedup")
+        .about("A simple file-based deduplication tool using CoW semantic (reflink)")
         .arg(
             Arg::new("path")
                 .required(true)

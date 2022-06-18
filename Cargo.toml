@@ -30,7 +30,7 @@ members = [
     "apps/serial-cat",
     "apps/phone-transfer",
     "apps/to-human-readable",
-    "apps/btrfs-dedup",
+    "apps/cow-dedup",
 ]
 
 [[bin]]

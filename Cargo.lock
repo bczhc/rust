@@ -163,18 +163,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "btrfs-dedup"
-version = "1.0.0"
-dependencies = [
- "bytesize",
- "clap 3.1.18",
- "reflink",
- "sha2",
- "thiserror",
- "walkdir",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -325,6 +313,18 @@ dependencies = [
  "terminal_size",
  "unicode-width",
  "winapi",
+]
+
+[[package]]
+name = "cow-dedup"
+version = "1.0.0"
+dependencies = [
+ "bytesize",
+ "clap 3.1.18",
+ "reflink",
+ "sha2",
+ "thiserror",
+ "walkdir",
 ]
 
 [[package]]
