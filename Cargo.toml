@@ -29,7 +29,8 @@ members = [
     "apps/http-server",
     "apps/serial-cat",
     "apps/phone-transfer",
-    "apps/to-human-readable"
+    "apps/to-human-readable",
+    "apps/btrfs-dedup",
 ]
 
 [[bin]]
