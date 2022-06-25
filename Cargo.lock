@@ -128,7 +128,7 @@ version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "byteorder",
- "clap 3.1.18",
+ "clap 3.2.6",
  "hound",
 ]
 
@@ -257,16 +257,16 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.18"
+version = "3.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2dbdf4bdacb33466e854ce889eee8dfd5729abf7ccd7664d0a2d60cd384440b"
+checksum = "9f1fe12880bae935d142c8702d500c63a4e8634b6c3c57ad72bf978fc7b6249a"
 dependencies = [
  "atty",
  "bitflags",
  "clap_derive",
  "clap_lex",
  "indexmap",
- "lazy_static",
+ "once_cell",
  "strsim 0.10.0",
  "termcolor",
  "textwrap 0.15.0",
@@ -274,9 +274,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.1.18"
+version = "3.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25320346e922cffe59c0bbc5410c8d8784509efb321488971081313cb1e1a33c"
+checksum = "ed6db9e867166a43a53f7199b5e4d1f522a1e5bd626654be263c999ce59df39a"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -287,9 +287,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.2.0"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a37c35f1112dad5e6e0b1adaff798507497a18fceeb30cceb3bae7d1427b9213"
+checksum = "87eba3c8c7f42ef17f6c659fc7416d0f4758cd3e58861ee63c5fa4a4dde649e4"
 dependencies = [
  "os_str_bytes",
 ]
@@ -320,7 +320,7 @@ name = "cow-dedup"
 version = "1.0.0"
 dependencies = [
  "bytesize",
- "clap 3.1.18",
+ "clap 3.2.6",
  "reflink",
  "sha2",
  "thiserror",
@@ -518,7 +518,7 @@ dependencies = [
  "bczhc_lib",
  "bmp",
  "byteorder",
- "clap 3.1.18",
+ "clap 3.2.6",
  "image",
  "quick-error",
 ]
@@ -600,7 +600,7 @@ name = "forward"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 3.1.18",
+ "clap 3.2.6",
  "errno",
  "once_cell",
  "thiserror",
@@ -769,7 +769,7 @@ name = "http-server"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 3.1.18",
+ "clap 3.2.6",
  "http",
  "mime",
  "mime_guess",
@@ -1092,7 +1092,7 @@ name = "ncat"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 3.1.18",
+ "clap 3.2.6",
  "errno",
  "libc",
  "polling",
@@ -1216,9 +1216,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.10.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87f3e037eac156d1775da914196f0f37741a274155e34a0b7e427c35d2a2ecb9"
+checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
 
 [[package]]
 name = "openssl-probe"
@@ -1310,7 +1310,7 @@ dependencies = [
  "bczhc_lib",
  "byteorder",
  "cfg-if",
- "clap 3.1.18",
+ "clap 3.2.6",
  "num-derive",
  "num-traits",
  "once_cell",
@@ -1648,6 +1648,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 
 [[package]]
+name = "rev-read"
+version = "1.0.0"
+dependencies = [
+ "clap 3.2.6",
+]
+
+[[package]]
 name = "reverse"
 version = "1.0.0"
 dependencies = [
@@ -1720,7 +1727,7 @@ version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "cfg-if",
- "clap 3.1.18",
+ "clap 3.2.6",
  "polling",
  "serialport",
  "thiserror",
@@ -1988,7 +1995,7 @@ name = "tohr"
 version = "0.1.0"
 dependencies = [
  "bytesize",
- "clap 3.1.18",
+ "clap 3.2.6",
 ]
 
 [[package]]
