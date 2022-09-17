@@ -10,6 +10,7 @@ use cfg_if::cfg_if;
 use crate::utf8::encode_utf8;
 
 pub mod errors;
+pub mod duplicator;
 
 trait ReadLine {
     /// Read lines without the end newline mark (CR and/or LF)

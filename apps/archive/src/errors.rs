@@ -9,4 +9,8 @@ pub enum Error {
     Io(#[from] io::Error),
     #[error("Invalid base directory")]
     InvalidBaseDir,
+    #[error("{0}")]
+    WalkDir(#[from] walkdir::Error),
+    #[error("Unknown compressor (name or level)")]
+    InvalidCompressor,
 }
