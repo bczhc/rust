@@ -33,6 +33,7 @@ members = [
     "apps/cow-dedup",
     "apps/reverse-read",
     "apps/image-track",
+    "apps/archive",
 ]
 
 [[bin]]
