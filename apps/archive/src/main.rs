@@ -58,6 +58,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     for path in paths {
         push_path(&mut archive, base_dir, path)?;
     }
+    archive.write_files()?;
 
     Ok(())
 }
