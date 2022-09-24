@@ -14,32 +14,48 @@ static CONFIGS: Lazy<Mutex<Configs>> = Lazy::new(|| Mutex::new(Configs::default(
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let matches = Command::new("archive")
-        .arg(Arg::new("output").required(true))
-        .arg(Arg::new("path").required(true).multiple_values(true))
-        .arg(
-            Arg::new("base-dir")
-                .short('C')
-                .long("base-directory")
-                .default_value("."),
+        .subcommand(
+            Command::new("create")
+                .alias("c")
+                .arg(Arg::new("output").required(true))
+                .arg(Arg::new("path").required(true).multiple_values(true))
+                .arg(
+                    Arg::new("base-dir")
+                        .short('C')
+                        .long("base-directory")
+                        .default_value("."),
+                )
+                .arg(
+                    Arg::new("compress")
+                        .short('c')
+                        .long("compress")
+                        .possible_values(&["gzip", "xz", "zstd", "no"])
+                        .help("Compression method used for each file, \"no\" means no compression")
+                        .default_value("no")
+                        .ignore_case(true),
+                )
+                .arg(
+                    Arg::new("level")
+                        .short('l')
+                        .long("level")
+                        .help("Compression level")
+                        .default_value("best"),
+                ),
         )
-        .arg(
-            Arg::new("compress")
-                .short('c')
-                .long("compress")
-                .possible_values(&["gzip", "xz", "zstd", "no"])
-                .help("Compression method used for each file, \"no\" means no compression")
-                .default_value("no")
-                .ignore_case(true),
+        .subcommand(
+            Command::new("list")
+                .alias("l")
+                .arg(Arg::new("archive").help("Archive file path").required(true)),
         )
-        .arg(
-            Arg::new("level")
-                .short('l')
-                .long("level")
-                .help("Compression level")
-                .default_value("best"),
-        )
-        .about("An index-able, compress-able archive format for data backups")
+        .about("An archive format for data backups with indexing and compression capabilities")
         .get_matches();
+
+    if let Some(matches) = matches.subcommand_matches("create") {
+        // archive::create::main(matches)
+    } else if let Some(matches) = matches.subcommand_matches("list") {
+    } else {
+        unreachable!();
+    }
 
     let mut paths = matches.values_of("path").unwrap();
     let output = matches.value_of("output").unwrap();

@@ -10,14 +10,17 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use cfg_if::cfg_if;
 use crc_lib::{Algorithm, Crc, Digest, Width};
 
-use crate::crc::DigestWriter;
 use bczhc_lib::io::duplicator::StreamDuplicator;
 use errors::Result;
+
+use crate::crc::DigestWriter;
 
 pub mod archive;
 pub mod compressors;
 pub mod crc;
+pub mod create;
 pub mod errors;
+pub mod list;
 
 pub struct Entry<'a> {
     magic_number: [u8; 5],

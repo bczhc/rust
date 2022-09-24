@@ -1,6 +1,6 @@
 ## Archive
 
-**An archive format for data backups with indexing and compression capabilities **
+**An archive format for data backups with indexing and compression capabilities**
 
 ---
 
