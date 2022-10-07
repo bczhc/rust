@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use clap::{Arg, Command};
+use clap::{Arg, ArgAction, Command};
 use once_cell::sync::Lazy;
 
 use archive::archive::Archive;
@@ -12,11 +12,12 @@ use bczhc_lib::mutex_lock;
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let matches = Command::new("archive")
+        .version("1.0.0")
         .subcommand(
             Command::new("create")
                 .alias("c")
                 .arg(Arg::new("output").required(true))
-                .arg(Arg::new("path").required(true).multiple_values(true))
+                .arg(Arg::new("path").action(ArgAction::Append).required(true))
                 .arg(
                     Arg::new("base-dir")
                         .short('C')
@@ -27,7 +28,8 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
                     Arg::new("compress")
                         .short('c')
                         .long("compress")
-                        .possible_values(&["gzip", "xz", "zstd", "no"])
+                        .value_name("method")
+                        .value_parser(["gzip", "xz", "zstd", "no"])
                         .help("Compression method used for each file, \"no\" means no compression")
                         .default_value("no")
                         .ignore_case(true),

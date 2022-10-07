@@ -7,7 +7,7 @@ use crate::errors::{Error, Result};
 use crate::{Header, ReadFrom, FILE_MAGIC};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
-    let archive = matches.value_of("archive").unwrap();
+    let archive = matches.get_one::<String>("archive").unwrap();
 
     let mut file = File::open(archive)?;
 

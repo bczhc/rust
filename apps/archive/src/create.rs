@@ -12,11 +12,11 @@ use crate::errors::*;
 static CONFIGS: Lazy<Mutex<Configs>> = Lazy::new(|| Mutex::new(Configs::default()));
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
-    let mut paths = matches.values_of("path").unwrap();
-    let output = matches.value_of("output").unwrap();
-    let base_dir = matches.value_of("base-dir").unwrap();
-    let compressor_name = matches.value_of("compress").unwrap();
-    let compress_level = matches.value_of("level").unwrap();
+    let mut paths = matches.get_many::<String>("path").unwrap();
+    let output = matches.get_one::<String>("output").unwrap();
+    let base_dir = matches.get_one::<String>("base-dir").unwrap();
+    let compressor_name = matches.get_one::<String>("compress").unwrap();
+    let compress_level = matches.get_one::<String>("level").unwrap();
 
     let (compressor_type, compressor) = resolve_compressor(compressor_name, compress_level)?;
 
