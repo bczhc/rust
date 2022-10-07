@@ -6,7 +6,7 @@ use std::io::{Read, Write};
 use std::mem::{size_of, size_of_val};
 use std::str::FromStr;
 
-use byteorder::{LittleEndian, WriteBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use cfg_if::cfg_if;
 use crc_lib::{Algorithm, Crc, Digest, Width};
 
@@ -64,6 +64,29 @@ pub struct Header {
 
 trait WriteTo {
     fn write_to<W: Write>(&self, writer: &mut W) -> io::Result<()>;
+}
+
+trait ReadFrom {
+    type Item;
+
+    fn read_from<R: Read>(reader: &mut R) -> io::Result<Self::Item>;
+}
+
+impl ReadFrom for Header {
+    type Item = Self;
+
+    fn read_from<R: Read>(reader: &mut R) -> io::Result<Self::Item> {
+        let mut mgc_num_buf = [0_u8; FILE_MAGIC.len()];
+        reader.read_exact(&mut mgc_num_buf)?;
+        let version = reader.read_u16::<LittleEndian>()?;
+        let content_offset = reader.read_u64::<LittleEndian>()?;
+
+        Ok(Self {
+            magic_number: mgc_num_buf,
+            version,
+            content_offset,
+        })
+    }
 }
 
 impl WriteTo for Header {
@@ -162,6 +185,11 @@ impl TryFrom<std::fs::FileType> for FileType {
             Err(())
         }
     }
+}
+
+#[derive(Default)]
+struct Configs {
+    compressor_type: Option<Compressor>,
 }
 
 pub const FILE_MAGIC: &[u8; 13] = b"bczhc archive";

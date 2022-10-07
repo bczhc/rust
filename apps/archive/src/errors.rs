@@ -13,4 +13,6 @@ pub enum Error {
     WalkDir(#[from] walkdir::Error),
     #[error("Unknown compressor (name or level)")]
     InvalidCompressor,
+    #[error("Invalid file type")]
+    InvalidFileType,
 }

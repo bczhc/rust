@@ -129,7 +129,7 @@ impl Archive {
     fn change_content_offset(&mut self, offset: u64) -> Result<()> {
         let position = self.writer.stream_position()?;
         self.writer
-            .seek(SeekFrom::Start((size_of_val(FILE_MAGIC) + 2) as u64))?;
+            .seek(SeekFrom::Start((FILE_MAGIC.len() + 2) as u64))?;
 
         self.writer.write_u64::<LittleEndian>(offset)?;
 

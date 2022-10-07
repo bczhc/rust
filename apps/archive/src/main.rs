@@ -10,8 +10,6 @@ use archive::errors::{Error, Result};
 use archive::Compressor;
 use bczhc_lib::mutex_lock;
 
-static CONFIGS: Lazy<Mutex<Configs>> = Lazy::new(|| Mutex::new(Configs::default()));
-
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let matches = Command::new("archive")
         .subcommand(
@@ -47,90 +45,17 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
                 .alias("l")
                 .arg(Arg::new("archive").help("Archive file path").required(true)),
         )
+        .subcommand_required(true)
         .about("An archive format for data backups with indexing and compression capabilities")
         .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("create") {
-        // archive::create::main(matches)
+        archive::create::main(matches)
     } else if let Some(matches) = matches.subcommand_matches("list") {
+        archive::list::main(matches)
     } else {
-        unreachable!();
-    }
-
-    let mut paths = matches.values_of("path").unwrap();
-    let output = matches.value_of("output").unwrap();
-    let base_dir = matches.value_of("base-dir").unwrap();
-    let compressor_name = matches.value_of("compress").unwrap();
-    let compress_level = matches.value_of("level").unwrap();
-
-    let (compressor_type, compressor) = resolve_compressor(compressor_name, compress_level)?;
-
-    mutex_lock!(CONFIGS)
-        .compressor_type
-        .replace(compressor_type);
-
-    let mut archive = Archive::new(output, compressor)?;
-
-    for path in paths {
-        push_path(&mut archive, base_dir, path)?;
-    }
-    archive.write_files()?;
+        unreachable!()
+    }?;
 
     Ok(())
-}
-
-fn push_path(archive: &mut Archive, base_dir: &str, path: &str) -> Result<()> {
-    let compressor_type = mutex_lock!(CONFIGS).compressor_type.unwrap();
-
-    let walk_dir = {
-        let mut buf = PathBuf::new();
-        buf.push(base_dir);
-        buf.push(path);
-        buf
-    };
-
-    let entries = walkdir::WalkDir::new(&walk_dir);
-    for entry in entries {
-        let entry = entry?;
-        let path = entry.path();
-
-        archive.add_path(Path::new(base_dir), path, compressor_type)?;
-    }
-
-    Ok(())
-}
-
-fn resolve_compressor(name: &str, level: &str) -> Result<(Compressor, Box<dyn Compress>)> {
-    let parse = name.parse::<Compressor>();
-    if parse.is_err() {
-        return Err(Error::InvalidCompressor);
-    }
-    let compressor_type = parse.unwrap();
-
-    let level_num = match level {
-        "best" => compressor_type.best_level(),
-        _ => level.parse::<u32>().map_err(|_| Error::InvalidCompressor)?,
-    };
-
-    let compressor: Box<dyn Compress> = match compressor_type {
-        Compressor::Gzip => Box::new(GzipCompressor::new(level_num)),
-        Compressor::Xz => {
-            todo!()
-        }
-        Compressor::Zstd => {
-            todo!()
-        }
-        Compressor::None => Box::new(NoCompressor::new()),
-        Compressor::External => {
-            // ensured by clap
-            unreachable!()
-        }
-    };
-
-    Ok((compressor_type, compressor))
-}
-
-#[derive(Default)]
-struct Configs {
-    compressor_type: Option<Compressor>,
 }
