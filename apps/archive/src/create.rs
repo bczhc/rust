@@ -31,7 +31,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     for path in paths {
         add_path(&mut archive, base_dir, path)?;
     }
-    archive.write_files()?;
+    archive.write()?;
 
     archive.flush()?;
 

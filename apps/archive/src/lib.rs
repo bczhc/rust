@@ -40,6 +40,7 @@ pub struct Entry {
     permission_mode: u16,
     modification_time: u64,
     content_checksum: u64,
+    offset: u64,
 }
 
 #[derive(Copy, Clone, FromPrimitive, Debug)]
@@ -155,6 +156,7 @@ impl WriteTo for Entry {
         writer.write_u16::<LittleEndian>(self.permission_mode)?;
         writer.write_u64::<LittleEndian>(self.modification_time)?;
         writer.write_u64::<LittleEndian>(self.content_checksum)?;
+        writer.write_u64::<LittleEndian>(self.offset)?;
         Ok(())
     }
 }
@@ -184,6 +186,7 @@ impl ReadFrom for Entry {
         let permission_mode = reader.read_u16::<LittleEndian>()?;
         let modification_time = reader.read_u64::<LittleEndian>()?;
         let content_checksum = reader.read_u64::<LittleEndian>()?;
+        let offset = reader.read_u64::<LittleEndian>()?;
 
         Ok(Self {
             magic_number: magic,
@@ -198,6 +201,7 @@ impl ReadFrom for Entry {
             permission_mode,
             modification_time,
             content_checksum,
+            offset,
         })
     }
 }
@@ -255,9 +259,28 @@ impl GetStoredSize for Entry {
     }
 }
 
+trait CalcCrcChecksum<W>
+where
+    W: Width,
+{
+    fn crc_checksum(&self) -> W;
+}
+
+impl CalcCrcChecksum<u32> for Entry {
+    fn crc_checksum(&self) -> u32 {
+        let crc = Crc::<u32>::new(&ENTRY_CRC_32);
+        let mut digest = crc.digest();
+        let mut crc_writer = DigestWriter::<u32>::new(&mut digest);
+        
+        self.write_to(&mut crc_writer).unwrap();
+        
+        digest.finalize()
+    }
+}
+
 pub const FILE_MAGIC: &[u8; 13] = b"bczhc archive";
 pub const ENTRY_MAGIC: &[u8; 5] = b"Entry";
 pub const VERSION: u16 = 1;
 
 pub const FILE_CRC_64: Algorithm<u64> = crc_lib::CRC_64_XZ;
-pub const HEADER_CRC_32: Algorithm<u32> = crc_lib::CRC_32_CKSUM;
+pub const ENTRY_CRC_32: Algorithm<u32> = crc_lib::CRC_32_CKSUM;

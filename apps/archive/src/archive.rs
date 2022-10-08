@@ -21,8 +21,8 @@ use cfg_if::cfg_if;
 use crate::compressors::Compress;
 use crate::errors::{Error, Result};
 use crate::{
-    Compressor, Entry, FileType, FixedStoredSize, GetStoredSize, Header, WriteTo, ENTRY_MAGIC,
-    FILE_MAGIC, VERSION,
+    CalcCrcChecksum, Compressor, Entry, FileType, FixedStoredSize, GetStoredSize, Header, WriteTo,
+    ENTRY_MAGIC, FILE_MAGIC, VERSION,
 };
 
 pub struct Archive<W>
@@ -31,7 +31,9 @@ where
 {
     writer: W,
     compressor: Box<dyn Compress>,
-    paths: Vec<(PathBuf, Entry)>,
+    entries: Vec<(PathBuf, Entry)>,
+    content_offset: u64,
+    last_offset: u64,
 }
 
 impl<W> Archive<W>
@@ -42,7 +44,9 @@ where
         let mut archive = Self {
             writer,
             compressor,
-            paths: Vec::new(),
+            entries: Vec::new(),
+            content_offset: 0,
+            last_offset: 0,
         };
         archive.init_header()?;
         Ok(archive)
@@ -107,14 +111,21 @@ where
             permission_mode: file_mode,
             modification_time,
             content_checksum: 0, /* placeholder */
+            offset: 0,           /* placeholder */
         };
 
-        self.paths.push((relative_path, entry));
+        self.entries.push((relative_path, entry));
         Ok(())
     }
 
     fn content_offset(&self) -> usize {
-        let entries_size_sum = self.paths.iter().map(|x| x.1.stored_size()).sum::<usize>();
+        let entries_size_sum = self
+            .entries
+            .iter()
+            .map(|x| {
+                x.1.stored_size() + 4 /* checksum of entry, following after each entry */
+            })
+            .sum::<usize>();
         Header::SIZE + entries_size_sum
     }
 
@@ -139,14 +150,45 @@ where
         Ok(())
     }
 
-    pub fn write_files(&mut self) -> Result<()> {
-        self.change_content_offset(self.content_offset() as u64)?;
+    pub fn write(&mut self) -> Result<()> {
+        self.write_files()?;
+        self.write_entries()?;
+        Ok(())
+    }
 
-        /*for path in self.paths.iter().filter(|x| x.is_file()) {
+    fn write_files(&mut self) -> Result<()> {
+        let content_offset = self.content_offset() as u64;
+        self.change_content_offset(content_offset)?;
+        self.writer.seek(SeekFrom::Start(content_offset))?;
+
+        self.content_offset = content_offset;
+        self.last_offset = content_offset;
+
+        for (path, entry) in self.entries.iter_mut().filter(|x| x.0.is_file()) {
             let file = File::open(path)?;
             let mut reader = BufReader::new(file);
-            io::copy(&mut reader, &mut self.writer)?;
-        }*/
+            let compressed_size = self.compressor.compress_to(&mut reader, &mut self.writer)?;
+            entry.stored_size = compressed_size;
+
+            entry.offset = self.last_offset;
+            self.last_offset += entry.stored_size;
+        }
+
+        Ok(())
+    }
+
+    fn write_entries(&mut self) -> Result<()> {
+        self.writer.seek(SeekFrom::Start(Header::SIZE as u64))?;
+
+        for (_, entry) in &self.entries {
+            let checksum = entry.crc_checksum();
+            entry.write_to(&mut self.writer)?;
+            self.writer.write_u32::<LittleEndian>(checksum)?;
+        }
+
+        // TODO: assertion failed
+        assert_eq!(self.content_offset, self.writer.stream_position()?);
+
         Ok(())
     }
 

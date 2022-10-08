@@ -6,7 +6,8 @@ use std::io::{Read, Write};
 use crate::errors::Result;
 
 pub trait Compress {
-    fn compress(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64>;
+    /// Returns the size after compression
+    fn compress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64>;
 }
 
 pub struct GzipCompressor {
@@ -14,7 +15,7 @@ pub struct GzipCompressor {
 }
 
 impl Compress for GzipCompressor {
-    fn compress(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+    fn compress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
         let mut encoder = GzEncoder::new(from, self.level);
         Ok(io::copy(&mut encoder, to)?)
     }
@@ -38,7 +39,7 @@ impl Default for GzipCompressor {
 pub struct NoCompressor;
 
 impl Compress for NoCompressor {
-    fn compress(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+    fn compress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
         Ok(io::copy(from, to)?)
     }
 }
