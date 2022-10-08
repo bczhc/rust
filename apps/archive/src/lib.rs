@@ -1,10 +1,7 @@
 extern crate core;
 extern crate crc as crc_lib;
 
-use bincode::config::{AllowTrailing, FixintEncoding, WithOtherIntEncoding, WithOtherTrailing};
-use bincode::DefaultOptions;
 use num_derive::FromPrimitive;
-use serde::{Deserialize, Serialize};
 use std::io;
 use std::io::{Read, Write};
 use std::mem::{size_of, size_of_val};
@@ -67,7 +64,6 @@ trait FixedStoredSize {
     const SIZE: usize;
 }
 
-#[derive(Serialize, Deserialize)]
 pub struct Header {
     magic_number: [u8; FILE_MAGIC.len()],
     version: u16,
@@ -92,14 +88,25 @@ impl ReadFrom for Header {
     type Item = Self;
 
     fn read_from<R: Read>(reader: &mut R) -> Result<Self::Item> {
-        let header = bincode::deserialize_from::<_, Self>(reader).filter_io_err()?;
-        Ok(header)
+        let mut magic_number = [0_u8; FILE_MAGIC.len()];
+        reader.read_exact(&mut magic_number)?;
+        let version = reader.read_u16::<LittleEndian>()?;
+        let content_offset = reader.read_u64::<LittleEndian>()?;
+
+        Ok(Self {
+            magic_number,
+            version,
+            content_offset,
+        })
     }
 }
 
 impl WriteTo for Header {
     fn write_to<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-        bincode::serialize_into(writer, self).filter_io_err()
+        writer.write_all(&self.magic_number)?;
+        writer.write_u16::<LittleEndian>(self.version)?;
+        writer.write_u64::<LittleEndian>(self.content_offset)?;
+        Ok(())
     }
 }
 
@@ -224,26 +231,6 @@ impl TryFrom<std::fs::FileType> for FileType {
 #[derive(Default)]
 struct Configs {
     compressor_type: Option<Compressor>,
-}
-
-trait FilterIoErr<T> {
-    fn filter_io_err(self) -> io::Result<T>;
-}
-
-impl<T> FilterIoErr<T> for bincode::Result<T> {
-    fn filter_io_err(self) -> io::Result<T> {
-        match self {
-            Ok(t) => Ok(t),
-            Err(e) => {
-                let kind = *e;
-                if let bincode::ErrorKind::Io(e) = kind {
-                    Err(e)
-                } else {
-                    panic!("Unexpected (de)serialization error: {:?}", kind)
-                }
-            }
-        }
-    }
 }
 
 trait GetStoredSize {

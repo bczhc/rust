@@ -78,7 +78,6 @@ name = "archive"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "bincode",
  "byteorder",
  "cfg-if",
  "clap 4.0.10",
@@ -88,7 +87,6 @@ dependencies = [
  "num-traits",
  "once_cell",
  "pathdiff",
- "serde",
  "thiserror",
  "walkdir",
  "xz2",
@@ -152,15 +150,6 @@ dependencies = [
  "byteorder",
  "clap 3.2.21",
  "hound",
-]
-
-[[package]]
-name = "bincode"
-version = "1.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f45e9417d87227c7a56d22e471c6206462cba514c7590c09aff4cf6d1ddcad"
-dependencies = [
- "serde",
 ]
 
 [[package]]
