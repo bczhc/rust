@@ -1,8 +1,10 @@
-use crate::compressors::Compress;
-use crate::errors::{Error, Result};
-use crate::{Compressor, Entry, FileType, Header, WriteTo, ENTRY_MAGIC, FILE_MAGIC, VERSION};
-use byteorder::{LittleEndian, WriteBytesExt};
-use cfg_if::cfg_if;
+//! # Archive
+//!
+//! ## Usage steps:
+//! 1. add path records, initialize the file entries
+//! 2. write files and update file entries
+//! 3. finalize: write entries to the starting part of the output file
+
 use std::ffi::{OsStr, OsString};
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -10,24 +12,33 @@ use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::mem::size_of_val;
 use std::os::linux::fs::MetadataExt;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::UNIX_EPOCH;
 
-pub struct Archive {
-    writer: BufWriter<File>,
+use byteorder::{LittleEndian, WriteBytesExt};
+use cfg_if::cfg_if;
+
+use crate::compressors::Compress;
+use crate::errors::{Error, Result};
+use crate::{
+    Compressor, Entry, FileType, FixedStoredSize, GetStoredSize, Header, WriteTo, ENTRY_MAGIC,
+    FILE_MAGIC, VERSION,
+};
+
+pub struct Archive<W>
+where
+    W: Write + Seek,
+{
+    writer: W,
     compressor: Box<dyn Compress>,
-    paths: Vec<PathBuf>,
+    paths: Vec<(PathBuf, Entry)>,
 }
 
-impl Archive {
-    pub fn new<P: AsRef<Path>>(path: P, compressor: Box<dyn Compress>) -> Result<Archive> {
-        let file = File::options()
-            .truncate(true)
-            .create(true)
-            .read(true)
-            .write(true)
-            .open(path)?;
-        let writer = BufWriter::new(file);
-
+impl<W> Archive<W>
+where
+    W: Write + Seek,
+{
+    pub fn new(writer: W, compressor: Box<dyn Compress>) -> Result<Self> {
         let mut archive = Self {
             writer,
             compressor,
@@ -86,7 +97,7 @@ impl Archive {
         let entry = Entry {
             magic_number: *ENTRY_MAGIC,
             path_length: path_bytes.len() as u16,
-            path: &path_bytes,
+            path: path_bytes,
             file_type,
             compression_method: compressor_type,
             stored_size: 0, /* placeholder */
@@ -96,24 +107,15 @@ impl Archive {
             permission_mode: file_mode,
             modification_time,
             content_checksum: 0, /* placeholder */
-            entry_checksum: 0,   /* placeholder */
         };
 
-        entry.write_to(&mut self.writer)?;
-
-        self.paths.push(path.as_ref().into());
-
+        self.paths.push((relative_path, entry));
         Ok(())
     }
 
-    fn add_record<R: Read>(&mut self, reader: &mut R, recorded_path: &str) -> Result<()> {
-        let writer = &mut self.writer;
-
-        // Entry {
-        //
-        // };
-
-        Ok(())
+    fn content_offset(&self) -> usize {
+        let entries_size_sum = self.paths.iter().map(|x| x.1.stored_size()).sum::<usize>();
+        Header::SIZE + entries_size_sum
     }
 
     fn init_header(&mut self) -> Result<()> {
@@ -138,16 +140,25 @@ impl Archive {
     }
 
     pub fn write_files(&mut self) -> Result<()> {
-        for path in self.paths.iter().filter(|x| x.is_file()) {
+        self.change_content_offset(self.content_offset() as u64)?;
+
+        /*for path in self.paths.iter().filter(|x| x.is_file()) {
             let file = File::open(path)?;
             let mut reader = BufReader::new(file);
             io::copy(&mut reader, &mut self.writer)?;
-        }
+        }*/
         Ok(())
+    }
+
+    pub fn flush(&mut self) -> io::Result<()> {
+        self.writer.flush()
     }
 }
 
-impl Drop for Archive {
+impl<W> Drop for Archive<W>
+where
+    W: Write + Seek,
+{
     /// finalize the archive
     fn drop(&mut self) {}
 }
@@ -167,14 +178,14 @@ impl ToBytes for OsStr {
                         return None;
                     }
                     Some(s) => {
-                        Vec::from(s.as_bytes())
+                        Some(Vec::from(s.as_bytes()))
                     }
                 }
             } else {
                 use std::os::unix::ffi::OsStrExt;
                 bytes = Vec::from(self.as_bytes())
             }
-        };
+        }
         Some(bytes)
     }
 }

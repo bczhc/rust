@@ -1,19 +1,26 @@
 extern crate core;
 extern crate crc as crc_lib;
 
+use bincode::config::{AllowTrailing, FixintEncoding, WithOtherIntEncoding, WithOtherTrailing};
+use bincode::DefaultOptions;
+use num_derive::FromPrimitive;
+use serde::{Deserialize, Serialize};
 use std::io;
 use std::io::{Read, Write};
 use std::mem::{size_of, size_of_val};
 use std::str::FromStr;
 
+use bczhc_lib::field_size;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use cfg_if::cfg_if;
 use crc_lib::{Algorithm, Crc, Digest, Width};
+use once_cell::sync::Lazy;
 
 use bczhc_lib::io::duplicator::StreamDuplicator;
 use errors::Result;
 
 use crate::crc::DigestWriter;
+use crate::errors::Error;
 
 pub mod archive;
 pub mod compressors;
@@ -22,10 +29,11 @@ pub mod create;
 pub mod errors;
 pub mod list;
 
-pub struct Entry<'a> {
-    magic_number: [u8; 5],
+#[derive(Debug)]
+pub struct Entry {
+    magic_number: [u8; ENTRY_MAGIC.len()],
     path_length: u16,
-    path: &'a [u8],
+    path: Vec<u8>,
     file_type: FileType,
     compression_method: Compressor,
     stored_size: u64,
@@ -35,10 +43,9 @@ pub struct Entry<'a> {
     permission_mode: u16,
     modification_time: u64,
     content_checksum: u64,
-    entry_checksum: u32,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, FromPrimitive, Debug)]
 pub enum Compressor {
     Gzip = 0,
     Xz = 1,
@@ -47,7 +54,7 @@ pub enum Compressor {
     External = 4,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, FromPrimitive, Debug)]
 pub enum FileType {
     Regular = 0,
     Link = 1,
@@ -56,10 +63,19 @@ pub enum FileType {
     Directory = 4,
 }
 
+trait FixedStoredSize {
+    const SIZE: usize;
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct Header {
-    magic_number: [u8; 13],
+    magic_number: [u8; FILE_MAGIC.len()],
     version: u16,
     content_offset: u64,
+}
+
+impl FixedStoredSize for Header {
+    const SIZE: usize = FILE_MAGIC.len() + 2 + 8;
 }
 
 trait WriteTo {
@@ -69,32 +85,21 @@ trait WriteTo {
 trait ReadFrom {
     type Item;
 
-    fn read_from<R: Read>(reader: &mut R) -> io::Result<Self::Item>;
+    fn read_from<R: Read>(reader: &mut R) -> Result<Self::Item>;
 }
 
 impl ReadFrom for Header {
     type Item = Self;
 
-    fn read_from<R: Read>(reader: &mut R) -> io::Result<Self::Item> {
-        let mut mgc_num_buf = [0_u8; FILE_MAGIC.len()];
-        reader.read_exact(&mut mgc_num_buf)?;
-        let version = reader.read_u16::<LittleEndian>()?;
-        let content_offset = reader.read_u64::<LittleEndian>()?;
-
-        Ok(Self {
-            magic_number: mgc_num_buf,
-            version,
-            content_offset,
-        })
+    fn read_from<R: Read>(reader: &mut R) -> Result<Self::Item> {
+        let header = bincode::deserialize_from::<_, Self>(reader).filter_io_err()?;
+        Ok(header)
     }
 }
 
 impl WriteTo for Header {
     fn write_to<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-        writer.write_all(&self.magic_number)?;
-        writer.write_u16::<LittleEndian>(self.version)?;
-        writer.write_u64::<LittleEndian>(self.content_offset)?;
-        Ok(())
+        bincode::serialize_into(writer, self).filter_io_err()
     }
 }
 
@@ -129,35 +134,64 @@ impl Compressor {
     }
 }
 
-impl<'a> WriteTo for Entry<'a> {
+impl WriteTo for Entry {
     fn write_to<W: Write>(&self, writer: &mut W) -> io::Result<()> {
-        let crc = Crc::<u64>::new(&FILE_CRC_64);
-        let mut digest = crc.digest();
-        let mut digest_writer = DigestWriter::<u64>::new(&mut digest);
-        let mut crc_writer = StreamDuplicator::new(writer, &mut digest_writer);
-
-        crc_writer.write_all(&self.magic_number)?;
-        crc_writer.write_u16::<LittleEndian>(self.path_length)?;
-        crc_writer.write_all(self.path)?;
-        crc_writer.write_u8(self.file_type as u8)?;
-        crc_writer.write_u8(self.compression_method as u8)?;
-        crc_writer.write_u64::<LittleEndian>(self.stored_size)?;
-        crc_writer.write_u64::<LittleEndian>(self.original_size)?;
-        crc_writer.write_u16::<LittleEndian>(self.owner_id)?;
-        crc_writer.write_u16::<LittleEndian>(self.group_id)?;
-        crc_writer.write_u16::<LittleEndian>(self.permission_mode)?;
-        crc_writer.write_u64::<LittleEndian>(self.modification_time)?;
-
-        crc_writer.flush()?;
-
-        let digest = digest.finalize();
-
-        // checksum for content (placeholder)
-        writer.write_u64::<LittleEndian>(0)?;
-        // checksum for this entry
-        writer.write_u64::<LittleEndian>(digest)?;
-
+        writer.write_all(&self.magic_number)?;
+        writer.write_u16::<LittleEndian>(self.path_length)?;
+        writer.write_all(&self.path)?;
+        writer.write_u8(self.file_type as u8)?;
+        writer.write_u8(self.compression_method as u8)?;
+        writer.write_u64::<LittleEndian>(self.stored_size)?;
+        writer.write_u64::<LittleEndian>(self.original_size)?;
+        writer.write_u16::<LittleEndian>(self.owner_id)?;
+        writer.write_u16::<LittleEndian>(self.group_id)?;
+        writer.write_u16::<LittleEndian>(self.permission_mode)?;
+        writer.write_u64::<LittleEndian>(self.modification_time)?;
+        writer.write_u64::<LittleEndian>(self.content_checksum)?;
         Ok(())
+    }
+}
+
+impl ReadFrom for Entry {
+    type Item = Self;
+
+    fn read_from<R: Read>(reader: &mut R) -> Result<Self::Item> {
+        let mut magic = [0_u8; ENTRY_MAGIC.len()];
+        reader.read_exact(&mut magic)?;
+        if &magic != ENTRY_MAGIC {
+            return Err(Error::InvalidEntryHeader);
+        }
+
+        let path_length = reader.read_u16::<LittleEndian>()?;
+        let mut path = vec![0_u8; path_length as usize];
+        reader.read_exact(&mut path)?;
+
+        let file_type =
+            num_traits::FromPrimitive::from_u8(reader.read_u8()?).ok_or(Error::UnknownFileType)?;
+        let compression_method = num_traits::FromPrimitive::from_u8(reader.read_u8()?)
+            .ok_or(Error::UnknownCompressionMethod)?;
+        let stored_size = reader.read_u64::<LittleEndian>()?;
+        let original_size = reader.read_u64::<LittleEndian>()?;
+        let owner_id = reader.read_u16::<LittleEndian>()?;
+        let group_id = reader.read_u16::<LittleEndian>()?;
+        let permission_mode = reader.read_u16::<LittleEndian>()?;
+        let modification_time = reader.read_u64::<LittleEndian>()?;
+        let content_checksum = reader.read_u64::<LittleEndian>()?;
+
+        Ok(Self {
+            magic_number: magic,
+            path_length,
+            path,
+            file_type,
+            compression_method,
+            stored_size,
+            original_size,
+            owner_id,
+            group_id,
+            permission_mode,
+            modification_time,
+            content_checksum,
+        })
     }
 }
 
@@ -190,6 +224,48 @@ impl TryFrom<std::fs::FileType> for FileType {
 #[derive(Default)]
 struct Configs {
     compressor_type: Option<Compressor>,
+}
+
+trait FilterIoErr<T> {
+    fn filter_io_err(self) -> io::Result<T>;
+}
+
+impl<T> FilterIoErr<T> for bincode::Result<T> {
+    fn filter_io_err(self) -> io::Result<T> {
+        match self {
+            Ok(t) => Ok(t),
+            Err(e) => {
+                let kind = *e;
+                if let bincode::ErrorKind::Io(e) = kind {
+                    Err(e)
+                } else {
+                    panic!("Unexpected (de)serialization error: {:?}", kind)
+                }
+            }
+        }
+    }
+}
+
+trait GetStoredSize {
+    /// get the dynamic written size after serialization
+    fn stored_size(&self) -> usize;
+}
+
+impl GetStoredSize for Entry {
+    fn stored_size(&self) -> usize {
+        size_of_val(&self.magic_number)
+            + 2
+            + self.path_length as usize
+            + 1
+            + 1
+            + 8
+            + 8
+            + 2
+            + 2
+            + 2
+            + 8
+            + 8
+    }
 }
 
 pub const FILE_MAGIC: &[u8; 13] = b"bczhc archive";

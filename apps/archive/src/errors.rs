@@ -15,4 +15,10 @@ pub enum Error {
     InvalidCompressor,
     #[error("Invalid file type")]
     InvalidFileType,
+    #[error("Invalid entry header")]
+    InvalidEntryHeader,
+    #[error("Unknown file type")]
+    UnknownFileType,
+    #[error("Unknown compression method")]
+    UnknownCompressionMethod,
 }
