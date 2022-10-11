@@ -186,7 +186,6 @@ where
             self.writer.write_u32::<LittleEndian>(checksum)?;
         }
 
-        // TODO: assertion failed
         assert_eq!(self.content_offset, self.writer.stream_position()?);
 
         Ok(())

@@ -256,6 +256,7 @@ impl GetStoredSize for Entry {
             + 2
             + 8
             + 8
+            + 8
     }
 }
 
@@ -271,9 +272,9 @@ impl CalcCrcChecksum<u32> for Entry {
         let crc = Crc::<u32>::new(&ENTRY_CRC_32);
         let mut digest = crc.digest();
         let mut crc_writer = DigestWriter::<u32>::new(&mut digest);
-        
+
         self.write_to(&mut crc_writer).unwrap();
-        
+
         digest.finalize()
     }
 }

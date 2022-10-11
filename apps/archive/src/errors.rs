@@ -21,4 +21,12 @@ pub enum Error {
     UnknownFileType,
     #[error("Unknown compression method")]
     UnknownCompressionMethod,
+    #[error("{0}")]
+    Others(String),
+}
+
+impl From<&str> for Error {
+    fn from(msg: &str) -> Self {
+        Self::Others(msg.into())
+    }
 }
