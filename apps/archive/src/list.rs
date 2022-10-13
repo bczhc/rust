@@ -8,17 +8,13 @@ use std::io::{Read, Seek};
 use std::mem::size_of_val;
 
 use crate::errors::{Error, Result};
+use crate::reader::ArchiveReader;
 use crate::{CalcCrcChecksum, Entry, FixedStoredSize, Header, ReadFrom, FILE_MAGIC};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
-    let archive = matches.get_one::<String>("archive").unwrap();
-
-    let mut file = File::open(archive)?;
-
-    let header = Header::read_from(&mut file)?;
-    if &header.magic_number != FILE_MAGIC {
-        return Err(Error::InvalidFileType);
-    }
+    let path = matches.get_one::<String>("archive").unwrap();
+    let mut archive = ArchiveReader::new(path)?;
+    let header = &archive.header;
 
     println!(
         "\
@@ -27,31 +23,9 @@ Content offset: {}",
         header.version, header.content_offset
     );
 
-    let mut entries_reader = file
-        .try_clone()
-        .unwrap()
-        .take(header.content_offset - Header::SIZE as u64);
-    loop {
-        let result = Entry::read_from(&mut entries_reader);
-        let entry = match result {
-            Ok(entry) => entry,
-            Err(e) => {
-                if let Error::Io(ref io) = e {
-                    if io.kind() == io::ErrorKind::UnexpectedEof {
-                        break;
-                    } else {
-                        return Err(e);
-                    }
-                } else {
-                    return Err(e);
-                }
-            }
-        };
-        let checksum = entries_reader.read_u32::<LittleEndian>()?;
-        if entry.crc_checksum() != checksum {
-            return Err(Error::Checksum(entry));
-        }
-
+    let entries = archive.entries();
+    for entry in entries {
+        let entry = entry?;
         // TODO: handle and escape special and non-printable characters
         let path_bytes = &entry.path[..];
         cfg_if! {
@@ -64,9 +38,6 @@ Content offset: {}",
                 println!("{}", str);
             }
         }
-    }
-    if file.stream_position()? != header.content_offset {
-        return Err("Unexpected entries end position in file".into());
     }
 
     Ok(())

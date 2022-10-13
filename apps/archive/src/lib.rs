@@ -2,9 +2,11 @@ extern crate core;
 extern crate crc as crc_lib;
 
 use num_derive::FromPrimitive;
+use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
 use std::mem::{size_of, size_of_val};
+use std::path::Path;
 use std::str::FromStr;
 
 use bczhc_lib::field_size;
@@ -24,7 +26,9 @@ pub mod compressors;
 pub mod crc;
 pub mod create;
 pub mod errors;
+pub mod extract;
 pub mod list;
+pub mod reader;
 
 #[derive(Debug, Clone)]
 pub struct Entry {

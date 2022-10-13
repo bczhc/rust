@@ -48,6 +48,11 @@ fn main() -> std::result::Result<(), String> {
                 .alias("l")
                 .arg(Arg::new("archive").help("Archive file path").required(true)),
         )
+        .subcommand(
+            Command::new("extract")
+                .alias("e")
+                .arg(Arg::new("archive").help("Archive file path").required(true)),
+        )
         .subcommand_required(true)
         .about("An archive format for data backups with indexing and compression capabilities")
         .get_matches();
@@ -56,6 +61,8 @@ fn main() -> std::result::Result<(), String> {
         archive::create::main(matches)
     } else if let Some(matches) = matches.subcommand_matches("list") {
         archive::list::main(matches)
+    } else if let Some(matches) = matches.subcommand_matches("extract") {
+        archive::extract::main(matches)
     } else {
         unreachable!()
     };
