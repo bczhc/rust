@@ -1,5 +1,6 @@
 pub type Result<T> = std::result::Result<T, Error>;
 
+use crate::Entry;
 use std::io;
 use thiserror::Error;
 
@@ -21,6 +22,8 @@ pub enum Error {
     UnknownFileType,
     #[error("Unknown compression method")]
     UnknownCompressionMethod,
+    #[error("Checksum error for entry: {0:?}")]
+    Checksum(Entry),
     #[error("{0}")]
     Others(String),
 }

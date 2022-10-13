@@ -26,7 +26,7 @@ pub mod create;
 pub mod errors;
 pub mod list;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Entry {
     magic_number: [u8; ENTRY_MAGIC.len()],
     path_length: u16,
@@ -40,6 +40,7 @@ pub struct Entry {
     permission_mode: u16,
     modification_time: u64,
     content_checksum: u64,
+    // the offset in respect with the content area (0 for the first file)
     offset: u64,
 }
 

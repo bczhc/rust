@@ -33,7 +33,7 @@ where
     compressor: Box<dyn Compress>,
     entries: Vec<(PathBuf, Entry)>,
     content_offset: u64,
-    last_offset: u64,
+    last_content_offset: u64,
 }
 
 impl<W> Archive<W>
@@ -46,7 +46,7 @@ where
             compressor,
             entries: Vec::new(),
             content_offset: 0,
-            last_offset: 0,
+            last_content_offset: 0,
         };
         archive.init_header()?;
         Ok(archive)
@@ -162,7 +162,7 @@ where
         self.writer.seek(SeekFrom::Start(content_offset))?;
 
         self.content_offset = content_offset;
-        self.last_offset = content_offset;
+        self.last_content_offset = 0;
 
         for (path, entry) in self.entries.iter_mut().filter(|x| x.0.is_file()) {
             let file = File::open(path)?;
@@ -170,8 +170,8 @@ where
             let compressed_size = self.compressor.compress_to(&mut reader, &mut self.writer)?;
             entry.stored_size = compressed_size;
 
-            entry.offset = self.last_offset;
-            self.last_offset += entry.stored_size;
+            entry.offset = self.last_content_offset;
+            self.last_content_offset += entry.stored_size;
         }
 
         Ok(())

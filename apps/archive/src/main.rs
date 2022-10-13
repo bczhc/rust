@@ -11,7 +11,7 @@ use archive::errors::{Error, Result};
 use archive::Compressor;
 use bczhc_lib::mutex_lock;
 
-fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+fn main() -> std::result::Result<(), String> {
     let matches = Command::new("archive")
         .version("1.0.0")
         .subcommand(
@@ -52,13 +52,16 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .about("An archive format for data backups with indexing and compression capabilities")
         .get_matches();
 
-    if let Some(matches) = matches.subcommand_matches("create") {
+    let result = if let Some(matches) = matches.subcommand_matches("create") {
         archive::create::main(matches)
     } else if let Some(matches) = matches.subcommand_matches("list") {
         archive::list::main(matches)
     } else {
         unreachable!()
-    }?;
+    };
+    if let Err(e) = result {
+        return Err(e.to_string());
+    }
 
     Ok(())
 }
