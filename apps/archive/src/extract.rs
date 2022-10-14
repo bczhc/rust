@@ -3,8 +3,8 @@ use crate::errors::*;
 use crate::reader::ArchiveReader;
 use crate::{Compressor, FileType, GenericOsStrExt, StreamPipe};
 use bczhc_lib::io::OpenOrCreate;
+use cfg_if::cfg_if;
 use clap::ArgMatches;
-use nix::sys::stat::Mode;
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::Write;
@@ -56,10 +56,17 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                 todo!()
             }
             FileType::Fifo => {
-                nix::unistd::mkfifo(
-                    target_path,
-                    Mode::from_bits(entry.permission_mode as nix::libc::mode_t).unwrap(),
-                )?;
+                cfg_if! {
+                    if #[cfg(unix)] {
+                        use nix::sys::stat::Mode;
+                        nix::unistd::mkfifo(
+                            target_path,
+                            Mode::from_bits(entry.permission_mode as nix::libc::mode_t).unwrap(),
+                        )?;
+                    } else {
+                        panic!("Not supported yet")
+                    }
+                }
             }
             FileType::Directory => {
                 if target_path.exists() {
