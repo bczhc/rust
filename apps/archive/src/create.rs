@@ -1,5 +1,7 @@
 use crate::archive::Archive;
-use crate::compressors::{Compress, GzipCompressor, NoCompressor};
+use crate::compressors::{
+    create_compressor, Compress, GzipCompressor, Level, NoCompressor, XzCompressor, ZstdCompressor,
+};
 use crate::{Compressor, Configs};
 use bczhc_lib::mutex_lock;
 use clap::ArgMatches;
@@ -7,6 +9,7 @@ use once_cell::sync::Lazy;
 use std::fs::File;
 use std::io::{BufWriter, Seek, Write};
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::sync::Mutex;
 
 use crate::errors::*;
@@ -20,11 +23,16 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     let compressor_name = matches.get_one::<String>("compress").unwrap();
     let compress_level = matches.get_one::<String>("level").unwrap();
 
-    let (compressor_type, compressor) = resolve_compressor(compressor_name, compress_level)?;
+    let compressor_name = compressor_name
+        .parse::<Compressor>()
+        .map_err(|_| Error::InvalidCompressor)?;
+    let compress_level = Level::from_str(compress_level).map_err(|_| Error::InvalidCompressor)?;
+
+    let compressor = create_compressor(compressor_name, compress_level);
 
     mutex_lock!(CONFIGS)
         .compressor_type
-        .replace(compressor_type);
+        .replace(compressor_name);
 
     let mut archive = create_archive(output, compressor)?;
 
@@ -71,34 +79,4 @@ fn add_path(archive: &mut Archive<impl Write + Seek>, base_dir: &str, path: &str
     }
 
     Ok(())
-}
-
-fn resolve_compressor(name: &str, level: &str) -> Result<(Compressor, Box<dyn Compress>)> {
-    let parse = name.parse::<Compressor>();
-    if parse.is_err() {
-        return Err(Error::InvalidCompressor);
-    }
-    let compressor_type = parse.unwrap();
-
-    let level_num = match level {
-        "best" => compressor_type.best_level(),
-        _ => level.parse::<u32>().map_err(|_| Error::InvalidCompressor)?,
-    };
-
-    let compressor: Box<dyn Compress> = match compressor_type {
-        Compressor::Gzip => Box::new(GzipCompressor::new(level_num)),
-        Compressor::Xz => {
-            todo!()
-        }
-        Compressor::Zstd => {
-            todo!()
-        }
-        Compressor::None => Box::new(NoCompressor::new()),
-        Compressor::External => {
-            // ensured by clap
-            unreachable!()
-        }
-    };
-
-    Ok((compressor_type, compressor))
 }

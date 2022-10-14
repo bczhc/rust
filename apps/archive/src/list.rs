@@ -33,6 +33,7 @@ Content offset: {}",
         let path_bytes = &entry.path[..];
         let path = OsStr::from_bytes(path_bytes);
         println!("{:?}", path);
+        // dbg!(entry);
     }
 
     Ok(())

@@ -302,6 +302,33 @@ impl GenericOsStrExt for OsStr {
     }
 }
 
+pub struct StreamPipe<'a, W>
+where
+    W: Write,
+{
+    writer: &'a mut W,
+}
+impl<'a, W> StreamPipe<'a, W>
+where
+    W: Write,
+{
+    pub fn new(writer: &'a mut W) -> Self {
+        Self { writer }
+    }
+}
+impl<'a, W> Write for StreamPipe<'a, W>
+where
+    W: Write,
+{
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.writer.write(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.writer.flush()
+    }
+}
+
 pub const FILE_MAGIC: &[u8; 13] = b"bczhc archive";
 pub const ENTRY_MAGIC: &[u8; 5] = b"Entry";
 pub const VERSION: u16 = 1;

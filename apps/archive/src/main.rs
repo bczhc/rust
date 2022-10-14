@@ -2,7 +2,8 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use clap::{Arg, ArgAction, Command};
+use clap::builder::RangedI64ValueParser;
+use clap::{value_parser, Arg, ArgAction, Command};
 use once_cell::sync::Lazy;
 
 use archive::archive::Archive;
