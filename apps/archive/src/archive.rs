@@ -64,7 +64,6 @@ where
         let relative_path = pathdiff::diff_paths(&path, &base_path).ok_or(Error::InvalidBaseDir)?;
         let metadata = path.as_ref().symlink_metadata()?;
 
-        println!("{:?}", relative_path);
         let path_bytes = relative_path.as_os_str().to_bytes();
         if path_bytes.is_none() {
             panic!("Invalid path name meets");
@@ -165,7 +164,9 @@ where
         self.last_content_offset = 0;
 
         for (path, entry) in self.entries.iter_mut().filter(|x| x.0.is_file()) {
-            let file = File::open(path)?;
+            println!("{:?}", path);
+
+            let file = File::open(&path)?;
             let mut reader = BufReader::new(file);
             let compressed_size = self.compressor.compress_to(&mut reader, &mut self.writer)?;
             entry.stored_size = compressed_size;

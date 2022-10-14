@@ -36,9 +36,11 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
 
     let mut archive = create_archive(output, compressor)?;
 
+    println!("Indexing...");
     for path in paths {
         add_path(&mut archive, base_dir, path)?;
     }
+    println!("Writing files...");
     archive.write()?;
 
     archive.flush()?;
