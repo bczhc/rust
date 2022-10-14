@@ -10,7 +10,6 @@ use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
 use std::mem::size_of_val;
-use std::os::linux::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::UNIX_EPOCH;
@@ -211,11 +210,10 @@ trait ToBytes {
 
 impl ToBytes for OsStr {
     fn to_bytes(&self) -> Option<Vec<u8>> {
-        let bytes;
         cfg_if! {
             if #[cfg(windows)] {
                 let option = self.to_str();
-                bytes = match option {
+                match option {
                     None => {
                         return None;
                     }
@@ -225,9 +223,8 @@ impl ToBytes for OsStr {
                 }
             } else {
                 use std::os::unix::ffi::OsStrExt;
-                bytes = Vec::from(self.as_bytes())
+                return Some(Vec::from(self.as_bytes()));
             }
         }
-        Some(bytes)
     }
 }
