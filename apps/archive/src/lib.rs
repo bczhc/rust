@@ -331,7 +331,7 @@ where
 
 pub const FILE_MAGIC: &[u8; 13] = b"bczhc archive";
 pub const ENTRY_MAGIC: &[u8; 5] = b"Entry";
-pub const VERSION: u16 = 1;
+pub const VERSION: u16 = 0;
 
 pub const FILE_CRC_64: Algorithm<u64> = crc_lib::CRC_64_XZ;
 pub const ENTRY_CRC_32: Algorithm<u32> = crc_lib::CRC_32_CKSUM;
