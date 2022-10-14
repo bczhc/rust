@@ -84,7 +84,7 @@ jobs:
       - name: Add build requirements
         run: |
           curl 'https://raw.githubusercontent.com/patmarion/winpcap/master/Lib/x64/Packet.lib' > Packet.lib
-          sudo cp -v Packet.lib 'C:\windows\system32\'
+          cp -v Packet.lib 'C:\windows\system32\'
       - name: Build
         run: cargo build --workspace
       - name: Test
