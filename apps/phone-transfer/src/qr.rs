@@ -1,9 +1,15 @@
 use crate::errors::*;
-use pnet::datalink::NetworkInterface;
 use std::io::{stderr, stdin, Write};
 
+#[cfg(windows)]
+pub fn print_addr_qr(port: u16) -> Result<()> {
+    panic!("Not supported for Windows yet")
+}
+
+#[cfg(unix)]
 pub fn print_addr_qr(port: u16) -> Result<()> {
     eprintln!("Please select a network interface manually:");
+    use pnet::datalink::NetworkInterface;
     let interfaces = pnet::datalink::interfaces();
     let options = interfaces.iter().map(|x| {
         (
