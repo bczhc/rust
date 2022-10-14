@@ -9,7 +9,9 @@ use std::mem::size_of_val;
 
 use crate::errors::{Error, Result};
 use crate::reader::ArchiveReader;
-use crate::{CalcCrcChecksum, Entry, FixedStoredSize, Header, ReadFrom, FILE_MAGIC};
+use crate::{
+    CalcCrcChecksum, Entry, FixedStoredSize, GenericOsStrExt, Header, ReadFrom, FILE_MAGIC,
+};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let path = matches.get_one::<String>("archive").unwrap();
@@ -27,17 +29,10 @@ Content offset: {}",
     for entry in entries {
         let entry = entry?;
         // TODO: handle and escape special and non-printable characters
+        // TODO: add trailing slash on directory paths
         let path_bytes = &entry.path[..];
-        cfg_if! {
-            if #[cfg(unix)] {
-                use std::os::unix::ffi::OsStrExt;
-                let str = OsStr::from_bytes(path_bytes);
-                println!("{:?}", str);
-            } else {
-                let str = std::str::from_utf8(path_bytes).expect("Invalid UTF-8 path name meets");
-                println!("{}", str);
-            }
-        }
+        let path = OsStr::from_bytes(path_bytes);
+        println!("{:?}", path);
     }
 
     Ok(())

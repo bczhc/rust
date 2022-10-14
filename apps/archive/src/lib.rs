@@ -2,6 +2,7 @@ extern crate core;
 extern crate crc as crc_lib;
 
 use num_derive::FromPrimitive;
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
@@ -281,6 +282,23 @@ impl CalcCrcChecksum<u32> for Entry {
         self.write_to(&mut crc_writer).unwrap();
 
         digest.finalize()
+    }
+}
+
+pub trait GenericOsStrExt {
+    fn from_bytes(_: &[u8]) -> &OsStr;
+}
+
+impl GenericOsStrExt for OsStr {
+    fn from_bytes(bytes: &[u8]) -> &OsStr {
+        cfg_if! {
+            if #[cfg(unix)] {
+                std::os::unix::ffi::OsStrExt::from_bytes(bytes)
+            } else {
+                let str = std::str::from_utf8(bytes).expect("Invalid UTF-8 meets");
+                OsStr::new(str)
+            }
+        }
     }
 }
 

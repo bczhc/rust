@@ -5,7 +5,7 @@ use cfg_if::cfg_if;
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io;
-use std::io::{Read, Seek, Take};
+use std::io::{Read, Seek, SeekFrom, Take, Write};
 use std::path::Path;
 
 pub struct ArchiveReader {
@@ -24,19 +24,36 @@ impl ArchiveReader {
         Ok(Self { file, header })
     }
 
-    pub fn entries(&mut self) -> Entries {
+    pub fn entries(&self) -> Entries {
         Entries::new(self)
+    }
+
+    pub fn retrieve_content<W: Write>(
+        &mut self,
+        writer: &mut W,
+        offset: u64,
+        size: u64,
+    ) -> Result<()> {
+        let position = self.file.stream_position()?;
+
+        self.file.seek(SeekFrom::Start(offset))?;
+        let mut take = self.file.try_clone().unwrap().take(size);
+        io::copy(&mut take, writer)?;
+
+        self.file.seek(SeekFrom::Start(position))?;
+
+        Ok(())
     }
 }
 
-pub struct Entries<'a> {
-    file: &'a mut File,
+pub struct Entries {
+    file: File,
     entries_reader: Take<File>,
     content_offset: u64,
 }
 
-impl<'a> Entries<'a> {
-    fn new(outer: &'a mut ArchiveReader) -> Self {
+impl Entries {
+    fn new(outer: &ArchiveReader) -> Self {
         let header = &outer.header;
         // constrain to the entries section
         let mut entries_reader = outer
@@ -46,18 +63,18 @@ impl<'a> Entries<'a> {
             .take(header.content_offset - Header::SIZE as u64);
 
         Self {
-            file: &mut outer.file,
+            file: outer.file.try_clone().unwrap(),
             entries_reader,
             content_offset: outer.header.content_offset,
         }
     }
 }
 
-impl<'a> Iterator for Entries<'a> {
+impl Iterator for Entries {
     type Item = Result<Entry>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut entries_reader = &mut self.entries_reader;
+        let entries_reader = &mut self.entries_reader;
 
         let result = Entry::read_from(entries_reader);
         let entry = match result {

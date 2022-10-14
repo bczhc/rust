@@ -24,6 +24,8 @@ pub enum Error {
     UnknownCompressionMethod,
     #[error("Checksum error for entry: {0:?}")]
     Checksum(Entry),
+    #[error("Unix errno: {0}")]
+    Errno(#[from] nix::Error),
     #[error("{0}")]
     Others(String),
 }

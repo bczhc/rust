@@ -51,7 +51,13 @@ fn main() -> std::result::Result<(), String> {
         .subcommand(
             Command::new("extract")
                 .alias("e")
-                .arg(Arg::new("archive").help("Archive file path").required(true)),
+                .arg(Arg::new("archive").help("Archive file path").required(true))
+                .arg(
+                    Arg::new("base-dir")
+                        .short('C')
+                        .long("base-directory")
+                        .default_value("."),
+                ),
         )
         .subcommand_required(true)
         .about("An archive format for data backups with indexing and compression capabilities")
