@@ -82,6 +82,7 @@ jobs:
           rustup default nightly
           rustc --version
       - name: Add build requirements
+        shell: bash
         run: |
           wget 'https://raw.githubusercontent.com/patmarion/winpcap/master/Lib/x64/Packet.lib'
           sudo cp -v Packet.lib 'C:\windows\system32\'
