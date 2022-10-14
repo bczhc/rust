@@ -81,6 +81,10 @@ jobs:
           ./installer --default-host x86_64-pc-windows-gnu -y
           rustup default nightly
           rustc --version
+      - name: Add build requirements
+        run: |
+          wget 'https://raw.githubusercontent.com/patmarion/winpcap/master/Lib/x64/Packet.lib'
+          sudo cp -v Packet.lib 'C:\windows\system32\'
       - name: Build
         run: cargo build --workspace
       - name: Test
