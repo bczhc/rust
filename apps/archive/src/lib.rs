@@ -54,8 +54,9 @@ pub enum Compressor {
     Gzip = 0,
     Xz = 1,
     Zstd = 2,
-    None = 3,
-    External = 4,
+    Bzip2 = 3,
+    None = 4,
+    External = 5,
 }
 
 #[derive(Copy, Clone, FromPrimitive, Debug)]
@@ -123,11 +124,13 @@ impl FromStr for Compressor {
     type Err = ();
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let compressor = match s.to_lowercase().as_str() {
-            "gzip" => Compressor::Gzip,
-            "xz" => Compressor::Xz,
-            "zstd" => Compressor::Zstd,
-            "no" => Compressor::None,
+        let name = s.to_lowercase();
+        let compressor = match name {
+            _ if name == Compressor::Gzip.as_str() => Compressor::Gzip,
+            _ if name == Compressor::Bzip2.as_str() => Compressor::Bzip2,
+            _ if name == Compressor::Zstd.as_str() => Compressor::Zstd,
+            _ if name == Compressor::Xz.as_str() => Compressor::Xz,
+            _ if name == Compressor::None.as_str() => Compressor::None,
             _ => {
                 return Err(());
             }
@@ -139,11 +142,23 @@ impl FromStr for Compressor {
 impl Compressor {
     pub fn best_level(&self) -> u32 {
         match self {
-            Compressor::Gzip => 9,
+            Compressor::Gzip => flate2::Compression::best().level(),
             Compressor::Xz => 9,
             Compressor::Zstd => 22,
             Compressor::None => 0,
+            Compressor::Bzip2 => bzip2::Compression::best().level(),
             Compressor::External => panic!("Unexpected method"),
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            Compressor::Gzip => "gzip",
+            Compressor::Xz => "xz",
+            Compressor::Zstd => "zstd",
+            Compressor::Bzip2 => "bzip2",
+            Compressor::None => "no",
+            _ => panic!("Invalid compressor"),
         }
     }
 }

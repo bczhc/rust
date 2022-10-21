@@ -31,7 +31,7 @@ fn main() -> std::result::Result<(), String> {
                         .short('c')
                         .long("compress")
                         .value_name("method")
-                        .value_parser(["gzip", "xz", "zstd", "no"])
+                        .value_parser(["gzip", "xz", "zstd", "bzip2", "no"])
                         .help("Compression method used for each file, \"no\" means no compression")
                         .default_value("no")
                         .ignore_case(true),

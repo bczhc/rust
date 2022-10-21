@@ -1,10 +1,11 @@
-use crate::Compressor;
-use flate2::Compression;
 use std::io;
 use std::io::{BufReader, Read, Write};
 use std::str::FromStr;
 
+use flate2::Compression;
+
 use crate::errors::Result;
+use crate::Compressor;
 
 #[derive(Copy, Clone)]
 pub enum Level {
@@ -39,6 +40,7 @@ pub fn create_compressor(method: Compressor, level: Level) -> Box<dyn Compress> 
         Compressor::Gzip => Box::new(GzipCompressor::new(level)),
         Compressor::Xz => Box::new(XzCompressor::new(level)),
         Compressor::Zstd => Box::new(ZstdCompressor::new(level)),
+        Compressor::Bzip2 => Box::new(Bzip2Compressor::new(level)),
         Compressor::None => Box::new(NoCompressor::new()),
         Compressor::External => {
             // ensured by clap
@@ -52,6 +54,7 @@ pub fn create_decompressor(method: Compressor) -> Box<dyn Decompress> {
         Compressor::Gzip => Box::new(GzipDecompressor),
         Compressor::Xz => Box::new(XzDecompressor),
         Compressor::Zstd => Box::new(ZstdDecompressor),
+        Compressor::Bzip2 => Box::new(Bzip2Decompressor),
         Compressor::None => Box::new(NoDecompressor),
         Compressor::External => {
             unreachable!()
@@ -143,9 +146,27 @@ impl Compress for ZstdCompressor {
     }
 }
 
+pub struct Bzip2Compressor {
+    level: u32,
+}
+
+impl Bzip2Compressor {
+    pub fn new(level: u32) -> Self {
+        Self { level }
+    }
+}
+
+impl Compress for Bzip2Compressor {
+    fn compress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+        let mut encoder = bzip2::read::BzEncoder::new(from, bzip2::Compression::new(self.level));
+        Ok(io::copy(&mut encoder, to)?)
+    }
+}
+
 pub struct GzipDecompressor;
 pub struct XzDecompressor;
 pub struct ZstdDecompressor;
+pub struct Bzip2Decompressor;
 pub struct NoDecompressor;
 
 impl Decompress for GzipDecompressor {
@@ -163,6 +184,12 @@ impl Decompress for XzDecompressor {
 impl Decompress for ZstdDecompressor {
     fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
         Ok(io::copy(&mut zstd::stream::read::Decoder::new(from)?, to)?)
+    }
+}
+
+impl Decompress for Bzip2Decompressor {
+    fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+        Ok(io::copy(&mut bzip2::read::BzDecoder::new(from), to)?)
     }
 }
 

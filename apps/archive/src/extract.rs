@@ -42,6 +42,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                     Compressor::Gzip => Box::new(flate2::write::GzDecoder::new(&mut file)),
                     Compressor::Xz => Box::new(xz2::write::XzDecoder::new(&mut file)),
                     Compressor::Zstd => Box::new(zstd::stream::write::Decoder::new(&mut file)?),
+                    Compressor::Bzip2 => Box::new(bzip2::write::BzDecoder::new(&mut file)),
                     Compressor::None => Box::new(StreamPipe::new(&mut file)),
                     Compressor::External => {
                         unreachable!()
