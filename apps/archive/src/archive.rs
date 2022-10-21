@@ -20,8 +20,8 @@ use cfg_if::cfg_if;
 use crate::compressors::Compress;
 use crate::errors::{Error, Result};
 use crate::{
-    CalcCrcChecksum, Compressor, Entry, FileType, FixedStoredSize, GetStoredSize, Header, WriteTo,
-    ENTRY_MAGIC, FILE_MAGIC, VERSION,
+    CalcCrcChecksum, Compressor, Entry, FileType, FixedStoredSize, GenericOsStrExt, GetStoredSize,
+    Header, WriteTo, ENTRY_MAGIC, FILE_MAGIC, VERSION,
 };
 
 pub struct Archive<W>
@@ -162,8 +162,15 @@ where
         self.content_offset = content_offset;
         self.last_content_offset = 0;
 
-        for (path, entry) in self.entries.iter_mut().filter(|x| x.0.is_file()) {
-            println!("{:?}", path);
+        for (path, entry) in self.entries.iter_mut() {
+            println!(
+                "./{}{}",
+                path.as_os_str().to_string(),
+                if path.is_dir() { "/" } else { "" }
+            );
+            if !path.is_file() {
+                continue;
+            }
 
             let file = File::open(&path)?;
             let mut reader = BufReader::new(file);

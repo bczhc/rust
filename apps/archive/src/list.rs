@@ -10,7 +10,8 @@ use std::mem::size_of_val;
 use crate::errors::{Error, Result};
 use crate::reader::ArchiveReader;
 use crate::{
-    CalcCrcChecksum, Entry, FixedStoredSize, GenericOsStrExt, Header, ReadFrom, FILE_MAGIC,
+    CalcCrcChecksum, Entry, FileType, FixedStoredSize, GenericOsStrExt, Header, ReadFrom,
+    FILE_MAGIC,
 };
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
@@ -28,12 +29,18 @@ Content offset: {}",
     let entries = archive.entries();
     for entry in entries {
         let entry = entry?;
-        // TODO: handle and escape special and non-printable characters
-        // TODO: add trailing slash on directory paths
         let path_bytes = &entry.path[..];
         let path = OsStr::from_bytes(path_bytes);
-        println!("{:?}", path);
-        // dbg!(entry);
+        println!(
+            "./{}{}",
+            path.to_string(),
+            if let FileType::Directory = entry.file_type {
+                "/"
+            } else {
+                ""
+            }
+        );
+        dbg!(entry);
     }
 
     Ok(())

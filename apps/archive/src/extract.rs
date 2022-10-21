@@ -82,7 +82,15 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                 }
             }
         }
-        println!("{:?}", path);
+        println!(
+            "./{}{}",
+            path.to_string(),
+            if let FileType::Directory = entry.file_type {
+                "/"
+            } else {
+                ""
+            }
+        );
     }
 
     Ok(())

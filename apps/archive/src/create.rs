@@ -6,6 +6,7 @@ use crate::{Compressor, Configs};
 use bczhc_lib::mutex_lock;
 use clap::ArgMatches;
 use once_cell::sync::Lazy;
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufWriter, Seek, Write};
 use std::path::{Path, PathBuf};
