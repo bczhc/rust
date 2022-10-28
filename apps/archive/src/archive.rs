@@ -69,7 +69,17 @@ where
         }
         let path_bytes = path_bytes.unwrap();
 
-        let file_type = FileType::try_from(metadata.file_type());
+        let file_type = metadata.file_type();
+        cfg_if! {
+            if #[cfg(unix)] {
+                use std::os::unix::fs::FileTypeExt;
+                if file_type.is_socket() {
+                    eprintln!("{}: socket ignored", relative_path.as_os_str().to_string());
+                    return Ok(());
+                }
+            }
+        }
+        let file_type = FileType::try_from(file_type);
         if file_type.is_err() {
             panic!("Unknown file type: {:?}", relative_path);
         }
