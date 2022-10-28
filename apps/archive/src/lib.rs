@@ -3,6 +3,7 @@ extern crate crc as crc_lib;
 
 use num_derive::FromPrimitive;
 use std::ffi::OsStr;
+use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
@@ -30,6 +31,7 @@ pub mod errors;
 pub mod extract;
 pub mod list;
 pub mod reader;
+pub mod test;
 
 #[derive(Debug, Clone)]
 pub struct Entry {
@@ -76,6 +78,15 @@ pub struct Header {
     magic_number: [u8; FILE_MAGIC.len()],
     version: u16,
     content_offset: u64,
+}
+
+impl Display for Header {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Version: {}", self.version)?;
+        write!(f, "Content offset: {}", self.content_offset)?;
+
+        Ok(())
+    }
 }
 
 impl FixedStoredSize for Header {

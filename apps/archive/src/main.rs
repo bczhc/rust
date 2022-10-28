@@ -60,6 +60,12 @@ fn main() -> std::result::Result<(), String> {
                         .default_value("."),
                 ),
         )
+        .subcommand(
+            Command::new("test")
+                .alias("t")
+                .arg(Arg::new("archive").help("Archive file path").required(true))
+                .about("Check the archive integrity"),
+        )
         .subcommand_required(true)
         .about("An archive format for data backups with indexing and compression capabilities")
         .get_matches();
@@ -70,6 +76,8 @@ fn main() -> std::result::Result<(), String> {
         archive::list::main(matches)
     } else if let Some(matches) = matches.subcommand_matches("extract") {
         archive::extract::main(matches)
+    } else if let Some(matches) = matches.subcommand_matches("test") {
+        archive::test::main(matches)
     } else {
         unreachable!()
     };

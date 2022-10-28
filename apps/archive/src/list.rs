@@ -19,12 +19,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     let mut archive = ArchiveReader::new(path)?;
     let header = &archive.header;
 
-    println!(
-        "\
-Version: {}
-Content offset: {}",
-        header.version, header.content_offset
-    );
+    println!("{}", header);
 
     let entries = archive.entries();
     for entry in entries {
