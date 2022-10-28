@@ -34,12 +34,14 @@ Content offset: {}",
         println!(
             "./{}{}",
             path.to_string(),
-            if let FileType::Directory = entry.file_type {
+            if !path.is_empty() && entry.file_type == FileType::Directory {
                 "/"
             } else {
                 ""
             }
         );
+
+        #[cfg(debug_assertions)]
         dbg!(entry);
     }
 

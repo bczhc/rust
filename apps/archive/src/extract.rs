@@ -34,9 +34,8 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
 
                 let mut file = File::open_or_create(target_path)?;
 
-                // let decompressor = create_decompressor(entry.compression_method);
                 // here must use a write-based decoder, as the target writer
-                // in `retrieve_content(...)`
+                // passed to `retrieve_content(...)`
                 // TODO: generalize APIs; refactor
                 let mut decoder: Box<dyn Write> = match entry.compression_method {
                     Compressor::Gzip => Box::new(flate2::write::GzDecoder::new(&mut file)),
@@ -85,7 +84,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         println!(
             "./{}{}",
             path.to_string(),
-            if let FileType::Directory = entry.file_type {
+            if !path.is_empty() && entry.file_type == FileType::Directory {
                 "/"
             } else {
                 ""

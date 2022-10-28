@@ -59,7 +59,7 @@ pub enum Compressor {
     External = 5,
 }
 
-#[derive(Copy, Clone, FromPrimitive, Debug)]
+#[derive(Copy, Clone, FromPrimitive, Debug, Eq, PartialEq)]
 pub enum FileType {
     Regular = 0,
     Link = 1,
