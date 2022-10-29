@@ -42,3 +42,40 @@ impl<'a, 'b> DigestWriter<'a, 'b, u64> {
         Self { digest }
     }
 }
+
+pub mod write {
+    use crc_lib::{Digest, Width};
+    use std::io::Write;
+
+    pub struct CrcFilter<'a, 'b, W, Wr>
+    where
+        W: Width,
+        Wr: Write,
+    {
+        digest: &'a mut Digest<'b, W>,
+        writer: &'a mut Wr,
+    }
+
+    impl<'a, 'b, Wr> CrcFilter<'a, 'b, u64, Wr>
+    where
+        Wr: Write,
+    {
+        pub fn new(digest: &'a mut Digest<'b, u64>, writer: &'a mut Wr) -> Self {
+            Self { digest, writer }
+        }
+    }
+
+    impl<'a, 'b, Wr> Write for CrcFilter<'a, 'b, u64, Wr>
+    where
+        Wr: Write,
+    {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.digest.update(buf);
+            self.writer.write(buf)
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.writer.flush()
+        }
+    }
+}

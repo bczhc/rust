@@ -16,12 +16,14 @@ use std::time::UNIX_EPOCH;
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use cfg_if::cfg_if;
+use crc_lib::Crc;
 
 use crate::compressors::Compress;
+use crate::crc::write::CrcFilter;
 use crate::errors::{Error, Result};
 use crate::{
     CalcCrcChecksum, Compressor, Entry, FileType, FixedStoredSize, GenericOsStrExt, GetStoredSize,
-    Header, WriteTo, ENTRY_MAGIC, FILE_MAGIC, VERSION,
+    Header, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
 };
 
 pub struct Archive<W>
@@ -183,9 +185,21 @@ where
             }
 
             let file = File::open(&path)?;
-            let mut reader = BufReader::new(file);
-            let compressed_size = self.compressor.compress_to(&mut reader, &mut self.writer)?;
+            let mut file_reader = BufReader::new(file);
+
+            let crc = Crc::<u64>::new(&FILE_CRC_64);
+            let mut digest = crc.digest();
+            let mut crc_filter = CrcFilter::new(&mut digest, &mut self.writer);
+
+            let compressed_size = self
+                .compressor
+                .compress_to(&mut file_reader, &mut crc_filter)?;
+
+            crc_filter.flush()?;
+            let content_checksum = digest.finalize();
+
             entry.stored_size = compressed_size;
+            entry.content_checksum = content_checksum;
 
             entry.offset = self.last_content_offset;
             self.last_content_offset += entry.stored_size;
