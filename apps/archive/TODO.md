@@ -3,7 +3,7 @@
             Arg::new("parameters")
                 .short('p')
                 .long("parameters")
-                .help("Extra parameters of used compressor"),
+                .help("Extra parameters of used external compressor"),
         )
         .arg(
             Arg::new("compressor")
@@ -19,9 +19,9 @@ to be valid UTF-8 encoded sequences).
 So I just use `OsString` with unix-specific "from [u8]"-like functions;
 
 But I'm not familiar with this on Windows. I don't know how Windows handles
-these. Now it will panic when meeting invalid UTF-8.
+these. Now it will panic when meeting any invalid UTF-8.
 
-And I know these restrictions are related with filesystems. For example ext4
+And I know these restrictions are related to filesystems. For example ext4
 and Btrfs allow arbitrary binary except '\0' as file names, and I don't know how
-Windows will handle this when use some methods to mount these filesystems
+Windows will handle this when using some methods to mount these filesystems
 on a Windows platform.
