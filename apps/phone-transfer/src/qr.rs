@@ -36,6 +36,6 @@ pub fn print_addr_qr(port: u16) -> Result<()> {
         .map_or_else(|| Err(Error::InvalidSelect), Ok)?;
 
     let text = format!("{}:{}", interface.ips[0].ip(), port);
-    qr2term::print_qr(&text).unwrap();
+    qr2term::print_qr(text).unwrap();
     Ok(())
 }

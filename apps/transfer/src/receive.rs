@@ -81,7 +81,7 @@ fn receive_file(stream: &mut TcpStream) -> MyResult<()> {
 
 fn receive_dir(stream: &mut TcpStream) -> MyResult<()> {
     let path = read_path(stream)?;
-    let result = create_dir(&path);
+    let result = create_dir(path);
     if let Err(e) = result {
         if e.kind() != ErrorKind::AlreadyExists {
             return Err(Error::IOError(e));

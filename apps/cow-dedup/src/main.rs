@@ -61,7 +61,7 @@ fn main() {
 
     let dup_files = map
         .into_iter()
-        .filter(|x| (*x).1.len() > 1)
+        .filter(|x| x.1.len() > 1)
         .map(|x| x.1)
         .collect::<Vec<_>>();
     let total: usize = dup_files.iter().map(|x| x.len()).sum();
@@ -79,7 +79,7 @@ fn main() {
                 .or_insert_with(Vec::new)
                 .push(path.clone());
         }
-        for x in map.into_iter().filter(|x| (*x).1.len() > 1) {
+        for x in map.into_iter().filter(|x| x.1.len() > 1) {
             dups_vec.push(x.1);
         }
     }

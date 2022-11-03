@@ -1,5 +1,5 @@
 use std::io;
-use std::io::{BufReader, Read, Write};
+use std::io::{Read, Write};
 use std::str::FromStr;
 
 use flate2::Compression;

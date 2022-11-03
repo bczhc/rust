@@ -1,6 +1,6 @@
 use clap::ArgMatches;
 
-use crate::{open_image, AnyResult, HEADER};
+use crate::{open_image, AnyResult};
 
 pub fn main(matches: &ArgMatches) -> AnyResult<()> {
     let img = matches.value_of("img").unwrap();

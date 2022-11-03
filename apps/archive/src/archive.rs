@@ -5,13 +5,13 @@
 //! 2. write files and update file entries
 //! 3. finalize: write entries to the starting part of the output file
 
-use std::ffi::{OsStr, OsString};
-use std::fs::{File, OpenOptions};
+use std::ffi::OsStr;
+use std::fs::File;
 use std::io;
-use std::io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write};
-use std::mem::size_of_val;
+use std::io::{BufReader, Seek, SeekFrom, Write};
+
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+
 use std::time::UNIX_EPOCH;
 
 use byteorder::{LittleEndian, WriteBytesExt};

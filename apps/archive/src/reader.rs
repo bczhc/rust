@@ -1,8 +1,7 @@
 use crate::errors::*;
 use crate::{CalcCrcChecksum, Entry, FixedStoredSize, Header, ReadFrom, FILE_MAGIC};
 use byteorder::{LittleEndian, ReadBytesExt};
-use cfg_if::cfg_if;
-use std::ffi::OsStr;
+
 use std::fs::File;
 use std::io;
 use std::io::{Read, Seek, SeekFrom, Take, Write};
@@ -56,7 +55,7 @@ impl Entries {
     fn new(outer: &ArchiveReader) -> Self {
         let header = &outer.header;
         // constrain to the entries section
-        let mut entries_reader = outer
+        let entries_reader = outer
             .file
             .try_clone()
             .unwrap()

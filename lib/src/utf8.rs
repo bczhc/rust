@@ -137,7 +137,7 @@ pub fn decode_utf8(bytes: &[u8]) -> SolvedUtf8Properties {
 pub fn decode_utf8_with_length(bytes: &[u8], bytes_length: u32) -> SolvedUtf8Properties {
     let codepoint: u32 = match bytes_length {
         1 => (bytes[0] & 0b01111111_u8) as u32,
-        2 => (((bytes[1] & 0b00111111_u8) as u32) | (((bytes[0] & 0b00011111_u8) as u32) << 6_u32)),
+        2 => ((bytes[1] & 0b00111111_u8) as u32) | (((bytes[0] & 0b00011111_u8) as u32) << 6_u32),
         3 => {
             ((bytes[2] & 0b00111111_u8) as u32)
                 | (((bytes[1] & 0b00111111_u8) as u32) << 6_u32)

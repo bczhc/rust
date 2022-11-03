@@ -55,7 +55,7 @@ fn main() {
             ComplexValueF64::new(point.x, point.y)
         },
         move |r| unsafe {
-            let mut guard = (&*(p as *mut Mutex<Vec<Epicycle>>)).lock().unwrap();
+            let mut guard = (*(p as *mut Mutex<Vec<Epicycle>>)).lock().unwrap();
             println!("{:?}", r);
             guard.push(r);
         },

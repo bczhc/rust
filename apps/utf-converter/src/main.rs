@@ -272,7 +272,7 @@ impl Main {
                     .unwrap();
             }
             let solved = decode_utf8(&read);
-            let size = unicode_converter(solved.codepoint, &mut out_buf) as usize;
+            let size = unicode_converter(solved.codepoint, &mut out_buf);
             self.output_stream.write_all(&out_buf[..size]).unwrap();
         }
     }
@@ -299,11 +299,11 @@ impl Main {
                     let lead = *p;
                     let trail = *(((p as usize) + 2) as *const u16);
                     let unicode = utf8::surrogate_pair_to_unicode(lead, trail);
-                    let size = unicode_converter(unicode, &mut buf) as usize;
+                    let size = unicode_converter(unicode, &mut buf);
                     self.output_stream.write_all(&buf[..size]).unwrap();
                 } else {
                     let unicode = *p as u32;
-                    let size = unicode_converter(unicode, &mut buf) as usize;
+                    let size = unicode_converter(unicode, &mut buf);
                     self.output_stream.write_all(&buf[..size]).unwrap();
                 }
             }
@@ -334,11 +334,11 @@ impl Main {
                     let lead = *p;
                     let trail = *(((p as usize) + 2) as *const u16);
                     let unicode = utf8::surrogate_pair_to_unicode(lead, trail);
-                    let size = unicode_converter(unicode, &mut buf) as usize;
+                    let size = unicode_converter(unicode, &mut buf);
                     self.output_stream.write_all(&buf[..size]).unwrap();
                 } else {
                     let unicode = *p as u32;
-                    let size = unicode_converter(unicode, &mut buf) as usize;
+                    let size = unicode_converter(unicode, &mut buf);
                     self.output_stream.write_all(&buf[..size]).unwrap();
                 }
             }
@@ -361,7 +361,7 @@ impl Main {
             }
             let unicode;
             unsafe { unicode = *(&buf as *const u8 as *const u32) }
-            let size = unicode_converter(unicode, &mut buf) as usize;
+            let size = unicode_converter(unicode, &mut buf);
             self.output_stream.write_all(&buf[..size]).unwrap();
         }
     }
@@ -389,7 +389,7 @@ impl Main {
                 buf[3] = t[0];
                 unicode = *(&buf as *const u8 as *const u32)
             }
-            let size = unicode_converter(unicode, &mut buf) as usize;
+            let size = unicode_converter(unicode, &mut buf);
             self.output_stream.write_all(&buf[..size]).unwrap();
         }
     }

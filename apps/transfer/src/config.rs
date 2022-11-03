@@ -17,7 +17,7 @@ pub fn run(matches: &ArgMatches) -> MyResult<()> {
     check_option(result, Error::NoConfigKey(String::from(key)))?;
 
     let mut config = read_config_file()?;
-    if value == None {
+    if value.is_none() {
         let value = search_config(&config, key);
         if let Some(value) = value {
             println!("{}", value);

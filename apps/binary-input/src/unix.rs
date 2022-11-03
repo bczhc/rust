@@ -59,7 +59,7 @@ pub fn main() -> Result<()> {
 fn bits_to_byte(bits: &[u8]) -> u8 {
     let mut byte = 0_u8;
     for (i, bit) in bits.iter().enumerate().take(8) {
-        let bit = if *bit == 0 { 0_u8 } else { 1_u8 };
+        let bit = u8::from(*bit != 0);
         byte |= bit << (7 - i);
     }
     byte

@@ -46,7 +46,7 @@ pub mod lib {
         check_config_file()?;
 
         let file_path = config_file_path();
-        if file_path == None {
+        if file_path.is_none() {
             return Err(Error::CannotGetHomeDir);
         }
 

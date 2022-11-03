@@ -4,20 +4,17 @@ extern crate crc as crc_lib;
 use num_derive::FromPrimitive;
 use std::ffi::OsStr;
 use std::fmt::{Display, Formatter};
-use std::fs::File;
+
 use std::io;
 use std::io::{Read, Write};
-use std::mem::{size_of, size_of_val};
-use std::path::Path;
+use std::mem::size_of_val;
+
 use std::str::{from_utf8, from_utf8_unchecked, FromStr};
 
-use bczhc_lib::field_size;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use cfg_if::cfg_if;
-use crc_lib::{Algorithm, Crc, Digest, Width};
-use once_cell::sync::Lazy;
+use crc_lib::{Algorithm, Crc, Width};
 
-use bczhc_lib::io::duplicator::StreamDuplicator;
 use errors::Result;
 
 use crate::crc::DigestWriter;
@@ -244,9 +241,9 @@ impl TryFrom<std::fs::FileType> for FileType {
     fn try_from(t: std::fs::FileType) -> std::result::Result<Self, Self::Error> {
         let option = t
             .is_file()
-            .then(|| FileType::Regular)
-            .or_else(|| t.is_symlink().then(|| FileType::Symlink))
-            .or_else(|| t.is_dir().then(|| FileType::Directory));
+            .then_some(FileType::Regular)
+            .or_else(|| t.is_symlink().then_some(FileType::Symlink))
+            .or_else(|| t.is_dir().then_some(FileType::Directory));
 
         if let Some(t) = option {
             Ok(t)

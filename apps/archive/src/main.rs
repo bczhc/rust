@@ -1,16 +1,4 @@
-use std::io;
-use std::path::{Path, PathBuf};
-use std::sync::Mutex;
-
-use clap::builder::RangedI64ValueParser;
-use clap::{value_parser, Arg, ArgAction, Command};
-use once_cell::sync::Lazy;
-
-use archive::archive::Archive;
-use archive::compressors::{Compress, GzipCompressor, NoCompressor};
-use archive::errors::{Error, Result};
-use archive::Compressor;
-use bczhc_lib::mutex_lock;
+use clap::{Arg, ArgAction, Command};
 
 fn main() -> std::result::Result<(), String> {
     let matches = Command::new("archive")

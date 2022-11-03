@@ -1,12 +1,10 @@
 use crate::archive::Archive;
-use crate::compressors::{
-    create_compressor, Compress, GzipCompressor, Level, NoCompressor, XzCompressor, ZstdCompressor,
-};
+use crate::compressors::{create_compressor, Compress, Level};
 use crate::{Compressor, Configs};
 use bczhc_lib::mutex_lock;
 use clap::ArgMatches;
 use once_cell::sync::Lazy;
-use std::ffi::OsStr;
+
 use std::fs::File;
 use std::io::{BufWriter, Seek, Write};
 use std::path::{Path, PathBuf};
@@ -18,7 +16,7 @@ use crate::errors::*;
 static CONFIGS: Lazy<Mutex<Configs>> = Lazy::new(|| Mutex::new(Configs::default()));
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
-    let mut paths = matches.get_many::<String>("path").unwrap();
+    let paths = matches.get_many::<String>("path").unwrap();
     let output = matches.get_one::<String>("output").unwrap();
     let base_dir = matches.get_one::<String>("base-dir").unwrap();
     let compressor_name = matches.get_one::<String>("compress").unwrap();
@@ -73,7 +71,7 @@ fn add_path(archive: &mut Archive<impl Write + Seek>, base_dir: &str, path: &str
         buf
     };
 
-    let entries = walkdir::WalkDir::new(&walk_dir);
+    let entries = walkdir::WalkDir::new(walk_dir);
     for entry in entries {
         let entry = entry?;
         let path = entry.path();
