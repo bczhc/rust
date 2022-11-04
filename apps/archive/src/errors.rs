@@ -31,6 +31,8 @@ pub enum Error {
     FilterNonZeroExit(i32),
     #[error("External decompressor not provided")]
     MissingDecompressor,
+    #[error("Only use relative paths")]
+    AbsolutePath,
     #[error("{0}")]
     Others(String),
 }

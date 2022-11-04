@@ -56,6 +56,9 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
 
     println!("Indexing...");
     for path in paths {
+        if Path::new(path).is_absolute() {
+            return Err(Error::AbsolutePath);
+        }
         add_path(&mut archive, base_dir, path)?;
     }
     println!("Writing files...");
