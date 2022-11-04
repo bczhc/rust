@@ -26,22 +26,22 @@ use crate::{
     Header, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
 };
 
-pub struct Archive<W>
+pub struct Archive<'a, W>
 where
     W: Write + Seek,
 {
     writer: W,
-    compressor: Box<dyn Compress>,
+    compressor: Box<dyn Compress + 'a>,
     entries: Vec<(PathBuf, Entry)>,
     content_offset: u64,
     last_content_offset: u64,
 }
 
-impl<W> Archive<W>
+impl<'a, W> Archive<'a, W>
 where
     W: Write + Seek,
 {
-    pub fn new(writer: W, compressor: Box<dyn Compress>) -> Result<Self> {
+    pub fn new(writer: W, compressor: Box<dyn Compress + 'a>) -> Result<Self> {
         let mut archive = Self {
             writer,
             compressor,
@@ -227,7 +227,7 @@ where
     }
 }
 
-impl<W> Drop for Archive<W>
+impl<'a, W> Drop for Archive<'a, W>
 where
     W: Write + Seek,
 {

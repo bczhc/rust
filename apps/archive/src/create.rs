@@ -21,10 +21,9 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     let output = matches.get_one::<String>("output").unwrap();
     let base_dir = matches.get_one::<String>("base-dir").unwrap();
 
-    // TODO: strange lifetime... I think there's no need to use `Box::leak` here
     let data_filter_cmd = matches
         .get_many::<String>("data-filter-cmd")
-        .map(|values| Box::leak(Box::new(values.map(|x| x.to_owned()).collect::<Vec<_>>())));
+        .map(|values| values.map(|x| x.to_owned()).collect::<Vec<_>>());
 
     let compressor_type;
     let compressor: Box<dyn Compress> = match data_filter_cmd {
@@ -42,7 +41,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
             compressor_type = compressor_name;
             create_compressor(compressor_name, compress_level)
         }
-        Some(cmd) => {
+        Some(ref cmd) => {
             // external compressor
             compressor_type = Compressor::External;
             Box::new(ExternalFilter::new(cmd))
@@ -67,9 +66,9 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     Ok(())
 }
 
-fn create_archive<P: AsRef<Path>>(
+fn create_archive<'a, P: AsRef<Path>>(
     path: P,
-    compressor: Box<dyn Compress>,
+    compressor: Box<dyn Compress + 'a>,
 ) -> Result<Archive<impl Write + Seek>> {
     let file = File::options()
         .truncate(true)
