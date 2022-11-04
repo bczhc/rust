@@ -1,6 +1,6 @@
 use clap::{Arg, ArgAction, Command};
 
-fn main() -> std::result::Result<(), String> {
+fn main() -> Result<(), String> {
     let matches = Command::new("archive")
         .version("1.0.0")
         .subcommand(
@@ -22,14 +22,26 @@ fn main() -> std::result::Result<(), String> {
                         .value_parser(["gzip", "xz", "zstd", "bzip2", "no"])
                         .help("Compression method used for each file, \"no\" means no compression")
                         .default_value("no")
-                        .ignore_case(true),
+                        .ignore_case(true)
+                        .conflicts_with("data-filter-cmd"),
                 )
                 .arg(
                     Arg::new("level")
                         .short('l')
                         .long("level")
                         .help("Compression level")
-                        .default_value("best"),
+                        .default_value("best")
+                        .conflicts_with("data-filter-cmd"),
+                )
+                .arg(
+                    Arg::new("data-filter-cmd")
+                        .long("data-filter")
+                        .action(ArgAction::Append)
+                        .num_args(1..)
+                        .allow_hyphen_values(true)
+                        .help(
+                            "External data filter command line (for compression and decompression)",
+                        ),
                 ),
         )
         .subcommand(
@@ -46,6 +58,16 @@ fn main() -> std::result::Result<(), String> {
                         .short('C')
                         .long("base-directory")
                         .default_value("."),
+                )
+                .arg(
+                    Arg::new("data-filter-cmd")
+                        .long("data-filter")
+                        .action(ArgAction::Append)
+                        .num_args(1..)
+                        .allow_hyphen_values(true)
+                        .help(
+                            "External data filter command line (for compression and decompression)",
+                        ),
                 ),
         )
         .subcommand(

@@ -1,11 +1,14 @@
 use std::io;
 use std::io::{Read, Write};
+use std::mem::transmute_copy;
+use std::process::{Command, Stdio};
 use std::str::FromStr;
+use std::thread::spawn;
 
 use flate2::Compression;
 
 use crate::errors::Result;
-use crate::Compressor;
+use crate::{Compressor, Error};
 
 #[derive(Copy, Clone)]
 pub enum Level {
@@ -195,5 +198,65 @@ impl Decompress for Bzip2Decompressor {
 impl Decompress for NoDecompressor {
     fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
         Ok(io::copy(from, to)?)
+    }
+}
+
+pub struct ExternalFilter<'a> {
+    cmd: &'a Vec<String>,
+}
+
+impl<'a> ExternalFilter<'a> {
+    pub fn new(cmd: &'a Vec<String>) -> Self {
+        Self { cmd }
+    }
+
+    fn process_filter(args: &Vec<String>, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+        let cmd = args;
+        let mut command = Command::new(&cmd[0]);
+        if cmd.len() > 1 {
+            command.args(&cmd[1..]);
+        }
+        command
+            .stdout(Stdio::piped())
+            .stdin(Stdio::piped())
+            .stderr(Stdio::inherit());
+        let mut child = command.spawn().unwrap();
+        let stdin = child.stdin.take().unwrap();
+        let mut stdout = child.stdout.take().unwrap();
+
+        // TODO: optimize performance (spawning threads frequently)
+        // it's really a trouble and hard using unix `poll` here (can't retrieve raw file descriptors)
+
+        // child thread: `from` -> `stdin`
+        let from_addr = &from as *const &mut dyn Read as usize;
+        let thread = spawn(move || unsafe {
+            let mut stdin = stdin;
+            let from: &mut dyn Read = transmute_copy(&*(from_addr as *const &mut dyn Read));
+            let result = io::copy(from, &mut stdin);
+            drop(stdin);
+            result
+        });
+
+        // main thread: `stdout` -> `to`
+        let read_size = io::copy(&mut stdout, to)?;
+        let status = child.wait().unwrap();
+        if !status.success() {
+            return Err(Error::FilterNonZeroExit(status.code().unwrap()));
+        }
+
+        thread.join().unwrap()?;
+        Ok(read_size)
+    }
+}
+
+impl<'a> Compress for ExternalFilter<'a> {
+    fn compress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+        Self::process_filter(self.cmd, from, to)
+    }
+}
+
+impl<'a> Decompress for ExternalFilter<'a> {
+    fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+        Self::process_filter(self.cmd, from, to)
     }
 }

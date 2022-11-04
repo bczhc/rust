@@ -27,6 +27,10 @@ pub enum Error {
     #[cfg(unix)]
     #[error("Unix errno: {0}")]
     Errno(#[from] nix::Error),
+    #[error("External compressor non-zero exit code: {0}")]
+    FilterNonZeroExit(i32),
+    #[error("External decompressor not provided")]
+    MissingDecompressor,
     #[error("{0}")]
     Others(String),
 }

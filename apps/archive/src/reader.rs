@@ -2,6 +2,7 @@ use crate::errors::*;
 use crate::{CalcCrcChecksum, Entry, FixedStoredSize, Header, ReadFrom, FILE_MAGIC};
 use byteorder::{LittleEndian, ReadBytesExt};
 
+use crate::compressors::ExternalFilter;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Seek, SeekFrom, Take};

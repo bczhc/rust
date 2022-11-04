@@ -1,7 +1,8 @@
 use crate::archive::Archive;
-use crate::compressors::{create_compressor, Compress, Level};
+use crate::compressors::{create_compressor, Compress, ExternalFilter, Level};
 use crate::{Compressor, Configs};
 use bczhc_lib::mutex_lock;
+
 use clap::ArgMatches;
 use once_cell::sync::Lazy;
 
@@ -19,19 +20,38 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     let paths = matches.get_many::<String>("path").unwrap();
     let output = matches.get_one::<String>("output").unwrap();
     let base_dir = matches.get_one::<String>("base-dir").unwrap();
-    let compressor_name = matches.get_one::<String>("compress").unwrap();
-    let compress_level = matches.get_one::<String>("level").unwrap();
 
-    let compressor_name = compressor_name
-        .parse::<Compressor>()
-        .map_err(|_| Error::InvalidCompressor)?;
-    let compress_level = Level::from_str(compress_level).map_err(|_| Error::InvalidCompressor)?;
+    // TODO: strange lifetime... I think there's no need to use `Box::leak` here
+    let data_filter_cmd = matches
+        .get_many::<String>("data-filter-cmd")
+        .map(|values| Box::leak(Box::new(values.map(|x| x.to_owned()).collect::<Vec<_>>())));
 
-    let compressor = create_compressor(compressor_name, compress_level);
+    let compressor_type;
+    let compressor: Box<dyn Compress> = match data_filter_cmd {
+        None => {
+            // use built-in compressors
+            let compressor_name = matches.get_one::<String>("compress").unwrap();
+            let compress_level = matches.get_one::<String>("level").unwrap();
+
+            let compressor_name = compressor_name
+                .parse::<Compressor>()
+                .map_err(|_| Error::InvalidCompressor)?;
+            let compress_level =
+                Level::from_str(compress_level).map_err(|_| Error::InvalidCompressor)?;
+
+            compressor_type = compressor_name;
+            create_compressor(compressor_name, compress_level)
+        }
+        Some(cmd) => {
+            // external compressor
+            compressor_type = Compressor::External;
+            Box::new(ExternalFilter::new(cmd))
+        }
+    };
 
     mutex_lock!(CONFIGS)
         .compressor_type
-        .replace(compressor_name);
+        .replace(compressor_type);
 
     let mut archive = create_archive(output, compressor)?;
 
