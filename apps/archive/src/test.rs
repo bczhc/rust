@@ -5,6 +5,7 @@ use clap::ArgMatches;
 use crc_lib::Crc;
 use indicatif::ProgressBar;
 use std::ffi::OsStr;
+use std::io;
 use std::process::exit;
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
@@ -46,7 +47,9 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         let mut digest = crc.digest();
         let mut crc_writer = DigestWriter::<u64>::new(&mut digest);
 
-        archive.retrieve_content(&mut crc_writer, abs_offset, entry.stored_size)?;
+        let mut content_reader = archive.retrieve_content(abs_offset, entry.stored_size)?;
+        io::copy(&mut content_reader, &mut crc_writer)?;
+        content_reader.finish()?;
 
         if content_checksum != digest.finalize() {
             progress_bar.println(format!("Content checksum error: {}", path_name));

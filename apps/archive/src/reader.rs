@@ -4,7 +4,7 @@ use byteorder::{LittleEndian, ReadBytesExt};
 
 use std::fs::File;
 use std::io;
-use std::io::{Read, Seek, SeekFrom, Take, Write};
+use std::io::{Read, Seek, SeekFrom, Take};
 use std::path::Path;
 
 pub struct ArchiveReader {
@@ -27,20 +27,41 @@ impl ArchiveReader {
         Entries::new(self)
     }
 
-    pub fn retrieve_content<W: Write>(
-        &mut self,
-        writer: &mut W,
-        offset: u64,
-        size: u64,
-    ) -> Result<()> {
-        let position = self.file.stream_position()?;
+    pub fn retrieve_content(&mut self, offset: u64, size: u64) -> io::Result<ContentReader> {
+        ContentReader::new(&mut self.file, offset, size)
+    }
+}
 
-        self.file.seek(SeekFrom::Start(offset))?;
-        let mut take = self.file.try_clone().unwrap().take(size);
-        io::copy(&mut take, writer)?;
+pub struct ContentReader<'a> {
+    file: &'a mut File,
+    init_position: u64,
+    took_reader: Take<File>,
+}
 
-        self.file.seek(SeekFrom::Start(position))?;
+impl<'a> Read for ContentReader<'a> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.took_reader.read(buf)
+    }
+}
 
+impl<'a> ContentReader<'a> {
+    fn new(file: &'a mut File, offset: u64, size: u64) -> io::Result<Self> {
+        let init_position = file.stream_position()?;
+
+        file.seek(SeekFrom::Start(offset))?;
+        let take = file.try_clone().unwrap().take(size);
+
+        Ok(Self {
+            init_position,
+            file,
+            took_reader: take,
+        })
+    }
+
+    /// must be called after the use of `ContentReader`
+    /// to seek back to the starting stream position
+    pub fn finish(&mut self) -> io::Result<()> {
+        self.file.seek(SeekFrom::Start(self.init_position))?;
         Ok(())
     }
 }

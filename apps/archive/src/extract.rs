@@ -1,3 +1,4 @@
+use crate::compressors::create_decompressor;
 use crate::errors::*;
 use crate::reader::ArchiveReader;
 use crate::{Compressor, FileType, GenericOsStrExt, StreamPipe};
@@ -33,20 +34,10 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
 
                 let mut file = File::open_or_create(target_path)?;
 
-                // here must use a write-based decoder, as the target writer
-                // passed to `retrieve_content(...)`
-                // TODO: generalize APIs; refactor
-                let mut decoder: Box<dyn Write> = match entry.compression_method {
-                    Compressor::Gzip => Box::new(flate2::write::GzDecoder::new(&mut file)),
-                    Compressor::Xz => Box::new(xz2::write::XzDecoder::new(&mut file)),
-                    Compressor::Zstd => Box::new(zstd::stream::write::Decoder::new(&mut file)?),
-                    Compressor::Bzip2 => Box::new(bzip2::write::BzDecoder::new(&mut file)),
-                    Compressor::None => Box::new(StreamPipe::new(&mut file)),
-                    Compressor::External => {
-                        unreachable!()
-                    }
-                };
-                archive.retrieve_content(&mut decoder, abs_offset, stored_size)?;
+                let mut content_reader = archive.retrieve_content(abs_offset, stored_size)?;
+                let decompressor = create_decompressor(entry.compression_method);
+                decompressor.decompress_to(&mut content_reader, &mut file)?;
+                content_reader.finish()?;
             }
             FileType::Link => {
                 todo!()

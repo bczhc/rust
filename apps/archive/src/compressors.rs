@@ -43,8 +43,7 @@ pub fn create_compressor(method: Compressor, level: Level) -> Box<dyn Compress> 
         Compressor::Bzip2 => Box::new(Bzip2Compressor::new(level)),
         Compressor::None => Box::new(NoCompressor::new()),
         Compressor::External => {
-            // ensured by clap
-            unreachable!()
+            unreachable!("Invalid argument")
         }
     }
 }
@@ -57,7 +56,7 @@ pub fn create_decompressor(method: Compressor) -> Box<dyn Decompress> {
         Compressor::Bzip2 => Box::new(Bzip2Decompressor),
         Compressor::None => Box::new(NoDecompressor),
         Compressor::External => {
-            unreachable!()
+            unreachable!("Invalid argument")
         }
     }
 }
