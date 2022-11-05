@@ -12,10 +12,9 @@ use std::io::{BufReader, Seek, SeekFrom, Write};
 
 use std::path::{Path, PathBuf};
 
-use std::time::UNIX_EPOCH;
-
 use byteorder::{LittleEndian, WriteBytesExt};
 use cfg_if::cfg_if;
+use chrono::{DateTime, Utc};
 use crc_lib::Crc;
 
 use crate::compressors::Compress;
@@ -23,7 +22,7 @@ use crate::crc::write::CrcFilter;
 use crate::errors::{Error, Result};
 use crate::{
     CalcCrcChecksum, Compressor, Entry, FileType, FixedStoredSize, GenericOsStrExt, GetStoredSize,
-    Header, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
+    Header, Timestamp, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
 };
 
 pub struct Archive<'a, W>
@@ -105,8 +104,13 @@ where
 
         let modification_time = metadata
             .modified()
-            .map(|x| x.duration_since(UNIX_EPOCH).unwrap().as_millis() as u64)
-            .unwrap_or(0);
+            .map(|x| {
+                let time = DateTime::<Utc>::from(x);
+                let seconds = time.timestamp();
+                let nanos = time.timestamp_subsec_nanos();
+                Timestamp::new(seconds, nanos)
+            })
+            .unwrap_or_else(|_| Timestamp::zero());
 
         let entry = Entry {
             magic_number: *ENTRY_MAGIC,

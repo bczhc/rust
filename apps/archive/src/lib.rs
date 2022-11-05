@@ -42,7 +42,7 @@ pub struct Entry {
     owner_id: u16,
     group_id: u16,
     permission_mode: u16,
-    modification_time: u64,
+    modification_time: Timestamp,
     content_checksum: u64,
     // the offset in respect with the content area (0 for the first file)
     offset: u64,
@@ -183,7 +183,7 @@ impl WriteTo for Entry {
         writer.write_u16::<LittleEndian>(self.owner_id)?;
         writer.write_u16::<LittleEndian>(self.group_id)?;
         writer.write_u16::<LittleEndian>(self.permission_mode)?;
-        writer.write_u64::<LittleEndian>(self.modification_time)?;
+        self.modification_time.write_to(writer)?;
         writer.write_u64::<LittleEndian>(self.content_checksum)?;
         writer.write_u64::<LittleEndian>(self.offset)?;
         Ok(())
@@ -213,7 +213,7 @@ impl ReadFrom for Entry {
         let owner_id = reader.read_u16::<LittleEndian>()?;
         let group_id = reader.read_u16::<LittleEndian>()?;
         let permission_mode = reader.read_u16::<LittleEndian>()?;
-        let modification_time = reader.read_u64::<LittleEndian>()?;
+        let modification_time = Timestamp::read_from(reader)?;
         let content_checksum = reader.read_u64::<LittleEndian>()?;
         let offset = reader.read_u64::<LittleEndian>()?;
 
@@ -273,6 +273,7 @@ trait GetStoredSize {
 
 impl GetStoredSize for Entry {
     fn stored_size(&self) -> usize {
+        // TODO: avoid manually adding these size values
         size_of_val(&self.magic_number)
             + 2
             + self.path_length as usize
@@ -283,7 +284,7 @@ impl GetStoredSize for Entry {
             + 2
             + 2
             + 2
-            + 8
+            + Timestamp::SIZE
             + 8
             + 8
     }
@@ -425,6 +426,50 @@ pub fn escape_utf8_bytes(data: &[u8]) -> String {
         }
     }
     str_buf
+}
+
+#[derive(Debug, Clone)]
+pub struct Timestamp {
+    seconds: i64,
+    nanoseconds: u32,
+}
+
+impl FixedStoredSize for Timestamp {
+    const SIZE: usize = 8 + 4;
+}
+
+impl Timestamp {
+    fn new(seconds: i64, nanoseconds: u32) -> Timestamp {
+        Self {
+            seconds,
+            nanoseconds,
+        }
+    }
+
+    fn zero() -> Timestamp {
+        Timestamp::new(0, 0)
+    }
+}
+
+impl ReadFrom for Timestamp {
+    type Item = Self;
+
+    fn read_from<R: Read>(reader: &mut R) -> Result<Self::Item> {
+        let seconds = reader.read_i64::<LittleEndian>()?;
+        let nanoseconds = reader.read_u32::<LittleEndian>()?;
+        Ok(Self {
+            seconds,
+            nanoseconds,
+        })
+    }
+}
+
+impl WriteTo for Timestamp {
+    fn write_to<W: Write>(&self, writer: &mut W) -> io::Result<()> {
+        writer.write_i64::<LittleEndian>(self.seconds)?;
+        writer.write_u32::<LittleEndian>(self.nanoseconds)?;
+        Ok(())
+    }
 }
 
 pub const FILE_MAGIC: &[u8; 13] = b"bczhc archive";

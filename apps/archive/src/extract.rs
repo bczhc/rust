@@ -1,11 +1,14 @@
 use std::ffi::OsStr;
-use std::fs;
-use std::fs::File;
+use std::fs::{File, Permissions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
+use std::time::SystemTime;
+use std::{fs, os};
 
 use cfg_if::cfg_if;
+use chrono::{TimeZone, Utc};
 use clap::ArgMatches;
+use filetime::FileTime;
 
 use bczhc_lib::io::OpenOrCreate;
 
@@ -53,6 +56,26 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                 let mut content_reader = archive.retrieve_content(abs_offset, stored_size)?;
                 decompressor.decompress_to(&mut content_reader, &mut file)?;
                 content_reader.finish()?;
+
+                cfg_if! {
+                    if #[cfg(unix)] {
+                        use os::unix::fs::PermissionsExt;
+                        use nix::unistd::*;
+                        if nix::unistd::getuid().is_root() {
+                            fs::set_permissions(target_path, Permissions::from_mode(entry.permission_mode as u32))?;
+                            chown(
+                                target_path,
+                                Some(Uid::from(entry.owner_id as u32)),
+                                Some(Gid::from(entry.group_id as u32)),
+                            )?;
+                        }
+                    }
+                }
+                let time = Utc.timestamp(
+                    entry.modification_time.seconds,
+                    entry.modification_time.nanoseconds,
+                );
+                filetime::set_file_mtime(target_path, FileTime::from(SystemTime::from(time)))?;
             }
             FileType::Link => {
                 todo!()
