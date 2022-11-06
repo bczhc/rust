@@ -566,29 +566,52 @@ pub const ENTRY_CRC_32: Algorithm<u32> = crc_lib::CRC_32_CKSUM;
 
 #[cfg(test)]
 pub mod unit_test {
-    use crate::{Entry, GetStoredSize, Header, WriteTo};
+    use crate::{
+        Compression, Entry, FileType, GetStoredSize, Header, Timestamp, WriteTo, ENTRY_MAGIC,
+        FILE_MAGIC,
+    };
     use std::io::{Cursor, Seek};
-    use std::mem::MaybeUninit;
 
-    fn test_size<T>()
+    fn test_size<T>(x: &T)
     where
         T: WriteTo + GetStoredSize,
     {
-        let uninit = MaybeUninit::<T>::uninit();
         let mut cursor = Cursor::new(Vec::new());
-        unsafe {
-            let x = uninit.assume_init_ref();
-            x.write_to(&mut cursor).unwrap();
-            assert_eq!(cursor.stream_position().unwrap(), x.stored_size() as u64);
-        }
+        x.write_to(&mut cursor).unwrap();
+        assert_eq!(cursor.stream_position().unwrap(), x.stored_size() as u64);
     }
 
     #[test]
     pub fn header_size() {
-        test_size::<Header>();
+        let header = Header {
+            magic_number: *FILE_MAGIC,
+            version: 0,
+            content_offset: 0,
+            compression: Compression::None,
+            creation_time: 0,
+            info_json: "{}".to_string(),
+        };
+        test_size(&header);
     }
 
     pub fn entry_size() {
-        test_size::<Entry>();
+        let entry = Entry {
+            magic_number: *ENTRY_MAGIC,
+            path_length: 0,
+            path: vec![],
+            file_type: FileType::Regular,
+            stored_size: 0,
+            original_size: 0,
+            owner_id: 0,
+            group_id: 0,
+            permission_mode: 0,
+            modification_time: Timestamp {
+                seconds: 0,
+                nanoseconds: 0,
+            },
+            content_checksum: 0,
+            offset: 0,
+        };
+        test_size(&entry);
     }
 }
