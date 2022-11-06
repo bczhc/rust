@@ -1,17 +1,3 @@
-```rust
-        .arg(
-            Arg::new("parameters")
-                .short('p')
-                .long("parameters")
-                .help("Extra parameters of used external compressor"),
-        )
-        .arg(
-            Arg::new("compressor")
-                .long("compress-cmd")
-                .help("External compressor command line. This overrides the default method"),
-        )
-```
-
 About path strings:
 
 On Unix things are very easy: paths can be in arbitrary binary (meaning no need
