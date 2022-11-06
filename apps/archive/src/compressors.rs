@@ -49,6 +49,7 @@ pub fn create_compressor(method: Compression, level: Level) -> Box<dyn Compress>
         Compression::Zstd => Box::new(ZstdCompressor::new(level)),
         Compression::Bzip2 => Box::new(Bzip2Compressor::new(level)),
         Compression::None => Box::new(NoCompressor::new()),
+        Compression::Brotli => Box::new(BrotliCompressor::new(level)),
         Compression::External => {
             unreachable!("Invalid argument")
         }
@@ -62,6 +63,7 @@ pub fn create_decompressor(method: Compression) -> Box<dyn Decompress> {
         Compression::Zstd => Box::new(ZstdDecompressor),
         Compression::Bzip2 => Box::new(Bzip2Decompressor),
         Compression::None => Box::new(NoDecompressor),
+        Compression::Brotli => Box::new(BrotliDecompressor),
         Compression::External => {
             unreachable!("Invalid argument")
         }
@@ -169,11 +171,29 @@ impl Compress for Bzip2Compressor {
     }
 }
 
+struct BrotliCompressor {
+    quality: u32,
+}
+
+impl BrotliCompressor {
+    pub fn new(quality: u32) -> BrotliCompressor {
+        Self { quality }
+    }
+}
+
+impl Compress for BrotliCompressor {
+    fn compress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+        let mut reader = brotli::CompressorReader::new(from, 4096, self.quality, 21);
+        Ok(io::copy(&mut reader, to)?)
+    }
+}
+
 pub struct GzipDecompressor;
 pub struct XzDecompressor;
 pub struct ZstdDecompressor;
 pub struct Bzip2Decompressor;
 pub struct NoDecompressor;
+pub struct BrotliDecompressor;
 
 impl Decompress for GzipDecompressor {
     fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
@@ -262,5 +282,12 @@ impl<'a> Compress for ExternalFilter<'a> {
 impl<'a> Decompress for ExternalFilter<'a> {
     fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
         Self::process_filter(self.cmd, from, to)
+    }
+}
+
+impl Decompress for BrotliDecompressor {
+    fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+        let mut reader = brotli::Decompressor::new(from, 4096);
+        Ok(io::copy(&mut reader, to)?)
     }
 }

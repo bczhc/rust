@@ -70,12 +70,13 @@ impl FixedStoredSize for ContentChecksum {
 
 #[derive(Copy, Clone, FromPrimitive, Debug, Eq, PartialEq)]
 pub enum Compression {
-    Gzip = 0,
-    Xz = 1,
-    Zstd = 2,
-    Bzip2 = 3,
-    None = 4,
-    External = 5,
+    External = 0,
+    Gzip = 1,
+    Xz = 2,
+    Zstd = 3,
+    Bzip2 = 4,
+    None = 5,
+    Brotli = 6,
 }
 
 impl Display for Compression {
@@ -214,11 +215,12 @@ impl FromStr for Compression {
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let name = s.to_lowercase();
         let compressor = match name {
+            _ if name == Compression::None.as_str() => Compression::None,
             _ if name == Compression::Gzip.as_str() => Compression::Gzip,
             _ if name == Compression::Bzip2.as_str() => Compression::Bzip2,
             _ if name == Compression::Zstd.as_str() => Compression::Zstd,
             _ if name == Compression::Xz.as_str() => Compression::Xz,
-            _ if name == Compression::None.as_str() => Compression::None,
+            _ if name == Compression::Brotli.as_str() => Compression::Brotli,
             _ => {
                 return Err(());
             }
@@ -235,18 +237,20 @@ impl Compression {
             Compression::Zstd => 22,
             Compression::None => 0,
             Compression::Bzip2 => bzip2::Compression::best().level(),
+            Compression::Brotli => 11,
             Compression::External => panic!("Unexpected method"),
         }
     }
 
     pub fn as_str(&self) -> &str {
         match self {
+            Compression::External => unreachable!(),
             Compression::Gzip => "gzip",
             Compression::Xz => "xz",
             Compression::Zstd => "zstd",
             Compression::Bzip2 => "bzip2",
             Compression::None => "none",
-            _ => panic!("Invalid compressor"),
+            Compression::Brotli => "brotli",
         }
     }
 }

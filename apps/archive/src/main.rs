@@ -25,7 +25,7 @@ fn main() -> Result<(), String> {
                         .short('c')
                         .long("compress")
                         .value_name("method")
-                        .value_parser(["gzip", "xz", "zstd", "bzip2", "none"])
+                        .value_parser(["gzip", "xz", "zstd", "bzip2", "brotli", "none"])
                         .help("Compression method used for each file, \"none\" for not used")
                         .default_value("none")
                         .ignore_case(true)
