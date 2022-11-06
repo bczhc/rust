@@ -1,7 +1,7 @@
 use crate::errors::*;
 use crate::info::print_info;
 use crate::reader::ArchiveReader;
-use crate::{DigestWriter, GenericOsStrExt, FILE_CRC_64};
+use crate::{DigestWriter, FileType, GenericOsStrExt, FILE_CRC_64};
 use clap::ArgMatches;
 use crc_lib::Crc;
 use indicatif::ProgressBar;
@@ -39,6 +39,10 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                 return Err(e);
             }
         };
+
+        if entry.file_type != FileType::Regular {
+            continue;
+        }
 
         let path_name = OsStr::from_bytes(&entry.path).to_string();
 
