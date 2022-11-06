@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 use std::fs::{File, Permissions};
 use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use std::{fs, os};
 
@@ -79,10 +79,20 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                 filetime::set_file_mtime(target_path, FileTime::from(SystemTime::from(time)))?;
             }
             FileType::Link => {
-                todo!()
+                let path = Path::new(OsStr::from_bytes(&entry.path));
+                let linked_path = Path::new(OsStr::from_bytes(&entry.linked_path));
+                fs::hard_link(linked_path, path)?;
             }
             FileType::Symlink => {
-                todo!()
+                let path = Path::new(OsStr::from_bytes(&entry.path));
+                let linked_path = Path::new(OsStr::from_bytes(&entry.linked_path));
+                cfg_if! {
+                    if #[cfg(windows)] {
+                        todo!();
+                    } else {
+                        os::unix::fs::symlink(linked_path, path)?;
+                    }
+                }
             }
             FileType::Fifo => {
                 cfg_if! {
@@ -93,7 +103,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                             Mode::from_bits(entry.permission_mode as nix::libc::mode_t).unwrap(),
                         )?;
                     } else {
-                        panic!("Not supported yet")
+                        panic!("Not supported")
                     }
                 }
             }

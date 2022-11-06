@@ -5,17 +5,19 @@
 //! 2. write files and update file entries
 //! 3. finalize: write entries to the starting part of the output file
 
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs::File;
-use std::io;
 use std::io::{BufReader, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{fs, io};
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use cfg_if::cfg_if;
 use chrono::{DateTime, Utc};
 use crc_lib::Crc;
+use nix::NixPath;
 
 use bczhc_lib::field_size;
 
@@ -37,6 +39,8 @@ where
     content_offset: u64,
     last_content_offset: u64,
     header: Header,
+    // for identifying hard links
+    inode_map: HashMap<u64, PathBuf>,
 }
 
 impl<'a, W> Archive<'a, W>
@@ -64,6 +68,7 @@ where
             content_offset: 0,
             last_content_offset: 0,
             header,
+            inode_map: HashMap::new(),
         };
         Ok(archive)
     }
@@ -72,6 +77,9 @@ where
     /// the path diff between `path` and `base_path` will be recorded in the archive file
     /// like `tar` utility
     pub fn add_path<P: AsRef<Path>>(&mut self, base_path: P, path: P) -> Result<()> {
+        #[cfg(unix)]
+        use std::os::unix::fs::{FileTypeExt, MetadataExt, PermissionsExt};
+
         let relative_path = pathdiff::diff_paths(&path, &base_path).ok_or(Error::InvalidBaseDir)?;
         let metadata = path.as_ref().symlink_metadata()?;
 
@@ -81,10 +89,42 @@ where
         }
         let path_bytes = path_bytes.unwrap();
 
+        // record inodes and detect hard links
+        cfg_if! {
+            if #[cfg(unix)] {
+
+            }
+        }
+
+        let inode = metadata.ino();
+        if let std::collections::hash_map::Entry::Vacant(e) = self.inode_map.entry(inode) {
+            e.insert(relative_path.clone());
+        } else {
+            // is a hardlink, just record the linked path, and no more fields needed
+            let linked_path = self.inode_map.get(&inode).unwrap();
+            let linked_path_bytes = linked_path.as_os_str().to_bytes().unwrap();
+            let entry = Entry {
+                magic_number: *ENTRY_MAGIC,
+                path_length: relative_path.len() as u16,
+                path: path_bytes,
+                file_type: FileType::Link,
+                linked_path: linked_path_bytes,
+                stored_size: 0,
+                original_size: 0,
+                owner_id: 0,
+                group_id: 0,
+                permission_mode: 0,
+                modification_time: Timestamp::zero(),
+                content_checksum: 0,
+                offset: 0,
+            };
+            self.entries.push((relative_path, entry));
+            return Ok(());
+        }
+
         let file_type = metadata.file_type();
         cfg_if! {
             if #[cfg(unix)] {
-                use std::os::unix::fs::FileTypeExt;
                 if file_type.is_socket() {
                     eprintln!("{}: socket ignored", relative_path.as_os_str().to_string());
                     return Ok(());
@@ -100,10 +140,8 @@ where
         cfg_if! {
             // unix-specific attributes
             if #[cfg(unix)] {
-                use std::os::unix::fs::PermissionsExt;
                 let file_mode = metadata.permissions().mode() as u16;
 
-                use std::os::unix::fs::MetadataExt;
                 let owner_id = metadata.uid();
                 let group_id = metadata.gid();
             } else {
@@ -123,11 +161,26 @@ where
             })
             .unwrap_or_else(|_| Timestamp::zero());
 
+        let linked_path = if file_type == FileType::Symlink {
+            // here it should be a symbolic link
+            let path_bytes = fs::read_link(&relative_path)
+                .unwrap()
+                .as_os_str()
+                .to_bytes();
+            if path_bytes.is_none() {
+                panic!("Invalid path name meets");
+            }
+            path_bytes.unwrap()
+        } else {
+            vec![]
+        };
+
         let entry = Entry {
             magic_number: *ENTRY_MAGIC,
             path_length: path_bytes.len() as u16,
             path: path_bytes,
             file_type,
+            linked_path,
             stored_size: 0, /* placeholder */
             original_size: metadata.len(),
             owner_id: owner_id as u16,
@@ -196,7 +249,7 @@ where
                 path.as_os_str().to_string(),
                 if path.is_dir() { "/" } else { "" }
             );
-            if !path.is_file() {
+            if entry.file_type != FileType::Regular {
                 continue;
             }
 

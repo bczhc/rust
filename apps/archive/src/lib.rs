@@ -42,6 +42,7 @@ pub struct Entry {
     path_length: u16,
     path: Vec<u8>,
     file_type: FileType,
+    linked_path: Vec<u8>,
     stored_size: u64,
     original_size: u64,
     owner_id: u16,
@@ -256,6 +257,8 @@ impl WriteTo for Entry {
         writer.write_u16::<LittleEndian>(self.path_length)?;
         writer.write_all(&self.path)?;
         writer.write_u8(self.file_type as u8)?;
+        writer.write_u16::<LittleEndian>(self.linked_path.len() as u16)?;
+        writer.write_all(&self.linked_path)?;
         writer.write_u64::<LittleEndian>(self.stored_size)?;
         writer.write_u64::<LittleEndian>(self.original_size)?;
         writer.write_u16::<LittleEndian>(self.owner_id)?;
@@ -284,6 +287,11 @@ impl ReadFrom for Entry {
 
         let file_type =
             num_traits::FromPrimitive::from_u8(reader.read_u8()?).ok_or(Error::UnknownFileType)?;
+
+        let linked_path_len = reader.read_u16::<LittleEndian>()?;
+        let mut linked_path = vec![0_u8; linked_path_len as usize];
+        reader.read_exact(&mut linked_path)?;
+
         let stored_size = reader.read_u64::<LittleEndian>()?;
         let original_size = reader.read_u64::<LittleEndian>()?;
         let owner_id = reader.read_u16::<LittleEndian>()?;
@@ -298,6 +306,7 @@ impl ReadFrom for Entry {
             path_length,
             path,
             file_type,
+            linked_path,
             stored_size,
             original_size,
             owner_id,
@@ -363,6 +372,8 @@ impl GetStoredSize for Entry {
                 offset
             )
             + Timestamp::SIZE
+            + size_of_val(&(self.linked_path.len() as u16))
+            + self.linked_path.len()
     }
 }
 
@@ -598,8 +609,9 @@ pub mod unit_test {
         let entry = Entry {
             magic_number: *ENTRY_MAGIC,
             path_length: 0,
-            path: vec![],
+            path: (*b"test").into(),
             file_type: FileType::Regular,
+            linked_path: (*b"test").into(),
             stored_size: 0,
             original_size: 0,
             owner_id: 0,
