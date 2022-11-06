@@ -41,14 +41,16 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         );
 
         if entry.file_type == FileType::Regular {
+            let compression_ratio = entry.original_size as f64 / entry.stored_size as f64;
             table.add_row(row![
                 format!("{:?}", entry.file_type),
                 entry.original_size,
                 entry.stored_size,
-                format!(
-                    "{:.3}",
-                    entry.original_size as f64 / entry.stored_size as f64
-                ),
+                if compression_ratio.is_finite() {
+                    format!("{:.3}", compression_ratio)
+                } else {
+                    "-".into()
+                },
                 path_string
             ]);
 
@@ -71,9 +73,14 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     println!("Records: {}", record_count);
     println!("Total original size: {}", original_size_sum);
     println!("Total stored size: {}", stored_size_sum);
+    let space_saving = (1.0 - stored_size_sum as f64 / original_size_sum as f64) * 100.0;
     println!(
         "Space saving: {:.3}%",
-        (1.0 - stored_size_sum as f64 / original_size_sum as f64) * 100.0
+        if space_saving.is_finite() {
+            space_saving
+        } else {
+            0.0
+        }
     );
 
     Ok(())
