@@ -42,6 +42,7 @@ pub struct Entry {
     path_length: u16,
     path: Vec<u8>,
     file_type: FileType,
+    linked_path_length: u16,
     linked_path: Vec<u8>,
     stored_size: u64,
     original_size: u64,
@@ -126,6 +127,7 @@ pub struct Header {
     content_offset: u64,
     compression: Compression,
     creation_time: i64,
+    info_json_length: u32,
     info_json: String,
 }
 
@@ -151,9 +153,9 @@ impl GetStoredSize for Header {
             content_offset,
             version,
             compression,
-            creation_time
-        ) + size_of_val(&(self.info_json.len() as u32))
-            + self.info_json.len()
+            creation_time,
+            info_json_length
+        ) + self.info_json.len()
     }
 }
 
@@ -178,8 +180,8 @@ impl ReadFrom for Header {
         let compression = num_traits::FromPrimitive::from_u8(reader.read_u8()?)
             .ok_or(Error::UnknownCompressionMethod)?;
         let creation_time = reader.read_i64::<LittleEndian>()?;
-        let info_json_len = reader.read_u32::<LittleEndian>()?;
-        let mut info_json_buf = vec![0_u8; info_json_len as usize];
+        let info_json_length = reader.read_u32::<LittleEndian>()?;
+        let mut info_json_buf = vec![0_u8; info_json_length as usize];
         reader.read_exact(&mut info_json_buf)?;
         let info_json = String::from_utf8(info_json_buf)?;
 
@@ -189,6 +191,7 @@ impl ReadFrom for Header {
             content_offset,
             compression,
             creation_time,
+            info_json_length,
             info_json,
         })
     }
@@ -292,8 +295,8 @@ impl ReadFrom for Entry {
         let file_type =
             num_traits::FromPrimitive::from_u8(reader.read_u8()?).ok_or(Error::UnknownFileType)?;
 
-        let linked_path_len = reader.read_u16::<LittleEndian>()?;
-        let mut linked_path = vec![0_u8; linked_path_len as usize];
+        let linked_path_length = reader.read_u16::<LittleEndian>()?;
+        let mut linked_path = vec![0_u8; linked_path_length as usize];
         reader.read_exact(&mut linked_path)?;
 
         let stored_size = reader.read_u64::<LittleEndian>()?;
@@ -310,6 +313,7 @@ impl ReadFrom for Entry {
             path_length,
             path,
             file_type,
+            linked_path_length,
             linked_path,
             stored_size,
             original_size,
@@ -376,7 +380,7 @@ impl GetStoredSize for Entry {
                 offset
             )
             + Timestamp::SIZE
-            + size_of_val(&(self.linked_path.len() as u16))
+            + field_size!(Self, linked_path_length)
             + self.linked_path.len()
     }
 }
@@ -604,6 +608,7 @@ pub mod unit_test {
             content_offset: 0,
             compression: Compression::None,
             creation_time: 0,
+            info_json_length: 2,
             info_json: "{}".to_string(),
         };
         test_size(&header);
@@ -612,9 +617,10 @@ pub mod unit_test {
     pub fn entry_size() {
         let entry = Entry {
             magic_number: *ENTRY_MAGIC,
-            path_length: 0,
+            path_length: 4,
             path: (*b"test").into(),
             file_type: FileType::Regular,
+            linked_path_length: 4,
             linked_path: (*b"test").into(),
             stored_size: 0,
             original_size: 0,

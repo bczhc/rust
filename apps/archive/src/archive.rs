@@ -57,6 +57,7 @@ where
             content_offset: 0,
             compression: compression_type,
             creation_time: Utc::now().timestamp_millis(),
+            info_json_length: 2,
             info_json: "{}".into(),
         };
 
@@ -103,6 +104,7 @@ where
                         path_length: path_bytes.len() as u16,
                         path: path_bytes,
                         file_type: FileType::Link,
+                        linked_path_length: linked_path_bytes.len() as u16,
                         linked_path: linked_path_bytes,
                         stored_size: 0,
                         original_size: 0,
@@ -177,6 +179,7 @@ where
             path_length: path_bytes.len() as u16,
             path: path_bytes,
             file_type,
+            linked_path_length: linked_path.len() as u16,
             linked_path,
             stored_size: 0, /* placeholder */
             original_size: metadata.len(),
