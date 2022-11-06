@@ -100,7 +100,7 @@ where
                     let linked_path_bytes = linked_path.as_os_str().to_bytes().unwrap();
                     let entry = Entry {
                         magic_number: *ENTRY_MAGIC,
-                        path_length: relative_path.len() as u16,
+                        path_length: path_bytes.len() as u16,
                         path: path_bytes,
                         file_type: FileType::Link,
                         linked_path: linked_path_bytes,
