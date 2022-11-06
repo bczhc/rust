@@ -17,7 +17,6 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use cfg_if::cfg_if;
 use chrono::{DateTime, Utc};
 use crc_lib::Crc;
-use nix::NixPath;
 
 use bczhc_lib::field_size;
 
@@ -92,34 +91,32 @@ where
         // record inodes and detect hard links
         cfg_if! {
             if #[cfg(unix)] {
-
+                let inode = metadata.ino();
+                if let std::collections::hash_map::Entry::Vacant(e) = self.inode_map.entry(inode) {
+                    e.insert(relative_path.clone());
+                } else {
+                    // is a hardlink, just record the linked path, and no more fields needed
+                    let linked_path = self.inode_map.get(&inode).unwrap();
+                    let linked_path_bytes = linked_path.as_os_str().to_bytes().unwrap();
+                    let entry = Entry {
+                        magic_number: *ENTRY_MAGIC,
+                        path_length: relative_path.len() as u16,
+                        path: path_bytes,
+                        file_type: FileType::Link,
+                        linked_path: linked_path_bytes,
+                        stored_size: 0,
+                        original_size: 0,
+                        owner_id: 0,
+                        group_id: 0,
+                        permission_mode: 0,
+                        modification_time: Timestamp::zero(),
+                        content_checksum: 0,
+                        offset: 0,
+                    };
+                    self.entries.push((relative_path, entry));
+                    return Ok(());
+                }
             }
-        }
-
-        let inode = metadata.ino();
-        if let std::collections::hash_map::Entry::Vacant(e) = self.inode_map.entry(inode) {
-            e.insert(relative_path.clone());
-        } else {
-            // is a hardlink, just record the linked path, and no more fields needed
-            let linked_path = self.inode_map.get(&inode).unwrap();
-            let linked_path_bytes = linked_path.as_os_str().to_bytes().unwrap();
-            let entry = Entry {
-                magic_number: *ENTRY_MAGIC,
-                path_length: relative_path.len() as u16,
-                path: path_bytes,
-                file_type: FileType::Link,
-                linked_path: linked_path_bytes,
-                stored_size: 0,
-                original_size: 0,
-                owner_id: 0,
-                group_id: 0,
-                permission_mode: 0,
-                modification_time: Timestamp::zero(),
-                content_checksum: 0,
-                offset: 0,
-            };
-            self.entries.push((relative_path, entry));
-            return Ok(());
         }
 
         let file_type = metadata.file_type();
