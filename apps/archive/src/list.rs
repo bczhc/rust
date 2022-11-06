@@ -6,7 +6,7 @@ use prettytable::{format, row, Table};
 use crate::errors::Result;
 use crate::info::print_info;
 use crate::reader::ArchiveReader;
-use crate::{Error, FileType, GenericOsStrExt, Info};
+use crate::{FileType, GenericOsStrExt};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let path = matches.get_one::<String>("archive").unwrap();

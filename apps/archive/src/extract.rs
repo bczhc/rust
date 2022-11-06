@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 use std::fs::{File, Permissions};
-use std::io::{Read, Write};
+
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use std::{fs, os};
@@ -15,7 +15,7 @@ use bczhc_lib::io::OpenOrCreate;
 use crate::compressors::{create_decompressor, Decompress, ExternalFilter};
 use crate::errors::*;
 use crate::reader::ArchiveReader;
-use crate::{Compression, FileType, GenericOsStrExt, StreamPipe};
+use crate::{Compression, FileType, GenericOsStrExt};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let archive_path = matches.get_one::<String>("archive").unwrap();

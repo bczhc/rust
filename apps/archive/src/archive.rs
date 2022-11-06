@@ -10,7 +10,7 @@ use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufReader, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+
 use std::{fs, io};
 
 use byteorder::{LittleEndian, WriteBytesExt};
@@ -61,7 +61,7 @@ where
             info_json: "{}".into(),
         };
 
-        let mut archive = Self {
+        let archive = Self {
             writer,
             compressor,
             entries: Vec::new(),

@@ -9,14 +9,13 @@ use std::fmt::{Display, Formatter};
 
 use std::io;
 use std::io::{Read, Write};
-use std::mem::size_of_val;
 
 use std::str::{from_utf8, from_utf8_unchecked, FromStr};
 
 use bczhc_lib::field_size;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use cfg_if::cfg_if;
-use chrono::{Local, TimeZone, Utc};
+use chrono::{Local, TimeZone};
 use crc_lib::{Algorithm, Crc, Width};
 use serde::{Deserialize, Serialize};
 
