@@ -246,7 +246,10 @@ trait ToBytes {
 impl ToBytes for OsStr {
     fn to_bytes(&self) -> Option<Vec<u8>> {
         cfg_if! {
-            if #[cfg(windows)] {
+            if #[cfg(unix)] {
+                use std::os::unix::ffi::OsStrExt;
+                return Some(Vec::from(self.as_bytes()));
+            } else {
                 let option = self.to_str();
                 match option {
                     None => {
@@ -256,9 +259,6 @@ impl ToBytes for OsStr {
                         Some(Vec::from(s.as_bytes()))
                     }
                 }
-            } else {
-                use std::os::unix::ffi::OsStrExt;
-                return Some(Vec::from(self.as_bytes()));
             }
         }
     }
