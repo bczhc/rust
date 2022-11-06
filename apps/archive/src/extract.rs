@@ -15,7 +15,7 @@ use bczhc_lib::io::OpenOrCreate;
 use crate::compressors::{create_decompressor, Decompress, ExternalFilter};
 use crate::errors::*;
 use crate::reader::ArchiveReader;
-use crate::{Compressor, FileType, GenericOsStrExt, StreamPipe};
+use crate::{Compression, FileType, GenericOsStrExt, StreamPipe};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let archive_path = matches.get_one::<String>("archive").unwrap();
@@ -26,7 +26,8 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
 
     let mut archive = ArchiveReader::new(archive_path)?;
 
-    let content_offset = archive.header.content_offset;
+    let header = archive.header.clone();
+    let content_offset = header.content_offset;
     let entries = archive.entries();
 
     for entry in entries {
@@ -44,14 +45,14 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
 
                 let mut file = File::open_or_create(target_path)?;
 
-                let decompressor: Box<dyn Decompress> = match &entry.compression_method {
-                    Compressor::External => match external_filter_cmd {
+                let decompressor: Box<dyn Decompress> = match &header.compression {
+                    Compression::External => match external_filter_cmd {
                         None => {
                             return Err(Error::MissingDecompressor);
                         }
                         Some(ref cmd) => Box::new(ExternalFilter::new(cmd)),
                     },
-                    _ => create_decompressor(entry.compression_method),
+                    _ => create_decompressor(header.compression),
                 };
                 let mut content_reader = archive.retrieve_content(abs_offset, stored_size)?;
                 decompressor.decompress_to(&mut content_reader, &mut file)?;

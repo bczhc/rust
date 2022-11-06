@@ -9,20 +9,22 @@ use std::ffi::OsStr;
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, Seek, SeekFrom, Write};
-
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use cfg_if::cfg_if;
 use chrono::{DateTime, Utc};
 use crc_lib::Crc;
 
+use bczhc_lib::field_size;
+
 use crate::compressors::Compress;
 use crate::crc::write::CrcFilter;
 use crate::errors::{Error, Result};
 use crate::{
-    CalcCrcChecksum, Compressor, Entry, FileType, FixedStoredSize, GenericOsStrExt, GetStoredSize,
-    Header, Timestamp, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
+    CalcCrcChecksum, Compression, Entry, EntryChecksum, FileType, FixedStoredSize, GenericOsStrExt,
+    GetStoredSize, Header, Info, Timestamp, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
 };
 
 pub struct Archive<'a, W>
@@ -34,33 +36,42 @@ where
     entries: Vec<(PathBuf, Entry)>,
     content_offset: u64,
     last_content_offset: u64,
+    header: Header,
 }
 
 impl<'a, W> Archive<'a, W>
 where
     W: Write + Seek,
 {
-    pub fn new(writer: W, compressor: Box<dyn Compress + 'a>) -> Result<Self> {
+    pub fn new(
+        writer: W,
+        compressor: Box<dyn Compress + 'a>,
+        compression_type: Compression,
+    ) -> Result<Self> {
+        let header = Header {
+            magic_number: *FILE_MAGIC,
+            version: VERSION,
+            content_offset: 0,
+            compression: compression_type,
+            creation_time: Utc::now().timestamp_millis(),
+            info_json: "{}".into(),
+        };
+
         let mut archive = Self {
             writer,
             compressor,
             entries: Vec::new(),
             content_offset: 0,
             last_content_offset: 0,
+            header,
         };
-        archive.init_header()?;
         Ok(archive)
     }
 
     /// add a path record
     /// the path diff between `path` and `base_path` will be recorded in the archive file
     /// like `tar` utility
-    pub fn add_path<P: AsRef<Path>>(
-        &mut self,
-        base_path: P,
-        path: P,
-        compressor_type: Compressor,
-    ) -> Result<()> {
+    pub fn add_path<P: AsRef<Path>>(&mut self, base_path: P, path: P) -> Result<()> {
         let relative_path = pathdiff::diff_paths(&path, &base_path).ok_or(Error::InvalidBaseDir)?;
         let metadata = path.as_ref().symlink_metadata()?;
 
@@ -117,7 +128,6 @@ where
             path_length: path_bytes.len() as u16,
             path: path_bytes,
             file_type,
-            compression_method: compressor_type,
             stored_size: 0, /* placeholder */
             original_size: metadata.len(),
             owner_id: owner_id as u16,
@@ -132,31 +142,30 @@ where
         Ok(())
     }
 
+    pub fn set_info(&mut self, info: &Info) {
+        self.header.info_json = serde_json::to_string(info).unwrap();
+    }
+
     fn content_offset(&self) -> usize {
         let entries_size_sum = self
             .entries
             .iter()
             .map(|x| {
-                x.1.stored_size() + 4 /* checksum of entry, following after each entry */
+                x.1.stored_size() + EntryChecksum::SIZE /* checksum of entry, following after each entry */
             })
             .sum::<usize>();
-        Header::SIZE + entries_size_sum
+        self.header.stored_size() + entries_size_sum
     }
 
-    fn init_header(&mut self) -> Result<()> {
-        let header = Header {
-            magic_number: *FILE_MAGIC,
-            version: VERSION,
-            content_offset: 0,
-        };
-        header.write_to(&mut self.writer)?;
-        Ok(())
+    fn write_header(&mut self) -> io::Result<()> {
+        self.header.write_to(&mut self.writer)
     }
 
     fn change_content_offset(&mut self, offset: u64) -> Result<()> {
         let position = self.writer.stream_position()?;
-        self.writer
-            .seek(SeekFrom::Start((FILE_MAGIC.len() + 2) as u64))?;
+        self.writer.seek(SeekFrom::Start(
+            (FILE_MAGIC.len() + field_size!(Header, version)) as u64,
+        ))?;
 
         self.writer.write_u64::<LittleEndian>(offset)?;
 
@@ -165,6 +174,9 @@ where
     }
 
     pub fn write(&mut self) -> Result<()> {
+        self.writer.seek(SeekFrom::Start(0))?;
+
+        self.write_header()?;
         self.write_files()?;
         self.write_entries()?;
         Ok(())
@@ -213,7 +225,8 @@ where
     }
 
     fn write_entries(&mut self) -> Result<()> {
-        self.writer.seek(SeekFrom::Start(Header::SIZE as u64))?;
+        self.writer
+            .seek(SeekFrom::Start(self.header.stored_size() as u64))?;
 
         for (_, entry) in &self.entries {
             let checksum = entry.crc_checksum();
@@ -221,7 +234,8 @@ where
             self.writer.write_u32::<LittleEndian>(checksum)?;
         }
 
-        assert_eq!(self.content_offset, self.writer.stream_position()?);
+        let result = self.writer.stream_position();
+        assert_eq!(self.content_offset, result?);
 
         Ok(())
     }

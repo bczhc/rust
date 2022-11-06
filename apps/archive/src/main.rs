@@ -15,13 +15,19 @@ fn main() -> Result<(), String> {
                         .default_value("."),
                 )
                 .arg(
+                    Arg::new("comment")
+                        .short('m')
+                        .long("comment")
+                        .help("Comment for this archive"),
+                )
+                .arg(
                     Arg::new("compress")
                         .short('c')
                         .long("compress")
                         .value_name("method")
-                        .value_parser(["gzip", "xz", "zstd", "bzip2", "no"])
-                        .help("Compression method used for each file, \"no\" means no compression")
-                        .default_value("no")
+                        .value_parser(["gzip", "xz", "zstd", "bzip2", "none"])
+                        .help("Compression method used for each file, \"none\" for not used")
+                        .default_value("none")
                         .ignore_case(true)
                         .conflicts_with("data-filter-cmd"),
                 )
@@ -76,6 +82,12 @@ fn main() -> Result<(), String> {
                 .arg(Arg::new("archive").help("Archive file path").required(true))
                 .about("Check the archive integrity"),
         )
+        .subcommand(
+            Command::new("info")
+                .alias("i")
+                .arg(Arg::new("archive").help("Archive file path").required(true))
+                .about("Show the information of archive"),
+        )
         .subcommand_required(true)
         .about("An archive format for data backups with indexing and compression capabilities")
         .get_matches();
@@ -88,6 +100,8 @@ fn main() -> Result<(), String> {
         archive::extract::main(matches)
     } else if let Some(matches) = matches.subcommand_matches("test") {
         archive::test::main(matches)
+    } else if let Some(matches) = matches.subcommand_matches("info") {
+        archive::info::main(matches)
     } else {
         unreachable!()
     };

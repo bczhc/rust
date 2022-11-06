@@ -1,16 +1,19 @@
-use clap::ArgMatches;
 use std::ffi::OsStr;
 
+use clap::ArgMatches;
+
 use crate::errors::Result;
+use crate::info::print_info;
 use crate::reader::ArchiveReader;
-use crate::{FileType, GenericOsStrExt};
+use crate::{Error, FileType, GenericOsStrExt, Info};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let path = matches.get_one::<String>("archive").unwrap();
     let archive = ArchiveReader::new(path)?;
     let header = &archive.header;
 
-    println!("{}", header);
+    print_info(header)?;
+    println!();
 
     let entries = archive.entries();
     for entry in entries {
@@ -26,9 +29,6 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                 ""
             }
         );
-
-        #[cfg(debug_assertions)]
-        dbg!(entry);
     }
 
     Ok(())

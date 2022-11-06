@@ -1,4 +1,5 @@
 use crate::errors::*;
+use crate::info::print_info;
 use crate::reader::ArchiveReader;
 use crate::{DigestWriter, GenericOsStrExt, FILE_CRC_64};
 use clap::ArgMatches;
@@ -14,7 +15,8 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     let archive = matches.get_one::<String>("archive").unwrap();
 
     let mut archive = ArchiveReader::new(archive)?;
-    println!("{}\n", archive.header);
+    print_info(&archive.header)?;
+    println!();
 
     let content_offset = archive.header.content_offset;
 

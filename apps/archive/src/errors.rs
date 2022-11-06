@@ -2,6 +2,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 use crate::Entry;
 use std::io;
+use std::string::FromUtf8Error;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -33,6 +34,10 @@ pub enum Error {
     MissingDecompressor,
     #[error("Only use relative paths")]
     AbsolutePath,
+    #[error("{0}")]
+    FromUtf8(#[from] FromUtf8Error),
+    #[error("Invalid info json")]
+    InvalidInfoJson,
     #[error("{0}")]
     Others(String),
 }

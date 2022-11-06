@@ -5,15 +5,22 @@ use std::process::{Command, Stdio};
 use std::str::FromStr;
 use std::thread::spawn;
 
-use flate2::Compression;
-
 use crate::errors::Result;
-use crate::{Compressor, Error};
+use crate::{Compression, Error};
 
 #[derive(Copy, Clone)]
 pub enum Level {
     Best,
     Numeric(u32),
+}
+
+impl Level {
+    pub fn to_numeric(&self, compression: Compression) -> u32 {
+        match self {
+            Level::Best => compression.best_level(),
+            Level::Numeric(n) => *n,
+        }
+    }
 }
 
 impl FromStr for Level {
@@ -33,32 +40,29 @@ impl FromStr for Level {
     }
 }
 
-pub fn create_compressor(method: Compressor, level: Level) -> Box<dyn Compress> {
-    let level = match level {
-        Level::Best => method.best_level(),
-        Level::Numeric(n) => n,
-    };
+pub fn create_compressor(method: Compression, level: Level) -> Box<dyn Compress> {
+    let level = level.to_numeric(method);
 
     match method {
-        Compressor::Gzip => Box::new(GzipCompressor::new(level)),
-        Compressor::Xz => Box::new(XzCompressor::new(level)),
-        Compressor::Zstd => Box::new(ZstdCompressor::new(level)),
-        Compressor::Bzip2 => Box::new(Bzip2Compressor::new(level)),
-        Compressor::None => Box::new(NoCompressor::new()),
-        Compressor::External => {
+        Compression::Gzip => Box::new(GzipCompressor::new(level)),
+        Compression::Xz => Box::new(XzCompressor::new(level)),
+        Compression::Zstd => Box::new(ZstdCompressor::new(level)),
+        Compression::Bzip2 => Box::new(Bzip2Compressor::new(level)),
+        Compression::None => Box::new(NoCompressor::new()),
+        Compression::External => {
             unreachable!("Invalid argument")
         }
     }
 }
 
-pub fn create_decompressor(method: Compressor) -> Box<dyn Decompress> {
+pub fn create_decompressor(method: Compression) -> Box<dyn Decompress> {
     match method {
-        Compressor::Gzip => Box::new(GzipDecompressor),
-        Compressor::Xz => Box::new(XzDecompressor),
-        Compressor::Zstd => Box::new(ZstdDecompressor),
-        Compressor::Bzip2 => Box::new(Bzip2Decompressor),
-        Compressor::None => Box::new(NoDecompressor),
-        Compressor::External => {
+        Compression::Gzip => Box::new(GzipDecompressor),
+        Compression::Xz => Box::new(XzDecompressor),
+        Compression::Zstd => Box::new(ZstdDecompressor),
+        Compression::Bzip2 => Box::new(Bzip2Decompressor),
+        Compression::None => Box::new(NoDecompressor),
+        Compression::External => {
             unreachable!("Invalid argument")
         }
     }
@@ -75,7 +79,7 @@ pub trait Decompress {
 }
 
 pub struct GzipCompressor {
-    level: Compression,
+    level: flate2::Compression,
 }
 
 impl Compress for GzipCompressor {
@@ -88,14 +92,14 @@ impl Compress for GzipCompressor {
 impl GzipCompressor {
     pub fn new(level: u32) -> Self {
         Self {
-            level: Compression::new(level),
+            level: flate2::Compression::new(level),
         }
     }
 }
 
 impl Default for GzipCompressor {
     fn default() -> Self {
-        GzipCompressor::new(Compression::default().level())
+        GzipCompressor::new(flate2::Compression::default().level())
     }
 }
 

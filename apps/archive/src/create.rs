@@ -1,6 +1,6 @@
 use crate::archive::Archive;
 use crate::compressors::{create_compressor, Compress, ExternalFilter, Level};
-use crate::{Compressor, Configs};
+use crate::{Compression, Configs, Info};
 use bczhc_lib::mutex_lock;
 
 use clap::ArgMatches;
@@ -20,12 +20,14 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     let paths = matches.get_many::<String>("path").unwrap();
     let output = matches.get_one::<String>("output").unwrap();
     let base_dir = matches.get_one::<String>("base-dir").unwrap();
+    let comment = matches.get_one::<String>("comment");
 
     let data_filter_cmd = matches
         .get_many::<String>("data-filter-cmd")
         .map(|values| values.map(|x| x.to_owned()).collect::<Vec<_>>());
 
     let compressor_type;
+    let compression_info;
     let compressor: Box<dyn Compress> = match data_filter_cmd {
         None => {
             // use built-in compressors
@@ -33,17 +35,29 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
             let compress_level = matches.get_one::<String>("level").unwrap();
 
             let compressor_name = compressor_name
-                .parse::<Compressor>()
+                .parse::<Compression>()
                 .map_err(|_| Error::InvalidCompressor)?;
             let compress_level =
                 Level::from_str(compress_level).map_err(|_| Error::InvalidCompressor)?;
 
             compressor_type = compressor_name;
+            compression_info = if compressor_name == Compression::None {
+                String::from(compressor_name.as_str())
+            } else {
+                format!(
+                    "{}:{}",
+                    compressor_name.as_str(),
+                    compress_level.to_numeric(compressor_name)
+                )
+            };
+
             create_compressor(compressor_name, compress_level)
         }
         Some(ref cmd) => {
             // external compressor
-            compressor_type = Compressor::External;
+            compressor_type = Compression::External;
+            compression_info = format!("External({:?})", cmd);
+
             Box::new(ExternalFilter::new(cmd))
         }
     };
@@ -52,7 +66,13 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         .compressor_type
         .replace(compressor_type);
 
-    let mut archive = create_archive(output, compressor)?;
+    let mut archive = create_archive(output, compressor, compressor_type)?;
+
+    let info = Info {
+        compression_method: compression_info,
+        comment: comment.map(|x| x.to_owned()),
+    };
+    archive.set_info(&info);
 
     println!("Indexing...");
     for path in paths {
@@ -72,6 +92,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
 fn create_archive<'a, P: AsRef<Path>>(
     path: P,
     compressor: Box<dyn Compress + 'a>,
+    compression_type: Compression,
 ) -> Result<Archive<impl Write + Seek>> {
     let file = File::options()
         .truncate(true)
@@ -80,12 +101,10 @@ fn create_archive<'a, P: AsRef<Path>>(
         .write(true)
         .open(path)?;
     let writer = BufWriter::new(file);
-    Archive::new(writer, compressor)
+    Archive::new(writer, compressor, compression_type)
 }
 
 fn add_path(archive: &mut Archive<impl Write + Seek>, base_dir: &str, path: &str) -> Result<()> {
-    let compressor_type = mutex_lock!(CONFIGS).compressor_type.unwrap();
-
     let walk_dir = {
         let mut buf = PathBuf::new();
         buf.push(base_dir);
@@ -98,7 +117,7 @@ fn add_path(archive: &mut Archive<impl Write + Seek>, base_dir: &str, path: &str
         let entry = entry?;
         let path = entry.path();
 
-        archive.add_path(Path::new(base_dir), path, compressor_type)?;
+        archive.add_path(Path::new(base_dir), path)?;
     }
 
     Ok(())

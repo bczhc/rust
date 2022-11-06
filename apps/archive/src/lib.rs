@@ -1,3 +1,5 @@
+#![feature(const_size_of_val)]
+
 extern crate core;
 extern crate crc as crc_lib;
 
@@ -11,9 +13,12 @@ use std::mem::size_of_val;
 
 use std::str::{from_utf8, from_utf8_unchecked, FromStr};
 
+use bczhc_lib::field_size;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use cfg_if::cfg_if;
+use chrono::{Local, TimeZone, Utc};
 use crc_lib::{Algorithm, Crc, Width};
+use serde::{Deserialize, Serialize};
 
 use errors::Result;
 
@@ -26,6 +31,7 @@ pub mod crc;
 pub mod create;
 pub mod errors;
 pub mod extract;
+pub mod info;
 pub mod list;
 pub mod reader;
 pub mod test;
@@ -36,7 +42,6 @@ pub struct Entry {
     path_length: u16,
     path: Vec<u8>,
     file_type: FileType,
-    compression_method: Compressor,
     stored_size: u64,
     original_size: u64,
     owner_id: u16,
@@ -48,14 +53,38 @@ pub struct Entry {
     offset: u64,
 }
 
-#[derive(Copy, Clone, FromPrimitive, Debug)]
-pub enum Compressor {
+#[repr(transparent)]
+pub struct EntryChecksum(u32);
+
+#[repr(transparent)]
+pub struct ContentChecksum(u64);
+
+impl FixedStoredSize for EntryChecksum {
+    const SIZE: usize = field_size!(Self, 0);
+}
+
+impl FixedStoredSize for ContentChecksum {
+    const SIZE: usize = field_size!(Self, 0);
+}
+
+#[derive(Copy, Clone, FromPrimitive, Debug, Eq, PartialEq)]
+pub enum Compression {
     Gzip = 0,
     Xz = 1,
     Zstd = 2,
     Bzip2 = 3,
     None = 4,
     External = 5,
+}
+
+impl Display for Compression {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            Compression::External => "external",
+            _ => self.as_str(),
+        };
+        f.write_str(name)
+    }
 }
 
 #[derive(Copy, Clone, FromPrimitive, Debug, Eq, PartialEq)]
@@ -71,23 +100,59 @@ trait FixedStoredSize {
     const SIZE: usize;
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct Info {
+    compression_method: String,
+    comment: Option<String>,
+}
+
+impl Display for Info {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Compression method: {}", self.compression_method)?;
+        if let Some(ref s) = self.comment {
+            writeln!(f)?;
+            write!(f, "Comment: {}", s)?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Header {
     magic_number: [u8; FILE_MAGIC.len()],
     version: u16,
     content_offset: u64,
+    compression: Compression,
+    creation_time: i64,
+    info_json: String,
 }
 
 impl Display for Header {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Version: {}", self.version)?;
-        write!(f, "Content offset: {}", self.content_offset)?;
+        writeln!(f, "Content offset: {}", self.content_offset)?;
+        write!(
+            f,
+            "Creation time: {}",
+            Local.timestamp_millis(self.creation_time)
+        )?;
 
         Ok(())
     }
 }
 
-impl FixedStoredSize for Header {
-    const SIZE: usize = FILE_MAGIC.len() + 2 + 8;
+impl GetStoredSize for Header {
+    fn stored_size(&self) -> usize {
+        field_size!(
+            Self,
+            magic_number,
+            content_offset,
+            version,
+            compression,
+            creation_time
+        ) + size_of_val(&(self.info_json.len() as u32))
+            + self.info_json.len()
+    }
 }
 
 trait WriteTo {
@@ -108,11 +173,21 @@ impl ReadFrom for Header {
         reader.read_exact(&mut magic_number)?;
         let version = reader.read_u16::<LittleEndian>()?;
         let content_offset = reader.read_u64::<LittleEndian>()?;
+        let compression = num_traits::FromPrimitive::from_u8(reader.read_u8()?)
+            .ok_or(Error::UnknownCompressionMethod)?;
+        let creation_time = reader.read_i64::<LittleEndian>()?;
+        let info_json_len = reader.read_u32::<LittleEndian>()?;
+        let mut info_json_buf = vec![0_u8; info_json_len as usize];
+        reader.read_exact(&mut info_json_buf)?;
+        let info_json = String::from_utf8(info_json_buf)?;
 
         Ok(Self {
             magic_number,
             version,
             content_offset,
+            compression,
+            creation_time,
+            info_json,
         })
     }
 }
@@ -122,23 +197,27 @@ impl WriteTo for Header {
         writer.write_all(&self.magic_number)?;
         writer.write_u16::<LittleEndian>(self.version)?;
         writer.write_u64::<LittleEndian>(self.content_offset)?;
+        writer.write_u8(self.compression as u8)?;
+        writer.write_i64::<LittleEndian>(self.creation_time)?;
+        writer.write_u32::<LittleEndian>(self.info_json.len() as u32)?;
+        writer.write_all(self.info_json.as_bytes())?;
         Ok(())
     }
 }
 
 pub struct Options {}
 
-impl FromStr for Compressor {
+impl FromStr for Compression {
     type Err = ();
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let name = s.to_lowercase();
         let compressor = match name {
-            _ if name == Compressor::Gzip.as_str() => Compressor::Gzip,
-            _ if name == Compressor::Bzip2.as_str() => Compressor::Bzip2,
-            _ if name == Compressor::Zstd.as_str() => Compressor::Zstd,
-            _ if name == Compressor::Xz.as_str() => Compressor::Xz,
-            _ if name == Compressor::None.as_str() => Compressor::None,
+            _ if name == Compression::Gzip.as_str() => Compression::Gzip,
+            _ if name == Compression::Bzip2.as_str() => Compression::Bzip2,
+            _ if name == Compression::Zstd.as_str() => Compression::Zstd,
+            _ if name == Compression::Xz.as_str() => Compression::Xz,
+            _ if name == Compression::None.as_str() => Compression::None,
             _ => {
                 return Err(());
             }
@@ -147,25 +226,25 @@ impl FromStr for Compressor {
     }
 }
 
-impl Compressor {
+impl Compression {
     pub fn best_level(&self) -> u32 {
         match self {
-            Compressor::Gzip => flate2::Compression::best().level(),
-            Compressor::Xz => 9,
-            Compressor::Zstd => 22,
-            Compressor::None => 0,
-            Compressor::Bzip2 => bzip2::Compression::best().level(),
-            Compressor::External => panic!("Unexpected method"),
+            Compression::Gzip => flate2::Compression::best().level(),
+            Compression::Xz => 9,
+            Compression::Zstd => 22,
+            Compression::None => 0,
+            Compression::Bzip2 => bzip2::Compression::best().level(),
+            Compression::External => panic!("Unexpected method"),
         }
     }
 
     pub fn as_str(&self) -> &str {
         match self {
-            Compressor::Gzip => "gzip",
-            Compressor::Xz => "xz",
-            Compressor::Zstd => "zstd",
-            Compressor::Bzip2 => "bzip2",
-            Compressor::None => "no",
+            Compression::Gzip => "gzip",
+            Compression::Xz => "xz",
+            Compression::Zstd => "zstd",
+            Compression::Bzip2 => "bzip2",
+            Compression::None => "none",
             _ => panic!("Invalid compressor"),
         }
     }
@@ -177,7 +256,6 @@ impl WriteTo for Entry {
         writer.write_u16::<LittleEndian>(self.path_length)?;
         writer.write_all(&self.path)?;
         writer.write_u8(self.file_type as u8)?;
-        writer.write_u8(self.compression_method as u8)?;
         writer.write_u64::<LittleEndian>(self.stored_size)?;
         writer.write_u64::<LittleEndian>(self.original_size)?;
         writer.write_u16::<LittleEndian>(self.owner_id)?;
@@ -206,8 +284,6 @@ impl ReadFrom for Entry {
 
         let file_type =
             num_traits::FromPrimitive::from_u8(reader.read_u8()?).ok_or(Error::UnknownFileType)?;
-        let compression_method = num_traits::FromPrimitive::from_u8(reader.read_u8()?)
-            .ok_or(Error::UnknownCompressionMethod)?;
         let stored_size = reader.read_u64::<LittleEndian>()?;
         let original_size = reader.read_u64::<LittleEndian>()?;
         let owner_id = reader.read_u16::<LittleEndian>()?;
@@ -222,7 +298,6 @@ impl ReadFrom for Entry {
             path_length,
             path,
             file_type,
-            compression_method,
             stored_size,
             original_size,
             owner_id,
@@ -263,7 +338,7 @@ impl TryFrom<std::fs::FileType> for FileType {
 
 #[derive(Default)]
 struct Configs {
-    compressor_type: Option<Compressor>,
+    compressor_type: Option<Compression>,
 }
 
 trait GetStoredSize {
@@ -274,19 +349,29 @@ trait GetStoredSize {
 impl GetStoredSize for Entry {
     fn stored_size(&self) -> usize {
         // TODO: avoid manually adding these size values
-        size_of_val(&self.magic_number)
-            + 2
+        field_size!(Self, magic_number, path_length)
             + self.path_length as usize
-            + 1
-            + 1
-            + 8
-            + 8
-            + 2
-            + 2
-            + 2
+            + field_size!(
+                Self,
+                file_type,
+                stored_size,
+                original_size,
+                owner_id,
+                group_id,
+                permission_mode,
+                content_checksum,
+                offset
+            )
             + Timestamp::SIZE
-            + 8
-            + 8
+    }
+}
+
+impl<T> GetStoredSize for T
+where
+    T: FixedStoredSize,
+{
+    fn stored_size(&self) -> usize {
+        T::SIZE
     }
 }
 
@@ -435,7 +520,7 @@ pub struct Timestamp {
 }
 
 impl FixedStoredSize for Timestamp {
-    const SIZE: usize = 8 + 4;
+    const SIZE: usize = field_size!(Self, seconds, nanoseconds);
 }
 
 impl Timestamp {
@@ -478,3 +563,32 @@ pub const VERSION: u16 = 0;
 
 pub const FILE_CRC_64: Algorithm<u64> = crc_lib::CRC_64_XZ;
 pub const ENTRY_CRC_32: Algorithm<u32> = crc_lib::CRC_32_CKSUM;
+
+#[cfg(test)]
+pub mod unit_test {
+    use crate::{Entry, GetStoredSize, Header, WriteTo};
+    use std::io::{Cursor, Seek};
+    use std::mem::MaybeUninit;
+
+    fn test_size<T>()
+    where
+        T: WriteTo + GetStoredSize,
+    {
+        let uninit = MaybeUninit::<T>::uninit();
+        let mut cursor = Cursor::new(Vec::new());
+        unsafe {
+            let x = uninit.assume_init_ref();
+            x.write_to(&mut cursor).unwrap();
+            assert_eq!(cursor.stream_position().unwrap(), x.stored_size() as u64);
+        }
+    }
+
+    #[test]
+    pub fn header_size() {
+        test_size::<Header>();
+    }
+
+    pub fn entry_size() {
+        test_size::<Entry>();
+    }
+}

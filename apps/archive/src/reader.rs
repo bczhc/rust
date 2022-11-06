@@ -1,5 +1,5 @@
 use crate::errors::*;
-use crate::{CalcCrcChecksum, Entry, FixedStoredSize, Header, ReadFrom, FILE_MAGIC};
+use crate::{CalcCrcChecksum, Entry, FixedStoredSize, GetStoredSize, Header, ReadFrom, FILE_MAGIC};
 use byteorder::{LittleEndian, ReadBytesExt};
 
 use crate::compressors::ExternalFilter;
@@ -81,7 +81,7 @@ impl Entries {
             .file
             .try_clone()
             .unwrap()
-            .take(header.content_offset - Header::SIZE as u64);
+            .take(header.content_offset - header.stored_size() as u64);
 
         Self {
             file: outer.file.try_clone().unwrap(),
