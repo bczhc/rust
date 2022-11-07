@@ -31,6 +31,7 @@ pub mod create;
 pub mod errors;
 pub mod extract;
 pub mod info;
+pub mod line_progress;
 pub mod list;
 pub mod reader;
 pub mod test;
