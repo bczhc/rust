@@ -25,12 +25,15 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     eprintln!("Testing...");
     let mut line_progress = LineProgress::new(entries.len() as u64);
 
-    for entry in entries.iter().enumerate() {
+    for entry in entries.into_iter().enumerate() {
         let progress = entry.0 as u64 + 1;
         let entry = entry.1;
 
         let entry = match entry {
             Ok(e) => e,
+            Err(Error::Io(e)) => {
+                return Err(Error::Io(e));
+            }
             Err(Error::Checksum(entry)) => {
                 line_progress.message(&format!("Entry checksum error: {:?}", entry))?;
                 has_error = true;

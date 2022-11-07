@@ -180,14 +180,17 @@ impl ReadFrom for Header {
         reader.read_exact(&mut magic_number)?;
         let version = reader.read_u16::<LittleEndian>()?;
         let content_offset = reader.read_u64::<LittleEndian>()?;
-        let compression = num_traits::FromPrimitive::from_u8(reader.read_u8()?)
-            .ok_or(Error::UnknownCompressionMethod)?;
+        let compression = reader.read_u8()?;
         let creation_time = reader.read_i64::<LittleEndian>()?;
         let entry_count = reader.read_u64::<LittleEndian>()?;
         let info_json_length = reader.read_u32::<LittleEndian>()?;
         let mut info_json_buf = vec![0_u8; info_json_length as usize];
         reader.read_exact(&mut info_json_buf)?;
         let info_json = String::from_utf8(info_json_buf)?;
+
+        // checks
+        let compression = num_traits::FromPrimitive::from_u8(compression)
+            .ok_or(Error::UnknownCompressionMethod)?;
 
         Ok(Self {
             magic_number,
@@ -288,18 +291,14 @@ impl ReadFrom for Entry {
     type Item = Self;
 
     fn read_from<R: Read>(reader: &mut R) -> Result<Self::Item> {
-        let mut magic = [0_u8; ENTRY_MAGIC.len()];
-        reader.read_exact(&mut magic)?;
-        if &magic != ENTRY_MAGIC {
-            return Err(Error::InvalidEntryHeader);
-        }
+        let mut magic_buf = [0_u8; ENTRY_MAGIC.len()];
+        reader.read_exact(&mut magic_buf)?;
 
         let path_length = reader.read_u16::<LittleEndian>()?;
         let mut path = vec![0_u8; path_length as usize];
         reader.read_exact(&mut path)?;
 
-        let file_type =
-            num_traits::FromPrimitive::from_u8(reader.read_u8()?).ok_or(Error::UnknownFileType)?;
+        let file_type = reader.read_u8()?;
 
         let linked_path_length = reader.read_u16::<LittleEndian>()?;
         let mut linked_path = vec![0_u8; linked_path_length as usize];
@@ -314,8 +313,15 @@ impl ReadFrom for Entry {
         let content_checksum = reader.read_u64::<LittleEndian>()?;
         let offset = reader.read_u64::<LittleEndian>()?;
 
+        // checks
+        if &magic_buf != ENTRY_MAGIC {
+            return Err(Error::InvalidEntryHeader);
+        }
+        let file_type =
+            num_traits::FromPrimitive::from_u8(file_type).ok_or(Error::UnknownFileType)?;
+
         Ok(Self {
-            magic_number: magic,
+            magic_number: magic_buf,
             path_length,
             path,
             file_type,

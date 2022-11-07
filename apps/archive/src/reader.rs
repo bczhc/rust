@@ -93,14 +93,15 @@ impl Iterator for Entries {
             if s.file.stream_position()? != s.position {
                 s.file.seek(SeekFrom::Start(s.position))?;
             }
-            let entry = Entry::read_from(&mut s.file)?;
-
+            let result = Entry::read_from(&mut s.file);
             let checksum = s.file.read_u32::<LittleEndian>()?;
+            s.position = s.file.stream_position()?;
+
+            let entry = result?;
             if entry.crc_checksum() != checksum {
                 return Err(Error::Checksum(entry));
             }
 
-            s.position = s.file.stream_position()?;
             Ok(entry)
         }
 
