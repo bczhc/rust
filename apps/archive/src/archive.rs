@@ -57,8 +57,9 @@ where
             content_offset: 0,
             compression: compression_type,
             creation_time: Utc::now().timestamp_millis(),
-            info_json_length: 2,
-            info_json: "{}".into(),
+            entry_count: 0,         /* placeholder */
+            info_json_length: 2,    /* default */
+            info_json: "{}".into(), /* default */
         };
 
         let archive = Self {
@@ -197,6 +198,7 @@ where
 
     pub fn set_info(&mut self, info: &Info) {
         self.header.info_json = serde_json::to_string(info).unwrap();
+        self.header.info_json_length = self.header.info_json.len() as u32;
     }
 
     fn content_offset(&self) -> usize {
@@ -211,6 +213,8 @@ where
     }
 
     fn write_header(&mut self) -> io::Result<()> {
+        self.header.entry_count = self.entries.len() as u64;
+
         self.header.write_to(&mut self.writer)
     }
 

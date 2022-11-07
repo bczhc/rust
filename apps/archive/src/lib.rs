@@ -126,6 +126,7 @@ pub struct Header {
     content_offset: u64,
     compression: Compression,
     creation_time: i64,
+    entry_count: u64,
     info_json_length: u32,
     info_json: String,
 }
@@ -134,11 +135,12 @@ impl Display for Header {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Version: {}", self.version)?;
         writeln!(f, "Content offset: {}", self.content_offset)?;
-        write!(
+        writeln!(
             f,
             "Creation time: {}",
             Local.timestamp_millis(self.creation_time)
         )?;
+        write!(f, "Entry count: {}", self.entry_count)?;
 
         Ok(())
     }
@@ -153,6 +155,7 @@ impl GetStoredSize for Header {
             version,
             compression,
             creation_time,
+            entry_count,
             info_json_length
         ) + self.info_json.len()
     }
@@ -179,6 +182,7 @@ impl ReadFrom for Header {
         let compression = num_traits::FromPrimitive::from_u8(reader.read_u8()?)
             .ok_or(Error::UnknownCompressionMethod)?;
         let creation_time = reader.read_i64::<LittleEndian>()?;
+        let entry_count = reader.read_u64::<LittleEndian>()?;
         let info_json_length = reader.read_u32::<LittleEndian>()?;
         let mut info_json_buf = vec![0_u8; info_json_length as usize];
         reader.read_exact(&mut info_json_buf)?;
@@ -190,6 +194,7 @@ impl ReadFrom for Header {
             content_offset,
             compression,
             creation_time,
+            entry_count,
             info_json_length,
             info_json,
         })
@@ -203,7 +208,8 @@ impl WriteTo for Header {
         writer.write_u64::<LittleEndian>(self.content_offset)?;
         writer.write_u8(self.compression as u8)?;
         writer.write_i64::<LittleEndian>(self.creation_time)?;
-        writer.write_u32::<LittleEndian>(self.info_json.len() as u32)?;
+        writer.write_u64::<LittleEndian>(self.entry_count)?;
+        writer.write_u32::<LittleEndian>(self.info_json_length)?;
         writer.write_all(self.info_json.as_bytes())?;
         Ok(())
     }
@@ -607,6 +613,7 @@ pub mod unit_test {
             content_offset: 0,
             compression: Compression::None,
             creation_time: 0,
+            entry_count: 0,
             info_json_length: 2,
             info_json: "{}".to_string(),
         };
