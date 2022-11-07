@@ -25,9 +25,10 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     eprintln!("Testing...");
     let mut line_progress = LineProgress::new(entries.len() as u64);
 
-    let mut progress = 0_u64;
+    for entry in entries.iter().enumerate() {
+        let progress = entry.0 as u64 + 1;
+        let entry = entry.1;
 
-    for entry in entries {
         let entry = match entry {
             Ok(e) => e,
             Err(Error::Checksum(entry)) => {
@@ -36,12 +37,13 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                 continue;
             }
             Err(e) => {
-                return Err(e);
+                line_progress.message(&format!("Other entry error: {:?}", e))?;
+                has_error = true;
+                continue;
             }
         };
 
         let path_name = OsStr::from_bytes(&entry.path).to_string();
-        progress += 1;
         line_progress.update(progress, path_name.clone())?;
 
         if entry.file_type != FileType::Regular {
