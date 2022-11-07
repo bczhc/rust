@@ -71,11 +71,11 @@ impl FixedStoredSize for ContentChecksum {
 #[derive(Copy, Clone, FromPrimitive, Debug, Eq, PartialEq)]
 pub enum Compression {
     External = 0,
-    Gzip = 1,
-    Xz = 2,
-    Zstd = 3,
-    Bzip2 = 4,
-    None = 5,
+    None = 1,
+    Gzip = 2,
+    Xz = 3,
+    Zstd = 4,
+    Bzip2 = 5,
     Brotli = 6,
 }
 
