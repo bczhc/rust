@@ -1,5 +1,5 @@
 use crate::errors::*;
-use crate::{CalcCrcChecksum, Entry, GetStoredSize, Header, ReadFrom, FILE_MAGIC};
+use crate::{CalcCrcChecksum, Entry, GetStoredSize, Header, ReadFrom, ENTRY_MAGIC, FILE_MAGIC};
 use byteorder::{LittleEndian, ReadBytesExt};
 
 use std::fs::File;
@@ -67,25 +67,22 @@ impl<'a> ContentReader<'a> {
 }
 
 pub struct Entries {
+    position: u64,
+    count: u64,
+    total_count: u64,
     file: File,
-    entries_reader: Take<File>,
-    content_offset: u64,
 }
 
 impl Entries {
     fn new(outer: &ArchiveReader) -> Self {
-        let header = &outer.header;
-        // constrain to the entries section
-        let entries_reader = outer
-            .file
-            .try_clone()
-            .unwrap()
-            .take(header.content_offset - header.stored_size() as u64);
+        let entries_start_pos = outer.header.stored_size() as u64;
+        let file = outer.file.try_clone().unwrap();
 
         Self {
-            file: outer.file.try_clone().unwrap(),
-            entries_reader,
-            content_offset: outer.header.content_offset,
+            position: entries_start_pos,
+            count: 0,
+            total_count: outer.header.entry_count,
+            file,
         }
     }
 }
@@ -94,41 +91,27 @@ impl Iterator for Entries {
     type Item = Result<Entry>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let entries_reader = &mut self.entries_reader;
-
-        let result = Entry::read_from(entries_reader);
-        let entry = match result {
-            Ok(entry) => entry,
-            Err(e) => {
-                return if let Error::Io(ref io) = e {
-                    if io.kind() == io::ErrorKind::UnexpectedEof {
-                        // no more entries to read; the stream position is expected to meet
-                        // the end of the entries section
-                        fn check(outer: &mut Entries) -> Result<()> {
-                            if outer.file.stream_position()? != outer.content_offset {
-                                return Err("Unexpected entries end position in file".into());
-                            }
-                            Ok(())
-                        }
-                        if let Err(e) = check(self) {
-                            return Some(Err(e));
-                        }
-                        None
-                    } else {
-                        Some(Err(e))
-                    }
-                } else {
-                    Some(Err(e))
-                };
+        fn try_next(s: &mut Entries) -> Result<Entry> {
+            if s.file.stream_position()? != s.position {
+                s.file.seek(SeekFrom::Start(s.position))?;
             }
-        };
-        let checksum = entries_reader.read_u32::<LittleEndian>();
-        if let Err(e) = checksum {
-            return Some(Err(e.into()));
+            let entry = Entry::read_from(&mut s.file)?;
+
+            let checksum = s.file.read_u32::<LittleEndian>()?;
+            if entry.crc_checksum() != checksum {
+                return Err(Error::Checksum(entry));
+            }
+
+            s.position = s.file.stream_position()?;
+            Ok(entry)
         }
-        if entry.crc_checksum() != checksum.unwrap() {
-            return Some(Err(Error::Checksum(entry)));
+
+        if self.count == self.total_count {
+            return None;
         }
-        Some(Ok(entry))
+
+        let result = try_next(self);
+        self.count += 1;
+        Some(result)
     }
 }

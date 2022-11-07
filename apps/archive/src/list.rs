@@ -18,13 +18,14 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
 
     let mut original_size_sum = 0_u64;
     let mut stored_size_sum = 0_u64;
-    let mut record_count = 0_u64;
+    let mut entry_count = 0_u64;
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
 
     table.set_titles(row!["Type", "Original", "Stored", "Ratio", "Path"]);
 
+    println!("Collecting entries...");
     let entries = archive.entries();
     for entry in entries {
         let entry = entry?;
@@ -65,12 +66,13 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                 path_string
             ]);
         }
-        record_count += 1;
+        entry_count += 1;
     }
 
     table.printstd();
     println!();
-    println!("Records: {}", record_count);
+    println!("Entries: {}", entry_count);
+    assert_eq!(entry_count, header.entry_count);
     println!("Total original size: {}", original_size_sum);
     println!("Total stored size: {}", stored_size_sum);
     let space_saving = (1.0 - stored_size_sum as f64 / original_size_sum as f64) * 100.0;
