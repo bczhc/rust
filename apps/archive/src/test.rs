@@ -47,15 +47,13 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         let path_name = OsStr::from_bytes(&entry.path).to_string();
 
         let content_checksum = entry.content_checksum;
-        let abs_offset = entry.offset + content_offset;
 
         let crc = Crc::<u64>::new(&FILE_CRC_64);
         let mut digest = crc.digest();
         let mut crc_writer = DigestWriter::<u64>::new(&mut digest);
 
-        let mut content_reader = archive.retrieve_content(abs_offset, entry.stored_size)?;
+        let mut content_reader = archive.retrieve_content(entry.offset, entry.stored_size);
         io::copy(&mut content_reader, &mut crc_writer)?;
-        content_reader.finish()?;
 
         if content_checksum != digest.finalize() {
             progress_bar.println(format!("Content checksum error: {}", path_name));

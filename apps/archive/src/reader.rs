@@ -2,6 +2,7 @@ use crate::errors::*;
 use crate::{CalcCrcChecksum, Entry, GetStoredSize, Header, ReadFrom, ENTRY_MAGIC, FILE_MAGIC};
 use byteorder::{LittleEndian, ReadBytesExt};
 
+use bczhc_lib::io::Skip;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Seek, SeekFrom, Take};
@@ -27,42 +28,39 @@ impl ArchiveReader {
         Entries::new(self)
     }
 
-    pub fn retrieve_content(&mut self, offset: u64, size: u64) -> io::Result<ContentReader> {
-        ContentReader::new(&mut self.file, offset, size)
+    /// `offset`: offset to `content_offset`
+    /// absolute offset = `offset` + `content_offset`
+    pub fn retrieve_content(&mut self, offset: u64, size: u64) -> ContentReader {
+        ContentReader::new(&mut self.file, self.header.content_offset, offset, size)
     }
 }
 
 pub struct ContentReader<'a> {
     file: &'a mut File,
-    init_position: u64,
-    took_reader: Take<File>,
+    left_size: u64,
+    position: u64,
 }
 
 impl<'a> Read for ContentReader<'a> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.took_reader.read(buf)
+        if self.file.stream_position()? != self.position {
+            self.file.seek(SeekFrom::Start(self.position))?;
+        }
+        let read_size = self.file.take(self.left_size).read(buf)?;
+        self.left_size -= read_size as u64;
+        self.position += read_size as u64;
+
+        Ok(read_size)
     }
 }
 
 impl<'a> ContentReader<'a> {
-    fn new(file: &'a mut File, offset: u64, size: u64) -> io::Result<Self> {
-        let init_position = file.stream_position()?;
-
-        file.seek(SeekFrom::Start(offset))?;
-        let take = file.try_clone().unwrap().take(size);
-
-        Ok(Self {
-            init_position,
+    fn new(file: &'a mut File, content_offset: u64, offset: u64, size: u64) -> Self {
+        Self {
             file,
-            took_reader: take,
-        })
-    }
-
-    /// must be called after the use of `ContentReader`
-    /// to seek back to the starting stream position
-    pub fn finish(&mut self) -> io::Result<()> {
-        self.file.seek(SeekFrom::Start(self.init_position))?;
-        Ok(())
+            left_size: size,
+            position: content_offset + offset,
+        }
     }
 }
 

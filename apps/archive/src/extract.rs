@@ -40,7 +40,6 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         };
         match entry.file_type {
             FileType::Regular => {
-                let abs_offset = content_offset + entry.offset;
                 let stored_size = entry.stored_size;
 
                 let mut file = File::open_or_create(target_path)?;
@@ -54,9 +53,8 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                     },
                     _ => create_decompressor(header.compression),
                 };
-                let mut content_reader = archive.retrieve_content(abs_offset, stored_size)?;
+                let mut content_reader = archive.retrieve_content(entry.offset, stored_size);
                 decompressor.decompress_to(&mut content_reader, &mut file)?;
-                content_reader.finish()?;
 
                 cfg_if! {
                     if #[cfg(unix)] {
