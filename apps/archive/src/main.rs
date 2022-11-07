@@ -66,6 +66,11 @@ fn main() -> Result<(), String> {
                         .default_value("."),
                 )
                 .arg(
+                    Arg::new("paths")
+                        .action(ArgAction::Append)
+                        .help("File paths to be extracted"),
+                )
+                .arg(
                     Arg::new("data-filter-cmd")
                         .long("data-filter")
                         .action(ArgAction::Append)

@@ -1,4 +1,4 @@
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::fs::{File, Permissions};
 
 use std::path::{Path, PathBuf};
@@ -23,25 +23,40 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     let external_filter_cmd = matches
         .get_many::<String>("data-filter-cmd")
         .map(|values| values.map(|x| x.to_owned()).collect::<Vec<_>>());
+    let paths = matches
+        .get_many::<String>("paths")
+        .map(|x| x.map(OsString::from).collect::<Vec<_>>());
 
     let mut archive = ArchiveReader::new(archive_path)?;
 
     let header = archive.header.clone();
-    let content_offset = header.content_offset;
     let entries = archive.entries();
 
     for entry in entries {
         let entry = entry?;
-        let path = OsStr::from_bytes(&entry.path);
+        let path = Path::new(OsStr::from_bytes(&entry.path));
         let target_path = &{
             let mut p = PathBuf::from(base_dir);
             p.push(path);
             p
         };
+
+        // extract specified paths if present
+        if let Some(ref paths) = paths {
+            if !paths.iter().any(|x| Path::new(&x) == path) {
+                continue;
+            }
+        }
+
         match entry.file_type {
             FileType::Regular => {
                 let stored_size = entry.stored_size;
 
+                if let Some(prefix) = target_path.parent() {
+                    if !prefix.exists() {
+                        fs::create_dir_all(prefix)?;
+                    }
+                }
                 let mut file = File::open_or_create(target_path)?;
 
                 let decompressor: Box<dyn Decompress> = match &header.compression {
@@ -120,8 +135,8 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         }
         println!(
             "./{}{}",
-            path.to_string(),
-            if !path.is_empty() && entry.file_type == FileType::Directory {
+            path.as_os_str().to_string(),
+            if !path.as_os_str().is_empty() && entry.file_type == FileType::Directory {
                 "/"
             } else {
                 ""
