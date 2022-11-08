@@ -1,11 +1,10 @@
 use crate::errors::*;
-use crate::{CalcCrcChecksum, Entry, GetStoredSize, Header, ReadFrom, ENTRY_MAGIC, FILE_MAGIC};
+use crate::{CalcCrcChecksum, Entry, GetStoredSize, Header, ReadFrom, FILE_MAGIC};
 use byteorder::{LittleEndian, ReadBytesExt};
 
-use bczhc_lib::io::Skip;
 use std::fs::File;
 use std::io;
-use std::io::{Read, Seek, SeekFrom, Take};
+use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
 pub struct ArchiveReader {

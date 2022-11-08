@@ -607,8 +607,8 @@ pub const ENTRY_CRC_32: Algorithm<u32> = crc_lib::CRC_32_CKSUM;
 #[cfg(test)]
 pub mod unit_test {
     use crate::{
-        escape_utf8_bytes, Compression, Entry, FileType, GetStoredSize, Header, Timestamp, WriteTo,
-        ENTRY_MAGIC, FILE_MAGIC,
+        Compression, Entry, FileType, GetStoredSize, Header, Timestamp, WriteTo, ENTRY_MAGIC,
+        FILE_MAGIC,
     };
     use std::io::{Cursor, Seek};
 
