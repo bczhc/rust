@@ -482,6 +482,15 @@ where
     }
 }
 
+/// # Examples
+/// ```
+/// use archive::escape_utf8_bytes;
+///
+/// assert_eq!(escape_utf8_bytes(b"normal"), "normal");
+/// assert_eq!(escape_utf8_bytes(b"\xE6\x9D"), "\\xE6\\x9D");
+/// assert_eq!(escape_utf8_bytes(b"\xE5\xB7ab\nc"), "\\xE5\\xB7ab\\nc");
+/// assert_eq!(escape_utf8_bytes(b"a\nb\\c"), "a\\nb\\\\c");
+/// ```
 pub fn escape_utf8_bytes(data: &[u8]) -> String {
     use std::fmt::Write;
 
@@ -598,8 +607,8 @@ pub const ENTRY_CRC_32: Algorithm<u32> = crc_lib::CRC_32_CKSUM;
 #[cfg(test)]
 pub mod unit_test {
     use crate::{
-        Compression, Entry, FileType, GetStoredSize, Header, Timestamp, WriteTo, ENTRY_MAGIC,
-        FILE_MAGIC,
+        escape_utf8_bytes, Compression, Entry, FileType, GetStoredSize, Header, Timestamp, WriteTo,
+        ENTRY_MAGIC, FILE_MAGIC,
     };
     use std::io::{Cursor, Seek};
 
