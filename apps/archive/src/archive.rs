@@ -104,11 +104,9 @@ where
         let file_path = file_path.as_ref();
         let metadata = file_path.symlink_metadata()?;
 
-        let path_bytes = path.to_bytes();
-        if path_bytes.is_none() {
+        let Some(path_bytes) = path.to_bytes() else {
             panic!("Invalid path name meets");
-        }
-        let path_bytes = path_bytes.unwrap();
+        };
 
         // record inodes and detect hard links
         cfg_if! {
@@ -151,11 +149,9 @@ where
                 }
             }
         }
-        let file_type = FileType::try_from(file_type);
-        if file_type.is_err() {
+        let Ok(file_type) = FileType::try_from(file_type) else {
             panic!("Unknown file type: {:?}", path);
-        }
-        let file_type = file_type.unwrap();
+        };
 
         cfg_if! {
             // unix-specific attributes
@@ -183,11 +179,10 @@ where
 
         let linked_path = if file_type == FileType::Symlink {
             // here it should be a symbolic link
-            let path_bytes = fs::read_link(file_path).unwrap().as_os_str().to_bytes();
-            if path_bytes.is_none() {
-                panic!("Invalid path name meets");
-            }
-            path_bytes.unwrap()
+            let Some(path_bytes) = ({
+                fs::read_link(file_path).unwrap().as_os_str().to_bytes()
+            }) else { panic!("Invalid path name meets") };
+            path_bytes
         } else {
             vec![]
         };
@@ -336,15 +331,8 @@ impl ToBytes for OsStr {
                 use std::os::unix::ffi::OsStrExt;
                 return Some(Vec::from(self.as_bytes()));
             } else {
-                let option = self.to_str();
-                match option {
-                    None => {
-                        return None;
-                    }
-                    Some(s) => {
-                        Some(Vec::from(s.as_bytes()))
-                    }
-                }
+                let Some(s) = self.to_str() else { return None };
+                Some(Vec::from(s.as_bytes()))
             }
         }
     }
