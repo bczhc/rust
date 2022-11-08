@@ -4,6 +4,7 @@ use bczhc_lib::io::ReadLines;
 use std::env::args;
 use std::io::{stdin, Read};
 use std::path::Path;
+use unicode_segmentation::UnicodeSegmentation;
 
 fn main() -> Result<(), String> {
     let mut args: Vec<String> = args().collect();
@@ -91,19 +92,5 @@ Options:
 }
 
 fn reverse_string(s: &str) -> String {
-    if s.is_empty() {
-        return String::from("");
-    }
-    let chars: Vec<char> = s.chars().collect();
-    let mut i = chars.len() - 1;
-    let mut r = String::new();
-    loop {
-        if i == 0 {
-            r.push(chars[0]);
-            break;
-        }
-        r.push(chars[i]);
-        i -= 1;
-    }
-    r
+    s.graphemes(true).rev().collect()
 }
