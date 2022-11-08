@@ -2,13 +2,15 @@ use crate::archive::Archive;
 use crate::compressors::{create_compressor, Compress, ExternalFilter, Level};
 use crate::{Compression, Configs, Info};
 use bczhc_lib::mutex_lock;
+use std::ffi::OsString;
 
 use clap::ArgMatches;
 use once_cell::sync::Lazy;
 
+use pathdiff::diff_paths;
 use std::fs::File;
 use std::io::{BufWriter, Seek, Write};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::str::FromStr;
 use std::sync::Mutex;
 
@@ -104,20 +106,46 @@ fn create_archive<'a, P: AsRef<Path>>(
     Archive::new(writer, compressor, compression_type)
 }
 
-fn add_path(archive: &mut Archive<impl Write + Seek>, base_dir: &str, path: &str) -> Result<()> {
-    let walk_dir = {
+fn add_path<P: AsRef<Path>>(
+    archive: &mut Archive<impl Write + Seek>,
+    base_dir: P,
+    path: P,
+) -> Result<()> {
+    let base_dir = base_dir.as_ref();
+    let path = path.as_ref();
+
+    let walk_dir_path = {
         let mut buf = PathBuf::new();
         buf.push(base_dir);
         buf.push(path);
         buf
     };
+    let path_is_current = {
+        let mut components = path.components();
+        components.next() == Some(Component::CurDir) && components.next().is_none()
+    };
 
-    let entries = walkdir::WalkDir::new(walk_dir);
+    let entries = walkdir::WalkDir::new(walk_dir_path);
     for entry in entries {
         let entry = entry?;
         let path = entry.path();
 
-        archive.add_path(Path::new(base_dir), path)?;
+        let relative_path = diff_paths(path, base_dir).unwrap();
+
+        let stored_path = {
+            let mut buf = if path_is_current {
+                OsString::from("./")
+            } else {
+                OsString::new()
+            };
+            buf.push(relative_path.into_os_string());
+            if path.is_dir() {
+                buf.push("/");
+            }
+            buf
+        };
+
+        archive.add_path(&stored_path, path)?;
     }
 
     Ok(())

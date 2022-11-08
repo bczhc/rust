@@ -449,7 +449,7 @@ impl GenericOsStrExt for OsStr {
                 use std::os::unix::ffi::OsStrExt;
                 escape_utf8_bytes(self.as_bytes())
             } else {
-                self.to_str().expect("Invalid UTF-8 meets").into()
+                escape_utf8_bytes(self.to_str().expect("Invalid UTF-8 meets").as_bytes())
             }
         }
     }

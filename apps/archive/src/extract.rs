@@ -48,15 +48,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
             }
         }
 
-        println!(
-            "./{}{}",
-            path.as_os_str().to_string(),
-            if !path.as_os_str().is_empty() && entry.file_type == FileType::Directory {
-                "/"
-            } else {
-                ""
-            }
-        );
+        println!("{}", path.as_os_str().to_string());
 
         match entry.file_type {
             FileType::Regular => {

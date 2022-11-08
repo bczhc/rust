@@ -6,11 +6,10 @@
 //! 3. finalize: write entries to the starting part of the output file
 
 use std::collections::HashMap;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::io::{BufReader, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
-
 use std::{fs, io};
 
 use byteorder::{LittleEndian, WriteBytesExt};
@@ -22,7 +21,7 @@ use bczhc_lib::field_size;
 
 use crate::compressors::Compress;
 use crate::crc::write::CrcFilter;
-use crate::errors::{Error, Result};
+use crate::errors::Result;
 use crate::{
     CalcCrcChecksum, Compression, Entry, EntryChecksum, FileType, FixedStoredSize, GenericOsStrExt,
     GetStoredSize, Header, Info, Timestamp, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
@@ -34,12 +33,15 @@ where
 {
     writer: W,
     compressor: Box<dyn Compress + 'a>,
+    /// the first tuple element in the vector, `PathBuf`,
+    /// is the path to the file to be added,
+    /// and should be opened in `write_files` method
     entries: Vec<(PathBuf, Entry)>,
     content_offset: u64,
     last_content_offset: u64,
     header: Header,
     // for identifying hard links
-    inode_map: HashMap<u64, PathBuf>,
+    inode_map: HashMap<u64, OsString>,
 }
 
 impl<'a, W> Archive<'a, W>
@@ -75,16 +77,34 @@ where
     }
 
     /// add a path record
-    /// the path diff between `path` and `base_path` will be recorded in the archive file
+    ///
+    /// `path` will be stored in the archive directly,
+    /// while `file_path` is the actual path of the file to be added
+    ///
+    /// For example, now we are at the location '/tmp', and if we do
+    /// ```bash
+    /// tar -C /home -c user > ./tar
+    /// ```
+    /// the stored paths in this tarball will like this:
+    /// - user/a.txt
+    /// - user/b.txt
+    /// - ...
+    ///
+    /// But they're not relative to our current location '/tmp', so
+    /// we also need paths to these files to be added, just using absolute paths:
+    /// - /home/user/a.txt
+    /// - /home/user/b.txt
+    /// - ...
+    ///
     /// like `tar` utility
-    pub fn add_path<P: AsRef<Path>>(&mut self, base_path: P, path: P) -> Result<()> {
+    pub fn add_path<P: AsRef<Path>>(&mut self, path: &OsStr, file_path: P) -> Result<()> {
         #[cfg(unix)]
         use std::os::unix::fs::{FileTypeExt, MetadataExt, PermissionsExt};
 
-        let relative_path = pathdiff::diff_paths(&path, &base_path).ok_or(Error::InvalidBaseDir)?;
-        let metadata = path.as_ref().symlink_metadata()?;
+        let file_path = file_path.as_ref();
+        let metadata = file_path.symlink_metadata()?;
 
-        let path_bytes = relative_path.as_os_str().to_bytes();
+        let path_bytes = path.to_bytes();
         if path_bytes.is_none() {
             panic!("Invalid path name meets");
         }
@@ -95,7 +115,7 @@ where
             if #[cfg(unix)] {
                 let inode = metadata.ino();
                 if let std::collections::hash_map::Entry::Vacant(e) = self.inode_map.entry(inode) {
-                    e.insert(relative_path.clone());
+                    e.insert(path.into());
                 } else {
                     // is a hardlink, just record the linked path, and no more fields needed
                     let linked_path = self.inode_map.get(&inode).unwrap();
@@ -116,7 +136,7 @@ where
                         content_checksum: 0,
                         offset: 0,
                     };
-                    self.entries.push((relative_path, entry));
+                    self.entries.push((file_path.into(), entry));
                     return Ok(());
                 }
             }
@@ -126,14 +146,14 @@ where
         cfg_if! {
             if #[cfg(unix)] {
                 if file_type.is_socket() {
-                    eprintln!("{}: socket ignored", relative_path.as_os_str().to_string());
+                    eprintln!("{}: socket ignored", path.to_string());
                     return Ok(());
                 }
             }
         }
         let file_type = FileType::try_from(file_type);
         if file_type.is_err() {
-            panic!("Unknown file type: {:?}", relative_path);
+            panic!("Unknown file type: {:?}", path);
         }
         let file_type = file_type.unwrap();
 
@@ -163,10 +183,7 @@ where
 
         let linked_path = if file_type == FileType::Symlink {
             // here it should be a symbolic link
-            let path_bytes = fs::read_link(&relative_path)
-                .unwrap()
-                .as_os_str()
-                .to_bytes();
+            let path_bytes = fs::read_link(file_path).unwrap().as_os_str().to_bytes();
             if path_bytes.is_none() {
                 panic!("Invalid path name meets");
             }
@@ -192,7 +209,7 @@ where
             offset: 0,           /* placeholder */
         };
 
-        self.entries.push((relative_path, entry));
+        self.entries.push((file_path.into(), entry));
         Ok(())
     }
 
@@ -248,16 +265,14 @@ where
         self.last_content_offset = 0;
 
         for (path, entry) in self.entries.iter_mut() {
-            println!(
-                "./{}{}",
-                path.as_os_str().to_string(),
-                if path.is_dir() { "/" } else { "" }
-            );
+            let stored_path = OsStr::from_bytes(&entry.path);
+            println!("{}", stored_path.to_string());
+
             if entry.file_type != FileType::Regular {
                 continue;
             }
 
-            let file = File::open(&path)?;
+            let file = File::open(path)?;
             let mut file_reader = BufReader::new(file);
 
             let crc = Crc::<u64>::new(&FILE_CRC_64);
