@@ -38,6 +38,24 @@ pub fn fourier_series_calc<F: 'static, R: 'static>(
     pool.join();
 }
 
+pub fn calc_n<F>(period: f64, integral_segments: u32, n: i32, function: F) -> Epicycle
+where
+    F: Fn(f64) -> ComplexValueF64 + Send + Copy + 'static,
+{
+    let omega = 2.0 * PI / period;
+    let half_period = period / 2.0;
+
+    let an = complex_integral(integral_segments, -half_period, half_period, move |t| {
+        ComplexValueF64::from_exponent_form(-(n as f64) * omega * t) * function(t)
+    }) / period;
+
+    Epicycle {
+        n,
+        a: an,
+        p: ((n as f64) * omega),
+    }
+}
+
 /// t is in \[0, 1\]
 #[inline]
 fn fraction_part(t: f64) -> f64 {
