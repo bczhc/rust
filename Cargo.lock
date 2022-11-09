@@ -817,6 +817,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fourier-series"
+version = "1.0.0"
+dependencies = [
+ "bczhc_lib",
+ "clap 4.0.22",
+ "num_cpus",
+ "once_cell",
+]
+
+[[package]]
 name = "futures-core"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
