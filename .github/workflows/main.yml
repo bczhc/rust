@@ -63,6 +63,10 @@ jobs:
           
           git remote add origin "$REMOTE_URL"
           git push origin gh-pages -f
+      - name: Test Dockerfile
+        run: |
+          cd "${GITHUB_WORKSPACE}"
+          docker build -t rust-build .
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
