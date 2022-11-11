@@ -2,3 +2,5 @@ target/
 .idea/
 rust.iml
 /.cargo/
+/install-all
+/uninstall-all

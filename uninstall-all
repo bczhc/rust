@@ -1,7 +1,0 @@
-#!/bin/bash
-
-for d in apps/*; do
-  cd "$d" || return
-  cargo uninstall "$@"
-  cd ../..
-done
