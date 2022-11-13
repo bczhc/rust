@@ -30,3 +30,5 @@ pub mod lazy;
 pub mod macros;
 
 pub mod net;
+
+pub mod str;
