@@ -150,7 +150,7 @@ where
     type ResultType = u8;
 
     fn read(buf: &[u8]) -> Self::ResultType {
-        buf[0] as u8
+        buf[0]
     }
 }
 
