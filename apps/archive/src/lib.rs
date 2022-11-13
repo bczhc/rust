@@ -70,6 +70,7 @@ impl FixedStoredSize for ContentChecksum {
 }
 
 #[derive(Copy, Clone, FromPrimitive, Debug, Eq, PartialEq)]
+#[repr(u8)]
 pub enum Compression {
     External = 0,
     None = 1,
@@ -91,6 +92,7 @@ impl Display for Compression {
 }
 
 #[derive(Copy, Clone, FromPrimitive, Debug, Eq, PartialEq)]
+#[repr(u8)]
 pub enum FileType {
     Regular = 0,
     Link = 1,
