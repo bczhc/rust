@@ -58,7 +58,7 @@ where
 
 pub fn calc_n_rayon<F>(period: f64, integral_segments: u32, n: i32, function: F) -> Epicycle
 where
-    F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy + 'static,
+    F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy,
 {
     let omega = 2.0 * PI / period;
     let half_period = period / 2.0;
@@ -162,8 +162,58 @@ impl<'a> EvaluatePath for LinearPath<'a> {
 }
 
 /// t is in \[0, 1\]
+#[inline]
 fn linear_bezier(p0: &PointF64, p1: &PointF64, t: f64) -> Point<f64> {
     *p0 + (*p1 - *p0) * t
+}
+
+pub struct Epicycles<F>
+where
+    F: Fn(f64) -> ComplexValueF64 + Send + Copy,
+{
+    n_from: i32,
+    n_to: i32,
+    n: i32,
+    period: f64,
+    integral_segment: u32,
+    function: F,
+}
+
+pub fn compute_iter<F>(
+    n_from: i32,
+    n_to: i32,
+    period: f64,
+    integral_segments: u32,
+    function: F,
+) -> Epicycles<F>
+where
+    F: Fn(f64) -> ComplexValueF64 + Send + Copy,
+{
+    Epicycles {
+        n_from,
+        n_to,
+        n: n_from,
+        period,
+        integral_segment: integral_segments,
+        function,
+    }
+}
+
+impl<F> Iterator for Epicycles<F>
+where
+    F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy,
+{
+    type Item = Epicycle;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.n > self.n_to {
+            return None;
+        }
+
+        let epicycle = calc_n_rayon(self.period, self.integral_segment, self.n, self.function);
+        self.n += 1;
+        Some(epicycle)
+    }
 }
 
 #[cfg(test)]

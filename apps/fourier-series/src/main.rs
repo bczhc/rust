@@ -8,7 +8,9 @@ use once_cell::sync::Lazy;
 
 use bczhc_lib::complex_num::ComplexValueF64;
 use bczhc_lib::epicycle::Epicycle;
-use bczhc_lib::fourier_series::{fourier_series_calc, EvaluatePath, LinearPath, calc_n_rayon};
+use bczhc_lib::fourier_series::{
+    calc_n_rayon, compute_iter, fourier_series_calc, EvaluatePath, LinearPath,
+};
 use bczhc_lib::point::PointF64;
 
 const TEST_INPUT_DATA: &str = include_str!("../../../lib/data/fourier-series-data.txt");
@@ -75,12 +77,12 @@ fn main() {
     let n_to = epicycle_count / 2;
     let n_from = -(epicycle_count - n_to) + 1;
 
-    let epicycles = (n_from..=n_to).map(|n| {
-        let e = calc_n_rayon(period, integral_segments, n, move |t| unsafe {
-            let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
-            let point = path_evaluator.evaluate(t / period);
-            ComplexValueF64::new(point.x, point.y)
-        });
+    let epicycles = compute_iter(n_from, n_to, period, integral_segments, move |t| unsafe {
+        let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
+        let point = path_evaluator.evaluate(t / period);
+        ComplexValueF64::new(point.x, point.y)
+    });
+    let epicycles = epicycles.map(|e| {
         println!("{:?}", e);
         e
     }).collect::<Vec<_>>();

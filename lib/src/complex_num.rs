@@ -22,11 +22,13 @@ impl ComplexValueF64 {
     }
 
     /// Definition: `r`e<sup>i&theta;</sup>
+    #[inline]
     pub fn from_exponent_form_with_r(r: f64, theta: f64) -> ComplexValueF64 {
         ComplexValueF64::from_exponent_form(theta) * r
     }
 
     /// Definition: e<sup>i&theta;</sup>
+    #[inline]
     pub fn from_exponent_form(theta: f64) -> ComplexValueF64 {
         ComplexValueF64::new(f64::cos(theta), f64::sin(theta))
     }
