@@ -1,15 +1,15 @@
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::Read;
-use std::sync::Mutex;
+
 
 use clap::{value_parser, Arg, Command};
 use once_cell::sync::Lazy;
 
 use bczhc_lib::complex_num::ComplexValueF64;
-use bczhc_lib::epicycle::Epicycle;
+
 use bczhc_lib::fourier_series::{
-    calc_n_rayon, compute_iter, fourier_series_calc, EvaluatePath, LinearPath,
+    compute_iter, EvaluatePath, LinearPath,
 };
 use bczhc_lib::point::PointF64;
 

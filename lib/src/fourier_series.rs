@@ -171,7 +171,6 @@ pub struct Epicycles<F>
 where
     F: Fn(f64) -> ComplexValueF64 + Send + Copy,
 {
-    n_from: i32,
     n_to: i32,
     n: i32,
     period: f64,
@@ -190,7 +189,6 @@ where
     F: Fn(f64) -> ComplexValueF64 + Send + Copy,
 {
     Epicycles {
-        n_from,
         n_to,
         n: n_from,
         period,
