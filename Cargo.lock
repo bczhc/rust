@@ -136,6 +136,7 @@ dependencies = [
  "float-cmp",
  "libc",
  "polling",
+ "rayon",
  "thiserror",
  "threadpool",
 ]

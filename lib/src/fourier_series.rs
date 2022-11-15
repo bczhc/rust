@@ -1,4 +1,4 @@
-use crate::complex_num::complex_integral::complex_integral;
+use crate::complex_num::complex_integral::*;
 use crate::complex_num::ComplexValueF64;
 use crate::epicycle::Epicycle;
 use crate::point::{Point, PointF64};
@@ -46,6 +46,24 @@ where
     let half_period = period / 2.0;
 
     let an = complex_integral(integral_segments, -half_period, half_period, move |t| {
+        ComplexValueF64::from_exponent_form(-(n as f64) * omega * t) * function(t)
+    }) / period;
+
+    Epicycle {
+        n,
+        a: an,
+        p: ((n as f64) * omega),
+    }
+}
+
+pub fn calc_n_rayon<F>(period: f64, integral_segments: u32, n: i32, function: F) -> Epicycle
+where
+    F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy + 'static,
+{
+    let omega = 2.0 * PI / period;
+    let half_period = period / 2.0;
+
+    let an = complex_integral_rayon(integral_segments, -half_period, half_period, move |t| {
         ComplexValueF64::from_exponent_form(-(n as f64) * omega * t) * function(t)
     }) / period;
 

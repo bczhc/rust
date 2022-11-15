@@ -8,7 +8,7 @@ use once_cell::sync::Lazy;
 
 use bczhc_lib::complex_num::ComplexValueF64;
 use bczhc_lib::epicycle::Epicycle;
-use bczhc_lib::fourier_series::{fourier_series_calc, EvaluatePath, LinearPath};
+use bczhc_lib::fourier_series::{fourier_series_calc, EvaluatePath, LinearPath, calc_n_rayon};
 use bczhc_lib::point::PointF64;
 
 const TEST_INPUT_DATA: &str = include_str!("../../../lib/data/fourier-series-data.txt");
@@ -71,27 +71,18 @@ fn main() {
     let path_evaluator = LinearPath::new(&vec);
     let path_evaluator_pointer = &path_evaluator as *const LinearPath as usize;
 
-    let vec = Vec::new();
-    let vec_mutex = Mutex::new(vec);
+    let epicycle_count = epicycles_count as i32;
+    let n_to = epicycle_count / 2;
+    let n_from = -(epicycle_count - n_to) + 1;
 
-    let p = &vec_mutex as *const Mutex<Vec<Epicycle>> as usize;
-    fourier_series_calc(
-        epicycles_count,
-        period,
-        thread_count,
-        integral_segments,
-        move |t| unsafe {
+    let epicycles = (n_from..=n_to).map(|n| {
+        let e = calc_n_rayon(period, integral_segments, n, move |t| unsafe {
             let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
             let point = path_evaluator.evaluate(t / period);
             ComplexValueF64::new(point.x, point.y)
-        },
-        move |r| unsafe {
-            let mut guard = (*(p as *mut Mutex<Vec<Epicycle>>)).lock().unwrap();
-            println!("{:?}", r);
-            guard.push(r);
-        },
-    );
-
-    let guard = vec_mutex.lock().unwrap();
-    println!("{:?}", &*guard);
+        });
+        println!("{:?}", e);
+        e
+    }).collect::<Vec<_>>();
+    println!("{:?}", epicycles);
 }

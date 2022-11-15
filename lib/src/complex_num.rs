@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::{ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign}, iter::Sum};
 
 pub type ComplexValueF64 = ComplexValue<f64>;
 
@@ -223,7 +223,27 @@ impl DivAssign<f64> for ComplexValueF64 {
     }
 }
 
+impl<T> Default for ComplexValue<T> where T: Default {
+    fn default() -> Self {
+        Self { re: T::default(), im: T::default() }
+    }
+}
+
+impl ComplexValueF64 {
+    pub fn zero() -> Self {
+        ComplexValueF64::default()
+    }
+}
+
+impl Sum<ComplexValueF64> for ComplexValueF64 {
+    fn sum<I: Iterator<Item = ComplexValueF64>>(iter: I) -> Self {
+        iter.fold(ComplexValueF64::zero(), |a, b| a + b)
+    }
+}
+
 pub mod complex_integral {
+    use rayon::prelude::{IntoParallelIterator, ParallelIterator};
+
     use crate::complex_num::ComplexValueF64;
 
     pub fn complex_integral<F>(segments: u32, x0: f64, xn: f64, function: F) -> ComplexValueF64
@@ -242,5 +262,23 @@ pub mod complex_integral {
             i = i2;
         }
         sum
+    }
+
+    pub fn complex_integral_rayon<F>(
+        segments: u32,
+        x0: f64,
+        xn: f64,
+        function: F,
+    ) -> ComplexValueF64
+    where
+        F: Fn(f64) -> ComplexValueF64 + Copy + Sync + Send,
+    {
+        let range = xn - x0;
+        let d = range / segments as f64;
+
+        (0..segments).into_par_iter()
+        .map(move |x| {
+            (function(x as f64 * d) + function((x + 1) as f64 * d)) * d / 2.0
+        }).sum::<ComplexValueF64>()
     }
 }
