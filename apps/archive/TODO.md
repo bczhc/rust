@@ -1,3 +1,1 @@
-- extract a specified path
-- show progress bar while collecting entries
 - parallel support
