@@ -30,7 +30,7 @@ fn main() {
         )
         .arg(
             Arg::new("thread-count")
-                .value_parser(value_parser!(u32))
+                .value_parser(value_parser!(usize))
                 .default_value(OsStr::new(&*CPU_NUM_STRING)),
         )
         .arg(
@@ -49,7 +49,7 @@ fn main() {
 
     let epicycles_count = *matches.get_one::<u32>("epicycle-count").unwrap();
     let period = *matches.get_one::<f64>("period").unwrap();
-    let thread_count = *matches.get_one::<u32>("thread-count").unwrap();
+    let thread_count = *matches.get_one::<usize>("thread-count").unwrap();
     let integral_segments = *matches.get_one::<u32>("integral-segments").unwrap();
     let input_data_file = matches.get_one::<String>("data");
 
@@ -77,14 +77,23 @@ fn main() {
     let n_to = epicycle_count / 2;
     let n_from = -(epicycle_count - n_to) + 1;
 
-    let epicycles = compute_iter(n_from, n_to, period, integral_segments, move |t| unsafe {
-        let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
-        let point = path_evaluator.evaluate(t / period);
-        ComplexValueF64::new(point.x, point.y)
+    let thread_pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(thread_count)
+        .build()
+        .unwrap();
+
+    let epicycles = thread_pool.install(|| {
+        compute_iter(n_from, n_to, period, integral_segments, move |t| unsafe {
+            let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
+            let point = path_evaluator.evaluate(t / period);
+            ComplexValueF64::new(point.x, point.y)
+        })
     });
-    let epicycles = epicycles.map(|e| {
-        println!("{:?}", e);
-        e
-    }).collect::<Vec<_>>();
+    let epicycles = epicycles
+        .map(|e| {
+            println!("{:?}", e);
+            e
+        })
+        .collect::<Vec<_>>();
     println!("{:?}", epicycles);
 }
