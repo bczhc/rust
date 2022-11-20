@@ -1,24 +1,36 @@
-use clap::{Command, Arg, ArgAction};
+use clap::{Arg, ArgAction, Command, ValueHint};
 
 pub fn build_cli() -> Command {
     Command::new("archive")
         .version("1.0.0")
         .subcommand(
             Command::new("create")
+                .about("Create an archive")
                 .alias("c")
-                .arg(Arg::new("output").required(true))
-                .arg(Arg::new("path").action(ArgAction::Append).required(true))
+                .arg(
+                    Arg::new("output")
+                        .required(true)
+                        .value_hint(ValueHint::FilePath),
+                )
+                .arg(
+                    Arg::new("path")
+                        .action(ArgAction::Append)
+                        .required(true)
+                        .value_hint(ValueHint::AnyPath),
+                )
                 .arg(
                     Arg::new("base-dir")
                         .short('C')
                         .long("base-directory")
-                        .default_value("."),
+                        .default_value(".")
+                        .value_hint(ValueHint::DirPath),
                 )
                 .arg(
                     Arg::new("comment")
                         .short('m')
                         .long("comment")
-                        .help("Comment for this archive"),
+                        .help("Comment for this archive")
+                        .value_hint(ValueHint::Other),
                 )
                 .arg(
                     Arg::new("compress")
@@ -37,7 +49,8 @@ pub fn build_cli() -> Command {
                         .long("level")
                         .help("Compression level")
                         .default_value("best")
-                        .conflicts_with("data-filter-cmd"),
+                        .conflicts_with("data-filter-cmd")
+                        .value_hint(ValueHint::Other),
                 )
                 .arg(
                     Arg::new("data-filter-cmd")
@@ -45,6 +58,7 @@ pub fn build_cli() -> Command {
                         .action(ArgAction::Append)
                         .num_args(1..)
                         .allow_hyphen_values(true)
+                        .value_hint(ValueHint::Other)
                         .help(
                             "External data filter command line (for compression and decompression)",
                         ),
@@ -52,23 +66,37 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("list")
+                .about("List archive content")
                 .alias("l")
-                .arg(Arg::new("archive").help("Archive file path").required(true)),
+                .arg(
+                    Arg::new("archive")
+                        .help("Archive file path")
+                        .required(true)
+                        .value_hint(ValueHint::FilePath),
+                ),
         )
         .subcommand(
             Command::new("extract")
+                .about("Extract files from archive")
                 .alias("e")
-                .arg(Arg::new("archive").help("Archive file path").required(true))
+                .arg(
+                    Arg::new("archive")
+                        .help("Archive file path")
+                        .required(true)
+                        .value_hint(ValueHint::FilePath),
+                )
                 .arg(
                     Arg::new("base-dir")
                         .short('C')
                         .long("base-directory")
-                        .default_value("."),
+                        .default_value(".")
+                        .value_hint(ValueHint::DirPath),
                 )
                 .arg(
                     Arg::new("paths")
                         .action(ArgAction::Append)
-                        .help("File paths to be extracted"),
+                        .help("File paths to be extracted")
+                        .value_hint(ValueHint::Other),
                 )
                 .arg(
                     Arg::new("data-filter-cmd")
@@ -76,6 +104,7 @@ pub fn build_cli() -> Command {
                         .action(ArgAction::Append)
                         .num_args(1..)
                         .allow_hyphen_values(true)
+                        .value_hint(ValueHint::Other)
                         .help(
                             "External data filter command line (for compression and decompression)",
                         ),
@@ -84,13 +113,23 @@ pub fn build_cli() -> Command {
         .subcommand(
             Command::new("test")
                 .alias("t")
-                .arg(Arg::new("archive").help("Archive file path").required(true))
+                .arg(
+                    Arg::new("archive")
+                        .help("Archive file path")
+                        .required(true)
+                        .value_hint(ValueHint::FilePath),
+                )
                 .about("Check the archive integrity"),
         )
         .subcommand(
             Command::new("info")
                 .alias("i")
-                .arg(Arg::new("archive").help("Archive file path").required(true))
+                .arg(
+                    Arg::new("archive")
+                        .help("Archive file path")
+                        .required(true)
+                        .value_hint(ValueHint::FilePath),
+                )
                 .about("Show the information of archive"),
         )
         .subcommand_required(true)
