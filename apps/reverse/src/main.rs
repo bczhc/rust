@@ -1,96 +1,71 @@
 extern crate bczhc_lib;
 
 use bczhc_lib::io::ReadLines;
-use std::env::args;
+use clap::{Arg, ArgAction, Command};
 use std::io::{stdin, Read};
-use std::path::Path;
 use unicode_segmentation::UnicodeSegmentation;
 
+enum ReverseMode {
+    Line,
+    All,
+}
+
 fn main() -> Result<(), String> {
-    let mut args: Vec<String> = args().collect();
-    args.remove(0);
+    let matches = Command::new("reverse")
+        .arg(
+            Arg::new("line")
+                .short('l')
+                .long("line")
+                .conflicts_with("all")
+                .action(ArgAction::SetTrue)
+                .help("Reverse string by each line"),
+        )
+        .arg(
+            Arg::new("all")
+                .short('a')
+                .long("all")
+                .conflicts_with("line")
+                .action(ArgAction::SetTrue)
+                .help("Reverse all string read from stdin; this is the default mode"),
+        )
+        .arg(
+            Arg::new("grapheme")
+                .short('g')
+                .long("grapheme")
+                .help("Reverse by Unicode grapheme clusters")
+                .action(ArgAction::SetTrue),
+        )
+        .get_matches();
 
-    if args.len() >= 2 {
-        return show_msg(MsgType::InvalidArgumentCount(args.len()));
+    let mut reverse_mode = ReverseMode::Line;
+    if matches.get_flag("all") {
+        reverse_mode = ReverseMode::All
     }
 
-    enum ReverseMode {
-        Line,
-        All,
-    }
+    let grapheme = matches.get_flag("grapheme");
 
-    struct Arguments {
-        reverse_mode: ReverseMode,
-    }
-    let mut arguments = Arguments {
-        reverse_mode: ReverseMode::All,
-    };
+    let mut stdin = stdin().lock();
 
-    if args.len() == 1 {
-        let option = &args[0];
-        match option.as_str() {
-            "-l" | "--line" => {
-                arguments.reverse_mode = ReverseMode::Line;
-            }
-            "-a" | "--all" => {
-                arguments.reverse_mode = ReverseMode::All;
-            }
-            "-h" | "--help" => {
-                return show_msg(MsgType::Help);
-            }
-            _ => {
-                return show_msg(MsgType::UnknownOption(option));
-            }
-        }
-    }
-
-    match arguments.reverse_mode {
-        ReverseMode::Line => {
-            let mut stdin = stdin();
-            let lines = ReadLines::lines(&mut stdin);
-            for line in lines {
-                println!("{}", reverse_string(&line));
-            }
-        }
+    match reverse_mode {
         ReverseMode::All => {
-            let mut stdin = stdin();
-            let mut buf = String::new();
-            stdin.read_to_string(&mut buf).unwrap();
-            let reversed = reverse_string(&buf);
-            print!("{}", reversed);
+            let mut read = String::new();
+            stdin.read_to_string(&mut read).unwrap();
+            println!("{}", reverse_string(&read, grapheme));
+        }
+        ReverseMode::Line => {
+            for line in stdin.lines() {
+                println!("{}", reverse_string(&line, grapheme));
+            }
         }
     }
 
     Ok(())
 }
 
-enum MsgType<'a> {
-    Help,
-    InvalidArgumentCount(usize),
-    UnknownOption(&'a String),
-}
-
-fn show_msg(msg_type: MsgType) -> Result<(), String> {
-    return match msg_type {
-        MsgType::Help => {
-            let file_path = args().next().unwrap();
-            let file_name = Path::new(&file_path).file_name().unwrap().to_str().unwrap();
-            println!(
-                "Reverse string read from stdin.
-Usage: {} [option]
-Options:
-  -l, --line  Reverse string by each line.
-  -a, --all  Reverse all string read from stdin; this is the default mode.
-  -h, --help  Show this help.",
-                file_name
-            );
-            Ok(())
-        }
-        MsgType::InvalidArgumentCount(c) => Err(format!("Invalid argument count: {}", c)),
-        MsgType::UnknownOption(o) => Err(format!("Unknown option: {}", o)),
-    };
-}
-
-fn reverse_string(s: &str) -> String {
-    s.graphemes(true).rev().collect()
+fn reverse_string(s: &str, grapheme_cluster: bool) -> String {
+    if grapheme_cluster {
+        s.graphemes(true).rev().collect()
+    } else {
+        s.chars().rev().collect()
+    }
 }

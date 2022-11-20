@@ -1948,6 +1948,7 @@ name = "reverse"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
+ "clap 4.0.26",
  "unicode-segmentation",
 ]
 
