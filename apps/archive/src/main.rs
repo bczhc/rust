@@ -1,7 +1,43 @@
-use clap::{Arg, ArgAction, Command};
+use std::io;
+
+use clap::{value_parser, Arg, ArgAction, Command};
+use clap_complete::{Generator, Shell};
 
 fn main() -> Result<(), String> {
-    let matches = Command::new("archive")
+    let matches = build_cli().get_matches();
+
+    if let Some(s) = matches.get_one::<Shell>("generator") {
+        print_completions(s.clone(), &mut build_cli());
+        return Ok(());
+    }
+
+    let result = if let Some(matches) = matches.subcommand_matches("create") {
+        archive::create::main(matches)
+    } else if let Some(matches) = matches.subcommand_matches("list") {
+        archive::list::main(matches)
+    } else if let Some(matches) = matches.subcommand_matches("extract") {
+        archive::extract::main(matches)
+    } else if let Some(matches) = matches.subcommand_matches("test") {
+        archive::test::main(matches)
+    } else if let Some(matches) = matches.subcommand_matches("info") {
+        archive::info::main(matches)
+    } else {
+        build_cli().print_help().unwrap();
+        Ok(())
+    };
+    if let Err(e) = result {
+        return Err(e.to_string());
+    }
+
+    Ok(())
+}
+
+fn print_completions<G: Generator>(generator: G, cmd: &mut Command) {
+    clap_complete::generate(generator, cmd, String::from(cmd.get_name()), &mut io::stdout());
+}
+
+fn build_cli() -> Command {
+    Command::new("archive")
         .version("1.0.0")
         .subcommand(
             Command::new("create")
@@ -93,26 +129,13 @@ fn main() -> Result<(), String> {
                 .arg(Arg::new("archive").help("Archive file path").required(true))
                 .about("Show the information of archive"),
         )
-        .subcommand_required(true)
+        .arg(
+            Arg::new("generator")
+                .action(ArgAction::Set)
+                .long("generate")
+                .value_parser(value_parser!(Shell))
+                .help("Generate auto-completion script"),
+        )
+        .args_conflicts_with_subcommands(true)
         .about("An archive format for data backups with indexing and compression capabilities")
-        .get_matches();
-
-    let result = if let Some(matches) = matches.subcommand_matches("create") {
-        archive::create::main(matches)
-    } else if let Some(matches) = matches.subcommand_matches("list") {
-        archive::list::main(matches)
-    } else if let Some(matches) = matches.subcommand_matches("extract") {
-        archive::extract::main(matches)
-    } else if let Some(matches) = matches.subcommand_matches("test") {
-        archive::test::main(matches)
-    } else if let Some(matches) = matches.subcommand_matches("info") {
-        archive::info::main(matches)
-    } else {
-        unreachable!()
-    };
-    if let Err(e) = result {
-        return Err(e.to_string());
-    }
-
-    Ok(())
 }

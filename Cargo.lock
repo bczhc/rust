@@ -82,6 +82,7 @@ dependencies = [
  "cfg-if",
  "chrono",
  "clap 4.0.26",
+ "clap_complete",
  "console",
  "crc",
  "filetime",
@@ -371,6 +372,15 @@ dependencies = [
  "clap_lex 0.3.0",
  "strsim 0.10.0",
  "termcolor",
+]
+
+[[package]]
+name = "clap_complete"
+version = "4.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96b0fba905b035a30d25c1b585bf1171690712fbb0ad3ac47214963aa4acc36c"
+dependencies = [
+ "clap 4.0.26",
 ]
 
 [[package]]
