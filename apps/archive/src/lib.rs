@@ -23,6 +23,7 @@ use crate::crc::DigestWriter;
 use crate::errors::Error;
 
 pub mod archive;
+pub mod cli;
 pub mod compressors;
 pub mod crc;
 pub mod create;
@@ -33,6 +34,8 @@ pub mod line_progress;
 pub mod list;
 pub mod reader;
 pub mod test;
+
+pub use cli::build_cli;
 
 #[derive(Debug, Clone)]
 pub struct Entry {

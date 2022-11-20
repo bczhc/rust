@@ -27,4 +27,5 @@ members = [
     "apps/image-track",
     "apps/archive",
     "apps/fourier-series",
+    "apps/completion-generator",
 ]
