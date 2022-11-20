@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 bczhc_lib = { path = "../../lib", version = "1.0.0" }
+clap = "4.0.26"
+unicode-segmentation = "1.10.0"

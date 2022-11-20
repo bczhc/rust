@@ -81,7 +81,7 @@ dependencies = [
  "bzip2",
  "cfg-if",
  "chrono",
- "clap 4.0.22",
+ "clap 4.0.26",
  "console",
  "crc",
  "filetime",
@@ -296,6 +296,8 @@ name = "char-count"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
+ "clap 4.0.26",
+ "unicode-segmentation",
 ]
 
 [[package]]
@@ -360,9 +362,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.0.22"
+version = "4.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91b9970d7505127a162fdaa9b96428d28a479ba78c9ec7550a63a5d9863db682"
+checksum = "2148adefda54e14492fb9bddcc600b4344c5d1a3123bd666dcb939c6f0e0e57e"
 dependencies = [
  "atty",
  "bitflags",
@@ -822,7 +824,7 @@ name = "fourier-series"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 4.0.22",
+ "clap 4.0.26",
  "num_cpus",
  "once_cell",
  "rayon",
