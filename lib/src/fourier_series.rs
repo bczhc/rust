@@ -1,4 +1,4 @@
-use crate::complex::integral::{complex_integral, complex_integral_rayon};
+use crate::complex::integral::{complex_integral, integral_trapezoid_rayon};
 use crate::epicycle::Epicycle;
 use crate::point::{Point, PointF64};
 use std::f64::consts::PI;
@@ -64,7 +64,7 @@ where
     let omega = 2.0 * PI / period;
     let half_period = period / 2.0;
 
-    let an = complex_integral_rayon(integral_segments, -half_period, half_period, move |t| {
+    let an = integral_trapezoid_rayon(integral_segments, -half_period, half_period, move |t| {
         ComplexValueF64::from_polar(1.0, -(n as f64) * omega * t) * function(t)
     }) / period;
 
