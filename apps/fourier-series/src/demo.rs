@@ -1,17 +1,14 @@
 
 use std::f64::consts::PI;
 
-use bczhc_lib::complex_num::ComplexValueF64;
-
-use bczhc_lib::complex_num::complex_integral::complex_integral_rayon;
-
-
-
+use bczhc_lib::complex::integral::complex_integral_rayon;
+use num_complex::Complex64;
 
 
 fn main() {
     let integral = complex_integral_rayon(1000000000, 0.0, 2.0 * PI, |t| {
-        ComplexValueF64::from_exponent_form(t)
+        Complex64::from_polar(1.0, t)
+        
     });
     println!("{:?}", integral);
 }

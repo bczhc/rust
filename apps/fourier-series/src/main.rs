@@ -2,15 +2,13 @@ use std::ffi::OsStr;
 use std::fs::File;
 use std::io::Read;
 
-
 use clap::{value_parser, Arg, Command};
+use num_complex::Complex64;
 use once_cell::sync::Lazy;
 
-use bczhc_lib::complex_num::ComplexValueF64;
+type ComplexValueF64 = Complex64;
 
-use bczhc_lib::fourier_series::{
-    compute_iter, EvaluatePath, LinearPath,
-};
+use bczhc_lib::fourier_series::{compute_iter, EvaluatePath, LinearPath};
 use bczhc_lib::point::PointF64;
 
 const TEST_INPUT_DATA: &str = include_str!("../../../lib/data/fourier-series-data.txt");

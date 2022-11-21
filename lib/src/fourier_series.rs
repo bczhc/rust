@@ -1,9 +1,10 @@
-use crate::complex_num::complex_integral::*;
-use crate::complex_num::ComplexValueF64;
+use crate::complex::integral::{complex_integral, complex_integral_rayon};
 use crate::epicycle::Epicycle;
 use crate::point::{Point, PointF64};
 use std::f64::consts::PI;
 use threadpool::ThreadPool;
+
+type ComplexValueF64 = num_complex::Complex64;
 
 pub fn fourier_series_calc<F: 'static, R: 'static>(
     epicycle_count: u32,
@@ -26,7 +27,7 @@ pub fn fourier_series_calc<F: 'static, R: 'static>(
     for n in n_from..=n_to {
         pool.execute(move || {
             let an = complex_integral(integral_segments, -half_period, half_period, |t| {
-                ComplexValueF64::from_exponent_form(-(n as f64) * omega * t) * function(t)
+                ComplexValueF64::from_polar(1.0, -(n as f64) * omega * t) * function(t)
             }) / period;
             result_callback(Epicycle {
                 n,
@@ -46,7 +47,7 @@ where
     let half_period = period / 2.0;
 
     let an = complex_integral(integral_segments, -half_period, half_period, move |t| {
-        ComplexValueF64::from_exponent_form(-(n as f64) * omega * t) * function(t)
+        ComplexValueF64::from_polar(1.0, -(n as f64) * omega * t) * function(t)
     }) / period;
 
     Epicycle {
@@ -64,7 +65,7 @@ where
     let half_period = period / 2.0;
 
     let an = complex_integral_rayon(integral_segments, -half_period, half_period, move |t| {
-        ComplexValueF64::from_exponent_form(-(n as f64) * omega * t) * function(t)
+        ComplexValueF64::from_polar(1.0, -(n as f64) * omega * t) * function(t)
     }) / period;
 
     Epicycle {
@@ -216,11 +217,14 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::complex_num::ComplexValueF64;
+    use num_complex::Complex64;
+
     use crate::epicycle::Epicycle;
     use crate::fourier_series::{fourier_series_calc, fraction_part, EvaluatePath, LinearPath};
     use crate::point::PointF64;
     use std::sync::Mutex;
+
+    type ComplexValueF64 = Complex64;
 
     #[test]
     fn fraction_part_test() {
