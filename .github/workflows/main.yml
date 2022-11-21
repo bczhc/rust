@@ -32,7 +32,7 @@ jobs:
           cargo test --workspace --release
       - name: Generate documentation
         run: |
-          RUSTDOCFLAGS="--enable-index-page -Z unstable-options" cargo doc --workspace
+          RUSTDOCFLAGS="--enable-index-page -Z unstable-options" cargo doc --workspace --no-deps
           cd target/doc
           tar -czf ../../documentation.tgz *
           cd ../..
