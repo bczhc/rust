@@ -354,7 +354,7 @@ checksum = "71655c45cb9845d3270c9d6df84ebe72b4dad3c2ba3f7023ad47c144e4e473a5"
 dependencies = [
  "atty",
  "bitflags",
- "clap_derive",
+ "clap_derive 3.2.18",
  "clap_lex 0.2.4",
  "indexmap",
  "once_cell",
@@ -371,7 +371,9 @@ checksum = "2148adefda54e14492fb9bddcc600b4344c5d1a3123bd666dcb939c6f0e0e57e"
 dependencies = [
  "atty",
  "bitflags",
+ "clap_derive 4.0.21",
  "clap_lex 0.3.0",
+ "once_cell",
  "strsim 0.10.0",
  "termcolor",
 ]
@@ -390,6 +392,19 @@ name = "clap_derive"
 version = "3.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea0c8bce528c4be4da13ea6fead8965e95b6073585a2f05204bd8f4119f82a65"
+dependencies = [
+ "heck",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "clap_derive"
+version = "4.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0177313f9f02afc995627906bbd8967e2be069f5261954222dac78290c2b9014"
 dependencies = [
  "heck",
  "proc-macro-error",
@@ -848,6 +863,7 @@ dependencies = [
  "bczhc_lib",
  "clap 4.0.26",
  "num-complex 0.4.2",
+ "num-traits",
  "num_cpus",
  "once_cell",
  "rayon",

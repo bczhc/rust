@@ -2,17 +2,19 @@ use crate::complex::integral::{Integrate, Trapezoid};
 use crate::epicycle::Epicycle;
 use crate::point::{Point, PointF64};
 use std::f64::consts::PI;
+use std::marker::PhantomData;
 
 type ComplexValueF64 = num_complex::Complex64;
 
-pub fn calc_n_rayon<F>(period: f64, integral_segments: u32, n: i32, function: F) -> Epicycle
+pub fn calc_n_rayon<I, F>(period: f64, integral_segments: u32, n: i32, function: F) -> Epicycle
 where
     F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy,
+    I: Integrate
 {
     let omega = 2.0 * PI / period;
     let half_period = period / 2.0;
 
-    let an = integrate::<Trapezoid, _>(integral_segments, -half_period, half_period, move |t| {
+    let an = integrate::<I, _>(integral_segments, -half_period, half_period, move |t| {
         ComplexValueF64::from_polar(1.0, -(n as f64) * omega * t) * function(t)
     }) / period;
 
@@ -116,26 +118,29 @@ fn linear_bezier(p0: &PointF64, p1: &PointF64, t: f64) -> Point<f64> {
     *p0 + (*p1 - *p0) * t
 }
 
-pub struct Epicycles<F>
+pub struct Epicycles<I, F>
 where
     F: Fn(f64) -> ComplexValueF64 + Send + Copy,
+    I: Integrate
 {
     n_to: i32,
     n: i32,
     period: f64,
     integral_segment: u32,
     function: F,
+    _phantom: PhantomData<I>,
 }
 
-pub fn compute_iter<F>(
+pub fn compute_iter<I, F>(
     n_from: i32,
     n_to: i32,
     period: f64,
     integral_segments: u32,
     function: F,
-) -> Epicycles<F>
+) -> Epicycles<I, F>
 where
     F: Fn(f64) -> ComplexValueF64 + Send + Copy,
+    I: Integrate,
 {
     Epicycles {
         n_to,
@@ -143,12 +148,14 @@ where
         period,
         integral_segment: integral_segments,
         function,
+        _phantom: PhantomData
     }
 }
 
-impl<F> Iterator for Epicycles<F>
+impl<I, F> Iterator for Epicycles<I, F>
 where
     F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy,
+    I: Integrate
 {
     type Item = Epicycle;
 
@@ -157,7 +164,7 @@ where
             return None;
         }
 
-        let epicycle = calc_n_rayon(self.period, self.integral_segment, self.n, self.function);
+        let epicycle = calc_n_rayon::<I,_>(self.period, self.integral_segment, self.n, self.function);
         self.n += 1;
         Some(epicycle)
     }
