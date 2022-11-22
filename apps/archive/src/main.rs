@@ -1,8 +1,4 @@
-use std::io;
-
 use archive::cli::build_cli;
-use clap::{value_parser, Arg, ArgAction, Command};
-use clap_complete::{Generator, Shell};
 
 fn main() -> Result<(), String> {
     let matches = build_cli().get_matches();
@@ -25,8 +21,4 @@ fn main() -> Result<(), String> {
     }
 
     Ok(())
-}
-
-fn print_completions<G: Generator>(generator: G, cmd: &mut Command) {
-    clap_complete::generate(generator, cmd, String::from(cmd.get_name()), &mut io::stdout());
 }

@@ -12,7 +12,7 @@ where
     let omega = 2.0 * PI / period;
     let half_period = period / 2.0;
 
-    let an = integrate::<Trapezoid,_>(integral_segments, -half_period, half_period, move |t| {
+    let an = integrate::<Trapezoid, _>(integral_segments, -half_period, half_period, move |t| {
         ComplexValueF64::from_polar(1.0, -(n as f64) * omega * t) * function(t)
     }) / period;
 
@@ -167,10 +167,7 @@ where
 mod test {
     use num_complex::Complex64;
 
-    use crate::epicycle::Epicycle;
-    use crate::fourier_series::{fraction_part, EvaluatePath, LinearPath};
-    use crate::point::PointF64;
-    use std::sync::Mutex;
+    use crate::fourier_series::fraction_part;
 
     type ComplexValueF64 = Complex64;
 
@@ -193,7 +190,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(target_feature="t")]
+    #[cfg(target_feature = "t")]
     /// FIXME
     fn fourier_series_compute() {
         let mut vec = Vec::new();
