@@ -1,4 +1,4 @@
-use crate::complex::integral::{Integrate, Trapezoid};
+use crate::complex::integral::Integrate;
 use crate::epicycle::Epicycle;
 use crate::point::{Point, PointF64};
 use std::f64::consts::PI;
@@ -9,7 +9,7 @@ type ComplexValueF64 = num_complex::Complex64;
 pub fn calc_n_rayon<I, F>(period: f64, integral_segments: u32, n: i32, function: F) -> Epicycle
 where
     F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy,
-    I: Integrate
+    I: Integrate,
 {
     let omega = 2.0 * PI / period;
     let half_period = period / 2.0;
@@ -121,7 +121,7 @@ fn linear_bezier(p0: &PointF64, p1: &PointF64, t: f64) -> Point<f64> {
 pub struct Epicycles<I, F>
 where
     F: Fn(f64) -> ComplexValueF64 + Send + Copy,
-    I: Integrate
+    I: Integrate,
 {
     n_to: i32,
     n: i32,
@@ -148,14 +148,14 @@ where
         period,
         integral_segment: integral_segments,
         function,
-        _phantom: PhantomData
+        _phantom: PhantomData,
     }
 }
 
 impl<I, F> Iterator for Epicycles<I, F>
 where
     F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy,
-    I: Integrate
+    I: Integrate,
 {
     type Item = Epicycle;
 
@@ -164,7 +164,8 @@ where
             return None;
         }
 
-        let epicycle = calc_n_rayon::<I,_>(self.period, self.integral_segment, self.n, self.function);
+        let epicycle =
+            calc_n_rayon::<I, _>(self.period, self.integral_segment, self.n, self.function);
         self.n += 1;
         Some(epicycle)
     }
@@ -172,11 +173,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use num_complex::Complex64;
-
     use crate::fourier_series::fraction_part;
-
-    type ComplexValueF64 = Complex64;
 
     #[test]
     fn fraction_part_test() {
@@ -194,85 +191,6 @@ mod test {
             1.0 - 0.12345,
             epsilon = 0.00002
         );
-    }
-
-    #[test]
-    #[cfg(target_feature = "t")]
-    /// FIXME
-    fn fourier_series_compute() {
-        let mut vec = Vec::new();
-        let read = include_str!("../data/fourier-series-data.txt");
-        for line in read.lines() {
-            let split = line.split(", ");
-            let split: Vec<&str> = split.collect();
-            assert_eq!(split.len(), 2);
-
-            let x: f64 = split[0].parse().unwrap();
-            let y: f64 = split[1].parse().unwrap();
-            vec.push(PointF64::new(x, y));
-        }
-
-        let path_evaluator = LinearPath::new(&vec);
-        let path_evaluator_pointer = &path_evaluator as *const LinearPath as usize;
-
-        let vec: Vec<Epicycle> = Vec::new();
-        let vec_mutex = Mutex::new(vec);
-        let p = &vec_mutex as *const Mutex<Vec<Epicycle>> as usize;
-
-        let period = 100.0;
-        fourier_series_calc(
-            100,
-            100.0,
-            4,
-            10000,
-            move |t| unsafe {
-                let path_evaluator = &*(path_evaluator_pointer as *const LinearPath);
-                let point = path_evaluator.evaluate(t / period);
-                ComplexValueF64::new(point.x, point.y)
-            },
-            move |r| unsafe {
-                let mut guard = (*(p as *mut Mutex<Vec<Epicycle>>)).lock().unwrap();
-                guard.push(r);
-            },
-        );
-
-        let guard = vec_mutex.lock().unwrap();
-
-        let mut result_vec = Vec::new();
-
-        let result_text = include_str!("../data/fourier-series-result.txt");
-        for line in result_text.lines() {
-            let split = line.split(' ');
-            let split: Vec<&str> = split.collect();
-            assert_eq!(split.len(), 4);
-
-            result_vec.push(Epicycle {
-                n: split[0].parse().unwrap(),
-                a: ComplexValueF64::new(split[1].parse().unwrap(), split[2].parse().unwrap()),
-                p: split[3].parse().unwrap(),
-            })
-        }
-
-        let find_result = |n: i32| {
-            for r in &result_vec {
-                if r.n == n {
-                    return r;
-                }
-            }
-            unreachable!()
-        };
-
-        let cmp_epicycle = |e1: Epicycle, e2: Epicycle| {
-            e1.n == e2.n
-                || float_cmp::approx_eq!(f64, e1.a.re, e2.a.re)
-                || float_cmp::approx_eq!(f64, e1.a.im, e2.a.im)
-                || float_cmp::approx_eq!(f64, e1.p, e2.p)
-        };
-
-        for epicycle in &*guard {
-            let found = find_result(epicycle.n);
-            assert!(cmp_epicycle(*epicycle, *found));
-        }
     }
 }
 

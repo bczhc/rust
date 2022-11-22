@@ -1,9 +1,8 @@
-use std::ffi::OsStr;
 use std::fs::File;
 use std::io::Read;
 
 use bczhc_lib::complex::integral::{self, Integrate};
-use clap::{value_parser, Arg, Command};
+
 use fourier_series::cli::build_cli;
 use fourier_series::{cli, TEST_INPUT_DATA};
 use num_complex::Complex64;

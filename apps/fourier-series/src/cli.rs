@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 
-use clap::{value_parser, Arg, Command, ValueEnum};
+use clap::{value_parser, Arg, Command};
 
 use crate::CPU_NUM_STRING;
 
