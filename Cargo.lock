@@ -454,6 +454,7 @@ dependencies = [
  "archive",
  "clap 4.0.26",
  "clap_complete",
+ "fourier-series",
  "once_cell",
 ]
 

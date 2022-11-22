@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 
-use clap::{value_parser, Arg, Command};
+use clap::{value_parser, Arg, Command, ValueHint};
 
 use crate::CPU_NUM_STRING;
 
@@ -32,14 +32,16 @@ pub fn build_cli() -> Command {
                 .short('i')
                 .long("integrator")
                 .default_value("trapezoid")
-                .required(false),
+                .required(false)
+                .help("Numerical integration method"),
         )
         .arg(
             Arg::new("data")
                 .required(false)
                 .short('d')
                 .long("data")
-                .help("Input data set file (if not provided, use a built-in test data set)"),
+                .help("Input data set file (if not provided, use a built-in test data set)")
+                .value_hint(ValueHint::FilePath),
         )
 }
 

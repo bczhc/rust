@@ -6,9 +6,10 @@ use once_cell::sync::Lazy;
 
 pub mod cli;
 
-pub static CLI_BUILDERS: [fn() -> Command; 1] = [archive::build_cli];
+pub static CLI_BUILDERS: [fn() -> Command; 2] =
+    [archive::build_cli, fourier_series::cli::build_cli];
 
-pub static BIN_NAMES: Lazy<[&str; 1]> = Lazy::new(|| {
+pub static BIN_NAMES: Lazy<[&str; 2]> = Lazy::new(|| {
     CLI_BUILDERS.map(|x| Box::leak(String::from(x().get_name()).into_boxed_str()) as &'static str)
 });
 
