@@ -1,12 +1,13 @@
 use num_complex::Complex;
-use num_traits::{Float, NumAssign};
+use num_traits::{AsPrimitive, Float, NumAssign};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 pub trait Integrate {
     fn complex_integral_rayon<F, T>(segments: u32, x0: T, xn: T, function: F) -> Complex<T>
     where
         F: Fn(T) -> Complex<T> + Copy + Sync + Send,
-        T: Float + NumAssign + NumAssign + Send + Sync;
+        T: Float + NumAssign + NumAssign + Send + Sync + 'static,
+        u32: AsPrimitive<T>;
 }
 
 pub struct Trapezoid;
@@ -20,14 +21,15 @@ impl Integrate for Trapezoid {
     fn complex_integral_rayon<F, T>(segments: u32, x0: T, xn: T, function: F) -> Complex<T>
     where
         F: Fn(T) -> Complex<T> + Copy + Sync + Send,
-        T: Float + NumAssign + NumAssign + Send + Sync,
+        T: Float + NumAssign + NumAssign + Send + Sync + 'static,
+        u32: AsPrimitive<T>,
     {
         let range = xn - x0;
         let d = range / T::from(segments).unwrap();
-        let c2 = Complex::new(T::from(2).unwrap(), T::zero());
+        let c2 = Complex::new(2_u32.as_(), T::zero());
         (0..segments)
             .into_par_iter()
-            .map(|x| T::from(x).unwrap())
+            .map(|x| AsPrimitive::<T>::as_(x))
             .map(move |x| (function(x0 + x * d) + function(x0 + (x + T::one()) * d)) * d / c2)
             .sum()
     }
@@ -37,14 +39,15 @@ impl Integrate for LeftRectangle {
     fn complex_integral_rayon<F, T>(segments: u32, x0: T, xn: T, function: F) -> Complex<T>
     where
         F: Fn(T) -> Complex<T> + Copy + Sync + Send,
-        T: Float + NumAssign + NumAssign + Send + Sync,
+        T: Float + NumAssign + NumAssign + Send + Sync + 'static,
+        u32: AsPrimitive<T>,
     {
         let range = xn - x0;
         let d = range / T::from(segments).unwrap();
 
         (0..segments)
             .into_par_iter()
-            .map(|x| T::from(x).unwrap())
+            .map(|x| AsPrimitive::<T>::as_(x))
             .map(move |x| function(x0 + x * d) * d)
             .sum()
     }
@@ -54,14 +57,15 @@ impl Integrate for RightRectangle {
     fn complex_integral_rayon<F, T>(segments: u32, x0: T, xn: T, function: F) -> Complex<T>
     where
         F: Fn(T) -> Complex<T> + Copy + Sync + Send,
-        T: Float + NumAssign + NumAssign + Send + Sync,
+        T: Float + NumAssign + NumAssign + Send + Sync + 'static,
+        u32: AsPrimitive<T>,
     {
         let range = xn - x0;
         let d = range / T::from(segments).unwrap();
 
         (1..=segments)
             .into_par_iter()
-            .map(|x| T::from(x).unwrap())
+            .map(|x| AsPrimitive::<T>::as_(x))
             .map(move |x| function(x0 + x * d) * d)
             .sum()
     }
@@ -71,7 +75,8 @@ impl Integrate for Simpson {
     fn complex_integral_rayon<F, T>(segments: u32, x0: T, xn: T, function: F) -> Complex<T>
     where
         F: Fn(T) -> Complex<T> + Copy + Sync + Send,
-        T: Float + NumAssign + NumAssign + Send + Sync,
+        T: Float + NumAssign + NumAssign + Send + Sync + 'static,
+        u32: AsPrimitive<T>,
     {
         let range = xn - x0;
         let d = range / T::from(segments).unwrap();
@@ -81,7 +86,7 @@ impl Integrate for Simpson {
 
         (0..segments)
             .into_par_iter()
-            .map(|x| T::from(x).unwrap())
+            .map(|x| AsPrimitive::<T>::as_(x))
             .map(move |n| {
                 multiplier
                     * (function(x0 + n * d)
@@ -96,7 +101,8 @@ impl Integrate for Simpson38 {
     fn complex_integral_rayon<F, T>(segments: u32, x0: T, xn: T, function: F) -> Complex<T>
     where
         F: Fn(T) -> Complex<T> + Copy + Sync + Send,
-        T: Float + NumAssign + NumAssign + Send + Sync,
+        T: Float + NumAssign + NumAssign + Send + Sync + 'static,
+        u32: AsPrimitive<T>,
     {
         let range = xn - x0;
         let d = range / T::from(segments).unwrap();
@@ -107,7 +113,7 @@ impl Integrate for Simpson38 {
 
         (0..segments)
             .into_par_iter()
-            .map(|x| T::from(x).unwrap())
+            .map(|x| AsPrimitive::<T>::as_(x))
             .map(move |n| {
                 multiplier
                     * (function(x0 + n * d)
@@ -123,7 +129,8 @@ impl Integrate for Boole {
     fn complex_integral_rayon<F, T>(segments: u32, x0: T, xn: T, function: F) -> Complex<T>
     where
         F: Fn(T) -> Complex<T> + Copy + Sync + Send,
-        T: Float + NumAssign + NumAssign + Send + Sync,
+        T: Float + NumAssign + NumAssign + Send + Sync + 'static,
+        u32: AsPrimitive<T>,
     {
         let range = xn - x0;
         let d = range / T::from(segments).unwrap();
@@ -137,7 +144,7 @@ impl Integrate for Boole {
 
         (0..segments)
             .into_par_iter()
-            .map(|x| T::from(x).unwrap())
+            .map(|x| AsPrimitive::<T>::as_(x))
             .map(move |n| {
                 multiplier
                     * (function(x0 + n * d) * co_7
