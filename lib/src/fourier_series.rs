@@ -1,5 +1,6 @@
 use euclid::Point2D;
-use num_traits::{AsPrimitive, Float};
+use num_complex::Complex;
+use num_traits::{AsPrimitive, Float, NumAssign};
 
 pub use euclid;
 
@@ -10,8 +11,6 @@ use std::marker::PhantomData;
 use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 
 type Point<T> = Point2D<T, ()>;
-
-type ComplexValueF64 = num_complex::Complex64;
 
 pub trait FloatNum:
     Float + AddAssign + SubAssign + MulAssign + DivAssign + AsPrimitive<usize> + AsPrimitive<f64>
@@ -29,22 +28,25 @@ impl<T> FloatNum for T where
 {
 }
 
-pub fn calc_n_rayon<I, F>(period: f64, integral_segments: u32, n: i32, function: F) -> Epicycle
+pub fn calc_n_rayon<I, F, T>(period: T, integral_segments: u32, n: i32, function: F) -> Epicycle<T>
 where
-    F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy,
+    F: Fn(T) -> Complex<T> + Send + Sync + Copy,
     I: Integrate,
+    T: FloatNum + NumAssign + Send + Sync + 'static,
+    i32: AsPrimitive<T>,
+    u32: AsPrimitive<T>,
 {
-    let omega = 2.0 * PI / period;
-    let half_period = period / 2.0;
+    let omega = T::from(2.0 * PI).unwrap() / period;
+    let half_period = period / T::from(2.0).unwrap();
 
-    let an = integrate::<I, _>(integral_segments, -half_period, half_period, move |t| {
-        ComplexValueF64::from_polar(1.0, -(n as f64) * omega * t) * function(t)
+    let an = integrate::<I, _, T>(integral_segments, -half_period, half_period, move |t| {
+        Complex::<T>::from_polar(T::one(), -(AsPrimitive::<T>::as_(n)) * omega * t) * function(t)
     }) / period;
 
     Epicycle {
         n,
         a: an,
-        p: ((n as f64) * omega),
+        p: (AsPrimitive::<T>::as_(n) * omega),
     }
 }
 
@@ -55,8 +57,8 @@ where
     F: Float,
 {
     match t.fract() {
-        a @ _ if a.is_sign_negative() => F::one() + a,
-        a @ _ => a,
+        a if a.is_sign_negative() => F::one() + a,
+        a => a,
     }
 }
 
@@ -146,29 +148,30 @@ where
     p0 + (p1 - p0) * t
 }
 
-pub struct Epicycles<I, F>
+pub struct Epicycles<I, F, T>
 where
-    F: Fn(f64) -> ComplexValueF64 + Send + Copy,
+    F: Fn(T) -> Complex<T> + Send + Copy,
     I: Integrate,
 {
     n_to: i32,
     n: i32,
-    period: f64,
+    period: T,
     integral_segment: u32,
     function: F,
     _phantom: PhantomData<I>,
 }
 
-pub fn compute_iter<I, F>(
+pub fn compute_iter<I, F, T>(
     n_from: i32,
     n_to: i32,
-    period: f64,
+    period: T,
     integral_segments: u32,
     function: F,
-) -> Epicycles<I, F>
+) -> Epicycles<I, F, T>
 where
-    F: Fn(f64) -> ComplexValueF64 + Send + Copy,
+    F: Fn(T) -> Complex<T> + Send + Copy,
     I: Integrate,
+    T: FloatNum,
 {
     Epicycles {
         n_to,
@@ -180,12 +183,15 @@ where
     }
 }
 
-impl<I, F> Iterator for Epicycles<I, F>
+impl<I, F, T> Iterator for Epicycles<I, F, T>
 where
-    F: Fn(f64) -> ComplexValueF64 + Send + Sync + Copy,
+    F: Fn(T) -> Complex<T> + Send + Sync + Copy,
     I: Integrate,
+    T: FloatNum + NumAssign + Send + Sync + 'static,
+    i32: AsPrimitive<T>,
+    u32: AsPrimitive<T>,
 {
-    type Item = Epicycle;
+    type Item = Epicycle<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.n > self.n_to {
@@ -193,7 +199,7 @@ where
         }
 
         let epicycle =
-            calc_n_rayon::<I, _>(self.period, self.integral_segment, self.n, self.function);
+            calc_n_rayon::<I, _, T>(self.period, self.integral_segment, self.n, self.function);
         self.n += 1;
         Some(epicycle)
     }
@@ -273,10 +279,12 @@ where
     }
 }
 
-fn integrate<I, F>(segments: u32, x0: f64, xn: f64, function: F) -> ComplexValueF64
+fn integrate<I, F, T>(segments: u32, x0: T, xn: T, function: F) -> Complex<T>
 where
-    F: Fn(f64) -> ComplexValueF64 + Copy + Sync + Send,
+    F: Fn(T) -> Complex<T> + Copy + Sync + Send,
     I: Integrate,
+    T: Float + NumAssign + Send + Sync + 'static,
+    u32: AsPrimitive<T>,
 {
     I::complex_integral_rayon(segments, x0, xn, function)
 }

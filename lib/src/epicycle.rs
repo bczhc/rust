@@ -1,4 +1,5 @@
-type ComplexValueF64 = num_complex::Complex64;
+use num_complex::Complex;
+use num_traits::Float;
 
 /// Struct for an epicycle in Fourier series
 /// -----
@@ -9,8 +10,11 @@ type ComplexValueF64 = num_complex::Complex64;
 /// - p = n&omega;
 ///
 #[derive(Copy, Clone, PartialEq, Debug)]
-pub struct Epicycle {
+pub struct Epicycle<T>
+where
+    T: Float,
+{
     pub n: i32,
-    pub a: ComplexValueF64,
-    pub p: f64,
+    pub a: Complex<T>,
+    pub p: T,
 }

@@ -95,7 +95,7 @@ where
         let period = self.period;
 
         let epicycles = self.thread_pool.install(|| {
-            compute_iter::<I, _>(
+            compute_iter::<I, _, _>(
                 n_from,
                 n_to,
                 period,
