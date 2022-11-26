@@ -1,5 +1,5 @@
-use euclid::{vec2, Point2D, Vector2D};
-use num_traits::{AsPrimitive, Float, FromPrimitive};
+use euclid::Point2D;
+use num_traits::{AsPrimitive, Float};
 
 pub use euclid;
 
@@ -7,7 +7,7 @@ use crate::complex::integral::Integrate;
 use crate::epicycle::Epicycle;
 use std::f64::consts::PI;
 use std::marker::PhantomData;
-use std::ops::{AddAssign, DivAssign, Mul, MulAssign, SubAssign};
+use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 
 type Point<T> = Point2D<T, ()>;
 
