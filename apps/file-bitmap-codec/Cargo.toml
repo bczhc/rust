@@ -12,3 +12,4 @@ byteorder = "1.4.3"
 bczhc_lib = { path = "../../lib", version = "1.0.0" }
 clap = { version = "3.1.2", features = ["derive"] }
 quick-error = "2.0.1"
+euclid = "0.22.7"

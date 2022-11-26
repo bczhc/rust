@@ -1,7 +1,7 @@
 use crate::Result;
-use bczhc_lib::point::PointU32;
 use bmp::{Image, Pixel};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use euclid::default::Point2D;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter, Cursor, Read, Write};
 
@@ -96,6 +96,8 @@ impl Positioner {
         }
     }
 }
+
+type PointU32 = Point2D<u32>;
 
 impl Iterator for Positioner {
     type Item = PointU32;

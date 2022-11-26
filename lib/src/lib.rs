@@ -17,8 +17,6 @@ pub mod char;
 
 pub mod fourier_series;
 
-pub mod point;
-
 pub mod utils;
 
 pub mod fs;

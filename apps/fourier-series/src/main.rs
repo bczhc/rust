@@ -10,8 +10,10 @@ use num_complex::Complex64;
 type ComplexValueF64 = Complex64;
 
 use bczhc_lib::fourier_series::{compute_iter, EvaluatePath, LinearPath};
-use bczhc_lib::point::PointF64;
+
 use rayon::ThreadPool;
+
+type PointF64 = bczhc_lib::fourier_series::euclid::Point2D<f64, ()>;
 
 fn main() {
     let matches = build_cli().get_matches();
@@ -67,7 +69,7 @@ fn main() {
 
 struct Params<E>
 where
-    E: EvaluatePath,
+    E: EvaluatePath<f64>,
 {
     thread_pool: ThreadPool,
     epicycle_count: u32,
@@ -78,7 +80,7 @@ where
 
 impl<E> Params<E>
 where
-    E: EvaluatePath,
+    E: EvaluatePath<f64>,
 {
     fn calc_and_print<I>(self)
     where
