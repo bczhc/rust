@@ -1,3 +1,5 @@
+use num_traits::Float;
+
 use crate::complex::integral::Integrate;
 use crate::epicycle::Epicycle;
 use crate::point::{Point, PointF64};
@@ -27,18 +29,13 @@ where
 
 /// t is in \[0, 1\]
 #[inline]
-fn fraction_part(t: f64) -> f64 {
-    if (t as i32 as f64) == t {
-        // `t` is a integer
-        0.0
-    } else {
-        // get the fraction part of `t`
-        if t > 0.0 {
-            t - t.floor()
-        } else {
-            // x < 0.0
-            (-t).ceil() + t
-        }
+fn fraction_part<F>(t: F) -> F
+where
+    F: Float,
+{
+    match t.fract() {
+        a @ _ if a.is_sign_negative() => F::one() + a,
+        a @ _ => a,
     }
 }
 
