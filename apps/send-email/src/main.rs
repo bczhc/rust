@@ -1,13 +1,13 @@
 use std::fs::File;
 use std::io::Read;
 use std::process::abort;
-use std::thread::{spawn, sleep};
+use std::thread::{sleep, spawn};
 use std::time::Duration;
 
 use lettre::transport::smtp::authentication::Credentials;
-use lettre::{SmtpTransport, Transport, message};
+use lettre::{SmtpTransport, Transport};
 use send_email::cli::build_cli;
-use send_email::{Config, Account, Message};
+use send_email::{Account, Config, Message};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli().get_matches();
@@ -45,9 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         body: body.into(),
     };
 
-    let send_thread = spawn(move || {
-        send_email(message, account)
-    });
+    let send_thread = spawn(move || send_email(message, account));
     if let Some(&timeout) = timeout {
         spawn(move || {
             sleep(Duration::from_millis(timeout as u64));
@@ -61,14 +59,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(_) => {
             println!("Done");
             Ok(())
-        },
+        }
         Err(e) => {
             return Err(e.into());
-        },
+        }
     }
 }
 
-fn send_email(message: Message, account: Account) -> Result<lettre::transport::smtp::response::Response, lettre::transport::smtp::Error> {
+fn send_email(
+    message: Message,
+    account: Account,
+) -> Result<lettre::transport::smtp::response::Response, lettre::transport::smtp::Error> {
     let mut email = lettre::Message::builder()
         .from(message.from.parse().unwrap())
         .to(message.to.parse().unwrap());
@@ -80,12 +81,10 @@ fn send_email(message: Message, account: Account) -> Result<lettre::transport::s
 
     let creds = account.credentials.clone();
 
-    // Open a remote connection to gmail
     let mailer = SmtpTransport::relay(&account.smtp)
         .unwrap()
         .credentials(creds)
         .build();
 
-    // Send the email
     mailer.send(&email)
 }
