@@ -13,7 +13,7 @@ pub enum Error {
     #[error("{0}")]
     PasswordHash(#[from] PasswordHashError),
     #[error("Invalid salt")]
-    InvalidSalt
+    InvalidSalt,
 }
 
 #[repr(transparent)]

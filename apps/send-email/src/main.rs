@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         smtp: config.smtp.clone(),
     };
     let message = Message {
-        from: config.from.into(),
+        from: config.from,
         to: to.into(),
         subject: subject.cloned(),
         body: body.into(),
@@ -60,9 +60,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Done");
             Ok(())
         }
-        Err(e) => {
-            return Err(e.into());
-        }
+        Err(e) => Err(e.into()),
     }
 }
 
@@ -77,7 +75,7 @@ fn send_email(
     if let Some(ref s) = message.subject {
         email = email.subject(s);
     }
-    let email = email.body(message.body.clone()).unwrap();
+    let email = email.body(message.body).unwrap();
 
     let creds = account.credentials.clone();
 
