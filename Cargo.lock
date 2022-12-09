@@ -2593,6 +2593,7 @@ version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "clap 4.0.29",
+ "once_cell",
  "thiserror",
 ]
 
