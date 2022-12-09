@@ -117,8 +117,9 @@ where
 {
     let mut init = true;
     let mut block = GenericArray::from([0_u8; 16]);
+    let mut buf = GenericArray::from([0_u8; 16]);
     loop {
-        if let Err(e) = from.read_exact(&mut block) {
+        if let Err(e) = from.read_exact(&mut buf) {
             if e.kind() != ErrorKind::UnexpectedEof {
                 return Err(e);
             }
@@ -151,7 +152,7 @@ where
             }
             // integrity check succeeds
             if last as usize != block.len() {
-                // still have some data to write
+                // still have data to write; write the left
                 to.write_all(&block[..(block.len() - last as usize)])?;
             }
             break;
@@ -162,7 +163,7 @@ where
         }
         // just assume the ciphertext length is a multiple of the block size
         // so it reads full blocks
-        cipher.decrypt_block(&mut block);
+        cipher.decrypt_block_b2b(&mut buf, &mut block);
         init = false;
     }
 
