@@ -2588,8 +2588,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "tcp-crypto-wrapper"
-version = "0.1.0"
+name = "tcp-crypto-tunnel"
+version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "clap 4.0.29",

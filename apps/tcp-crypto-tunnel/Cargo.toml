@@ -1,5 +1,5 @@
 [package]
-name = "tcp-crypto-wrapper"
+name = "tcp-crypto-tunnel"
 version = "1.0.0"
 edition = "2021"
 
