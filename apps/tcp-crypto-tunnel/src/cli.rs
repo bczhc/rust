@@ -5,6 +5,7 @@ pub fn build_cli() -> Command {
         .about("A TCP stream wrapper with cryptography")
         .subcommand(
             Command::new("server")
+                .alias("s")
                 .arg(Arg::new("address").help("Target address").required(true))
                 .arg(
                     Arg::new("port")
@@ -15,6 +16,7 @@ pub fn build_cli() -> Command {
         )
         .subcommand(
             Command::new("client")
+                .alias("c")
                 .arg(Arg::new("server").help("Server address").required(true))
                 .arg(
                     Arg::new("port")

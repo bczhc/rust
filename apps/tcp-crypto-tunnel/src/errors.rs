@@ -7,4 +7,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("{0}")]
     Io(#[from] io::Error),
+    #[error("Password doesn't match")]
+    PasswordNotMatch,
 }
