@@ -2588,6 +2588,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tcp-crypto-wrapper"
+version = "0.1.0"
+dependencies = [
+ "bczhc_lib",
+ "clap 4.0.29",
+ "thiserror",
+]
+
+[[package]]
 name = "tempfile"
 version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

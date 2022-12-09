@@ -1,0 +1,11 @@
+[package]
+name = "tcp-crypto-wrapper"
+version = "1.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bczhc_lib = {path = "../../lib"}
+clap = "4.0.29"
+thiserror = "1.0.37"
