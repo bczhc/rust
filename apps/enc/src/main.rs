@@ -4,7 +4,7 @@ use std::io::{stdin, stdout, ErrorKind, Read, Write};
 use aes::cipher::generic_array::GenericArray;
 use aes::cipher::{BlockEncrypt, KeyInit, KeySizeUser};
 use aes::Aes256;
-use argon2::password_hash::{Salt, SaltString};
+use argon2::password_hash::SaltString;
 use argon2::PasswordHasher;
 use cipher::consts::U32;
 use cipher::BlockDecrypt;
@@ -18,12 +18,10 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let matches = build_cli().get_matches();
     let decryption_mode = matches.get_flag("decrypt");
 
-    /*let password = rpassword::prompt_password("enter password: ")?;
-    if rpassword::prompt_password("enter again to verify: ")? != password {
+    let password = rpassword::prompt_password("enter password: ")?;
+    if !decryption_mode && rpassword::prompt_password("enter again to verify: ")? != password {
         return Err(Error::PasswordNotMatch.into());
-    }*/
-
-    let password = "1";
+    }
 
     let mut stdin = stdin();
     let mut stdout = stdout();
@@ -33,7 +31,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     } else {
         SaltString::generate(OsRng)
     };
-    let key = derive_key(password, &salt)?;
+    let key = derive_key(&password, &salt)?;
 
     let cipher = Aes256::new(&key);
 
@@ -163,7 +161,7 @@ where
         }
         // just assume the ciphertext length is a multiple of the block size
         // so it reads full blocks
-        cipher.decrypt_block_b2b(&mut buf, &mut block);
+        cipher.decrypt_block_b2b(&buf, &mut block);
         init = false;
     }
 
