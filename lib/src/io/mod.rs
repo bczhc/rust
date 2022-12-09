@@ -216,10 +216,11 @@ pub fn put_char(c: char) -> std::io::Result<()> {
 pub trait TryReadExact {
     /// Read exact data
     ///
-    /// This function blocks. It reads exact data, so the return value is the buffer's when
-    /// it doesn't reach EOF.
+    /// This function blocks. It reads exact data, and returns bytes it reads. The return value
+    /// will always be the buffer size until it reaches EOF.
     ///
-    /// If it reaches EOF, the return value is the bytes it has read.
+    /// When reaching EOF, the return value will be less than the size of the given buffer,
+    /// or just zero.
     ///
     /// # Examples
     ///
@@ -234,6 +235,7 @@ pub trait TryReadExact {
     ///     match result {
     ///         Ok(r) => {
     ///             if r == 0 {
+    ///                 // EOF
     ///                 break;
     ///             }
     ///             println!("Read: {:?}", &buf[..r]);
@@ -424,3 +426,37 @@ where
 }
 
 impl<R: Read> ReadText for R {}
+
+#[cfg(test)]
+pub mod test {
+    use crate::io::TryReadExact;
+    use std::io::Cursor;
+
+    #[test]
+    pub fn try_read_exact1() {
+        let mut reader = Cursor::new(vec![0_u8, 1, 2, 3, 4]);
+        let mut buf = [0_u8; 5];
+        let size = reader.try_read_exact(&mut buf).unwrap();
+        assert_eq!(size, 5);
+        assert_eq!(buf, [0_u8, 1, 2, 3, 4]);
+
+        let size = reader.try_read_exact(&mut buf).unwrap();
+        assert_eq!(size, 0);
+    }
+
+    #[test]
+    pub fn try_read_exact2() {
+        let mut reader = Cursor::new(vec![0_u8, 1, 2, 3, 4]);
+        let mut buf = [0_u8; 3];
+        let size = reader.try_read_exact(&mut buf).unwrap();
+        assert_eq!(size, 3);
+        assert_eq!(buf, [0_u8, 1, 2]);
+
+        let size = reader.try_read_exact(&mut buf).unwrap();
+        assert_eq!(size, 2);
+        assert_eq!(&buf[..2], [3_u8, 4]);
+
+        let size = reader.try_read_exact(&mut buf).unwrap();
+        assert_eq!(size, 0);
+    }
+}
