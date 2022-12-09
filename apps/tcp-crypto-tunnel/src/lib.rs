@@ -1,19 +1,18 @@
+use std::io::{Read, Write};
+use std::net::TcpStream;
+
+use polling::{Event, Poller};
+
+use errors::*;
+
 pub mod cli;
 pub mod client;
 pub mod errors;
 pub mod server;
 
-use bczhc_lib::io::interact_two_stream;
-use errors::*;
-use once_cell::sync::Lazy;
-use polling::{Event, Poller};
-use std::io;
-use std::io::{Cursor, Read, Write};
-use std::net::TcpStream;
-use std::sync::Mutex;
-
 pub static mut KEY: [u8; 32] = [0_u8; 32];
 pub static KEY_REF: &[u8; 32] = &unsafe { KEY };
+pub const KEY_LEN: usize = 32;
 
 pub fn prompt_password() -> Result<String> {
     /*let password = rpassword::prompt_password("enter password: ")?;
@@ -34,6 +33,10 @@ pub fn derive_key<const S: usize>(password: &str) -> [u8; S] {
 }
 
 pub fn crypto_interact_two_streams(stream1: &mut TcpStream, stream2: &mut TcpStream) -> Result<()> {
+    let mut stream1_key_offset = 0_usize;
+    let mut stream2_key_offset = 0_usize;
+    let xor_key = *KEY_REF;
+
     let stream1_key = 0;
     let stream2_key = 1;
 
@@ -55,12 +58,20 @@ pub fn crypto_interact_two_streams(stream1: &mut TcpStream, stream2: &mut TcpStr
                     if size == 0 {
                         break 'poll_loop;
                     }
+                    for x in &mut buf {
+                        *x ^= xor_key[stream1_key_offset % KEY_LEN];
+                        stream1_key_offset += 1;
+                    }
                     stream2.write_all(&buf[..size])?;
                 }
                 _ if key == stream2_key && readable => {
                     let size = stream2.read(&mut buf)?;
                     if size == 0 {
                         break 'poll_loop;
+                    }
+                    for x in &mut buf {
+                        *x ^= xor_key[stream2_key_offset % KEY_LEN];
+                        stream2_key_offset += 1;
                     }
                     stream1.write_all(&buf[..size])?;
                 }
