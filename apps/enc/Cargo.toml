@@ -1,0 +1,20 @@
+[package]
+name = "enc"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "my-enc"
+path = "src/main.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = "4.0.29"
+aes = "0.8.2"
+argon2 = "0.4.1"
+rpassword = "7.2.0"
+thiserror = "1.0.37"
+rand = "0.8.5"
+cipher = "0.4.3"
+bczhc_lib = { path = "../../lib" }

@@ -29,4 +29,5 @@ members = [
     "apps/fourier-series",
     "apps/completion-generator",
     "apps/send-email",
+    "apps/enc",
 ]
