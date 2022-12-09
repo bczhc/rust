@@ -1,5 +1,7 @@
 use std::io::{Read, Write};
-use std::net::TcpStream;
+use std::net::{SocketAddr, TcpListener, TcpStream};
+use std::sync::Arc;
+use std::thread::spawn;
 
 use polling::{Event, Poller};
 
@@ -84,4 +86,22 @@ pub fn crypto_interact_two_streams(stream1: &mut TcpStream, stream2: &mut TcpStr
         }
     }
     Ok(())
+}
+
+fn handle_connection(mut client: TcpStream, server_addr: &str) -> Result<()> {
+    let mut server = TcpStream::connect(server_addr)?;
+    crypto_interact_two_streams(&mut client, &mut server)?;
+    Ok(())
+}
+
+pub fn generic_main(server_addr: String, listen_port: u16) -> Result<()> {
+    let server_addr = Arc::new(server_addr);
+
+    let listener = TcpListener::bind(SocketAddr::new("0.0.0.0".parse().unwrap(), listen_port))?;
+    loop {
+        let accepted = listener.accept()?;
+        println!("Accepted: {}", accepted.1);
+        let server_addr = Arc::clone(&server_addr);
+        spawn(move || handle_connection(accepted.0, &server_addr).unwrap());
+    }
 }
