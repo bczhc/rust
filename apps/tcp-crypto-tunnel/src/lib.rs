@@ -17,12 +17,11 @@ pub static KEY_REF: &[u8; 32] = &unsafe { KEY };
 pub const KEY_LEN: usize = 32;
 
 pub fn prompt_password() -> Result<String> {
-    /*let password = rpassword::prompt_password("enter password: ")?;
+    let password = rpassword::prompt_password("enter password: ")?;
     if rpassword::prompt_password("enter again to verify: ")? != password {
         return Err(Error::PasswordNotMatch);
     }
-    Ok(password)*/
-    Ok(String::from("test"))
+    Ok(password)
 }
 
 pub fn derive_key<const S: usize>(password: &str) -> [u8; S] {
