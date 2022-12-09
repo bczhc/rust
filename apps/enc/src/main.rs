@@ -1,5 +1,5 @@
 use std::io;
-use std::io::{stdin, stdout, ErrorKind, Read, Write};
+use std::io::{stdin, stdout, BufReader, BufWriter, ErrorKind, Read, Write};
 
 use aes::cipher::generic_array::GenericArray;
 use aes::cipher::{BlockEncrypt, KeyInit, KeySizeUser};
@@ -36,13 +36,21 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let cipher = Aes256::new(&key);
 
     if decryption_mode {
-        decrypt_to(cipher, &mut stdin, &mut stdout)?;
+        decrypt_to(
+            cipher,
+            &mut BufReader::new(stdin),
+            &mut BufWriter::new(stdout),
+        )?;
     } else {
         // bring salt to the encrypted output
         // zero-terminated
         stdout.write_all(salt.as_bytes())?;
         stdout.write_all(&[0_u8])?;
-        encrypt_to(cipher, &mut stdin, &mut stdout)?;
+        encrypt_to(
+            cipher,
+            &mut BufReader::new(stdin),
+            &mut BufWriter::new(stdout),
+        )?;
     }
 
     Ok(())
