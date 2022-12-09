@@ -59,7 +59,7 @@ pub fn crypto_interact_two_streams(stream1: &mut TcpStream, stream2: &mut TcpStr
                     if size == 0 {
                         break 'poll_loop;
                     }
-                    for x in &mut buf {
+                    for x in &mut buf[..size] {
                         *x ^= xor_key[stream1_key_offset % KEY_LEN];
                         stream1_key_offset += 1;
                     }
@@ -70,7 +70,7 @@ pub fn crypto_interact_two_streams(stream1: &mut TcpStream, stream2: &mut TcpStr
                     if size == 0 {
                         break 'poll_loop;
                     }
-                    for x in &mut buf {
+                    for x in &mut buf[..size] {
                         *x ^= xor_key[stream2_key_offset % KEY_LEN];
                         stream2_key_offset += 1;
                     }
