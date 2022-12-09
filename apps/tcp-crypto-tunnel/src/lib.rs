@@ -13,7 +13,7 @@ pub mod errors;
 pub mod server;
 
 pub static mut KEY: [u8; 32] = [0_u8; 32];
-pub static KEY_REF: &[u8; 32] = &unsafe { KEY };
+pub static KEY_REF: &[u8; 32] = unsafe { &KEY };
 pub const KEY_LEN: usize = 32;
 
 pub fn prompt_password() -> Result<String> {
