@@ -5,7 +5,7 @@ use std::thread::spawn;
 use clap::{Arg, Command};
 use once_cell::sync::Lazy;
 
-use bczhc_lib::io::interact_two_stream;
+use bczhc_lib::io::interact_two_streams;
 use bczhc_lib::{rw_read, rw_write};
 use forward::errors::*;
 
@@ -40,7 +40,7 @@ fn handle_connection(mut access_stream: TcpStream) -> Result<()> {
     let to_addr = rw_read!(ARGUMENTS).dest_addr.unwrap();
     let mut local_stream = TcpStream::connect(to_addr)?;
 
-    interact_two_stream(&mut access_stream, &mut local_stream)?;
+    interact_two_streams(&mut access_stream, &mut local_stream)?;
     Ok(())
 }
 

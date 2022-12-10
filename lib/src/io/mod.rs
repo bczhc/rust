@@ -6,6 +6,7 @@ use std::path::Path;
 use std::thread::{spawn, JoinHandle};
 
 use cfg_if::cfg_if;
+use polling::{Event, Poller};
 
 use crate::utf8::encode_utf8;
 
@@ -309,22 +310,68 @@ pub fn attach_tcp_stream_to_stdio(stream: &mut TcpStream) -> io::Result<()> {
     }
 }
 
-pub fn interact_two_stream(stream1: &mut TcpStream, stream2: &mut TcpStream) -> io::Result<()> {
-    cfg_if! {
-        if #[cfg(unix)] {
-            unix::interact_two_stream(stream1, stream2)
-        } else {
-            generic::interact_two_stream(stream1, stream2)
-        }
+cfg_if! {
+    if #[cfg(windows)] {
+        use std::os::windows::io::AsRawSocket;
+        pub trait Poll: Read + Write + AsRawSocket {}
+        impl<T> Poll for T where T: Read + Write + AsRawSocket {}
+    } else if #[cfg(unix)] {
+        use std::os::unix::io::AsRawFd;
+        pub trait Poll: Read + Write + AsRawFd {}
+        impl<T> Poll for T where T: Read + Write + AsRawFd {}
     }
 }
 
-#[cfg(unix)]
+pub fn interact_two_streams<S1, S2>(stream1: &mut S1, stream2: &mut S2) -> io::Result<()>
+where
+    S1: Poll,
+    S2: Poll,
+{
+    let stream1_key = 0;
+    let stream2_key = 1;
+
+    let poller = Poller::new()?;
+    poller.add(&*stream1, Event::readable(stream1_key))?;
+    poller.add(&*stream2, Event::readable(stream2_key))?;
+
+    let mut events = Vec::new();
+    let mut buf = [0_u8; 4096];
+    'poll_loop: loop {
+        events.clear();
+        poller.wait(&mut events, None)?;
+        for ev in &events {
+            let key = ev.key;
+            let readable = ev.readable;
+            match ev.key {
+                _ if key == stream1_key && readable => {
+                    let size = stream1.read(&mut buf)?;
+                    if size == 0 {
+                        break 'poll_loop;
+                    }
+                    stream2.write_all(&buf[..size])?;
+                }
+                _ if key == stream2_key && readable => {
+                    let size = stream2.read(&mut buf)?;
+                    if size == 0 {
+                        break 'poll_loop;
+                    }
+                    stream1.write_all(&buf[..size])?;
+                }
+                _ => {
+                    unreachable!();
+                }
+            }
+            poller.modify(&*stream1, Event::readable(stream1_key))?;
+            poller.modify(&*stream2, Event::readable(stream2_key))?;
+        }
+    }
+    Ok(())
+}
+
 pub mod unix {
     use std::io;
     use std::io::{stdin, stdout, Read, Write};
     use std::net::TcpStream;
-    use std::os::unix::io::AsRawFd;
 
     use polling::{Event, Poller};
 
@@ -374,6 +421,9 @@ pub mod unix {
         };
     }
 
+    #[cfg(unix)]
+    use std::os::unix::io::AsRawFd;
+    #[cfg(unix)]
     pub fn attach_stream_to_stdio<S>(stream: &mut S) -> io::Result<()>
     where
         S: Read + Write + AsRawFd,
