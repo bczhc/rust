@@ -1,4 +1,3 @@
-use bytesize::ByteSize;
 use std::collections::HashMap;
 use std::fs::{remove_file, File};
 use std::io;
@@ -6,39 +5,24 @@ use std::io::BufReader;
 use std::path::Path;
 use std::str::FromStr;
 
-use clap::{Arg, ArgAction, Command, ValueHint};
-use cow_dedupe::errors::*;
+use bytesize::ByteSize;
 use reflink::reflink;
 use sha2::digest::Digest;
 use sha2::Sha256;
 use walkdir::WalkDir;
 
+use cow_dedupe::cli::build_cli;
+use cow_dedupe::errors::*;
+
 fn main() {
-    let matches = Command::new("cow-dedupe")
-        .about("A simple file-based deduplication tool using CoW semantic (reflink)")
-        .arg(
-            Arg::new("path")
-                .required(true)
-                .action(ArgAction::Append)
-                .value_hint(ValueHint::DirPath)
-                .help("Path to directory"),
-        )
-        .arg(
-            Arg::new("min-size")
-                .long("min-size")
-                .short('m')
-                .help("Minimum size filter")
-                .required(false),
-        )
-        .get_matches();
-
-    let mut map = HashMap::new();
-
+    let matches = build_cli().get_matches();
     let paths = matches.get_many::<String>("path").unwrap();
     let min_size: u64 = matches
         .get_one::<String>("min-size")
         .map(|x| ByteSize::from_str(x).unwrap().0)
         .unwrap_or(0);
+
+    let mut map = HashMap::new();
 
     let entries = paths.flat_map(WalkDir::new);
     for entry in entries {
