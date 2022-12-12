@@ -1,17 +1,14 @@
-use anyhow::anyhow;
 use std::collections::HashMap;
-use std::fs::{remove_file, File};
-use std::io;
-use std::io::{BufReader, Cursor, Read};
-use std::path::Path;
+use std::fs::remove_file;
 use std::str::FromStr;
 
+use anyhow::anyhow;
 use bytesize::ByteSize;
 use reflink::reflink;
 use walkdir::WalkDir;
 
 use cow_dedupe::cli::build_cli;
-use cow_dedupe::errors::*;
+use cow_dedupe::file_hash;
 
 /// the hash length to be used; in bytes
 const HASH_LENGTH: usize = 64;
@@ -117,18 +114,6 @@ fn main() -> anyhow::Result<()> {
             }
         }
     }
-
-    Ok(())
-}
-
-fn file_hash<P: AsRef<Path>>(path: P, buf: &mut [u8]) -> Result<()> {
-    let mut hasher = blake3::Hasher::new();
-    let mut reader = BufReader::new(File::open(path)?);
-    io::copy(&mut reader, &mut hasher)?;
-
-    let mut output_reader = hasher.finalize_xof();
-    // there's no way this can encounter an IO error
-    output_reader.read_exact(buf).unwrap();
 
     Ok(())
 }
