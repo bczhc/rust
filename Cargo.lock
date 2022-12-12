@@ -540,8 +540,12 @@ dependencies = [
  "archive",
  "clap 4.0.29",
  "clap_complete",
+ "cow-dedupe",
+ "enc",
  "fourier-series",
  "once_cell",
+ "send-email",
+ "tcp-crypto-tunnel",
 ]
 
 [[package]]

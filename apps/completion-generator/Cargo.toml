@@ -8,6 +8,11 @@ edition = "2021"
 [dependencies]
 archive = { path = "../archive" }
 fourier-series = { path = "../fourier-series" }
+cow-dedupe = { path = "../cow-dedupe" }
+enc = { path = "../enc" }
+send-email = { path = "../send-email" }
+tcp-crypto-tunnel = { path = "../tcp-crypto-tunnel" }
+
 clap = "4.0.26"
 clap_complete = "4.0.5"
 once_cell = "1.16.0"

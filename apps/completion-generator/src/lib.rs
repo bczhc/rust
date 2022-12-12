@@ -23,7 +23,14 @@ pub mod cli;
 
 type CliBuilderFn = fn() -> Command;
 
-cli_builders![archive::build_cli, fourier_series::cli::build_cli];
+cli_builders![
+    archive::build_cli,
+    fourier_series::cli::build_cli,
+    cow_dedupe::cli::build_cli,
+    enc::cli::build_cli,
+    send_email::cli::build_cli,
+    tcp_crypto_tunnel::cli::build_cli,
+];
 
 const CLI_BUILDERS_LEN: usize = size_of_val(&CLI_BUILDERS) / size_of::<CliBuilderFn>();
 
