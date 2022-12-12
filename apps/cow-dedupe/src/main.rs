@@ -25,6 +25,7 @@ fn main() -> anyhow::Result<()> {
     let min_size = ByteSize::from_str(min_size)
         .map_err(|e| anyhow!("Invalid size: {}", e))?
         .0;
+    let dry_run = matches.get_flag("dry-run");
 
     let mut map = HashMap::new();
 
@@ -72,18 +73,46 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    let total = dups_vec.iter().map(|x| x.len()).sum::<usize>() - dups_vec.len();
-    let mut count = 1;
-    for dups in dups_vec {
-        assert!(dups.len() > 1);
-        let first = &dups[0];
-        for x in dups.iter().skip(1) {
-            println!("Reflinking: ({}/{}) {:?}", count, total, x);
-            count += 1_usize;
-            remove_file(x)?;
-            reflink(first, x)?;
-            if !x.exists() {
-                panic!("Checking failed: {:?} doesn't exist", x);
+    if dry_run {
+        let mut dupes_sum = 0_u64;
+        for dupe in &dups_vec {
+            dupes_sum += dupe[0].metadata()?.len();
+        }
+
+        let mut reflink_sum = 0_u64;
+        for (mut dupe_count, first) in dups_vec.iter().map(|x| (x.len(), &x[0])) {
+            let first_size = first.metadata()?.len();
+            if dupe_count >= 1 {
+                dupe_count -= 1;
+            }
+            reflink_sum += dupe_count as u64 * first_size;
+        }
+
+        println!(
+            "Size of unique duplicated files: {}",
+            ByteSize(dupes_sum).to_string_as(true)
+        );
+        println!(
+            "Size of all duplicated files: {}",
+            ByteSize(dupes_sum + reflink_sum).to_string_as(true)
+        );
+        println!(
+            "Size of files to be reflinked: {}",
+            ByteSize(reflink_sum).to_string_as(true)
+        );
+    } else {
+        let total = dups_vec.iter().map(|x| x.len()).sum::<usize>() - dups_vec.len();
+        for (i, dups) in dups_vec.iter().enumerate() {
+            assert!(dups.len() > 1);
+            // pick the first file as reflinking source, since these files are all identical
+            let first = &dups[0];
+            for x in dups.iter().skip(1) {
+                println!("Reflinking: ({}/{}) {:?}", i + 1, total, x);
+                remove_file(x)?;
+                reflink(first, x)?;
+                if !x.exists() {
+                    panic!("Checking failed: {:?} doesn't exist", x);
+                }
             }
         }
     }

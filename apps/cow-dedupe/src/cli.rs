@@ -15,6 +15,15 @@ pub fn build_cli() -> Command {
                 .long("min-size")
                 .short('m')
                 .help("Minimum size filter")
+                .action(ArgAction::Set)
                 .required(false),
+        )
+        .arg(
+            Arg::new("dry-run")
+                .long("dry-run")
+                .short('d')
+                .help("Don't do reflinking; just print the size of duplicated files")
+                .required(false)
+                .action(ArgAction::SetTrue),
         )
 }
