@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "3.1.18"
+clap = "4.0.29"
 reflink = { git = "https://github.com/nicokoch/reflink", rev = "e8d93b46" }
 walkdir = "2.3.2"
 sha2 = "0.10.2"

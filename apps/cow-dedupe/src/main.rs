@@ -6,7 +6,7 @@ use std::io::BufReader;
 use std::path::Path;
 use std::str::FromStr;
 
-use clap::{Arg, Command};
+use clap::{Arg, ArgAction, Command, ValueHint};
 use cow_dedupe::errors::*;
 use reflink::reflink;
 use sha2::digest::Digest;
@@ -19,7 +19,8 @@ fn main() {
         .arg(
             Arg::new("path")
                 .required(true)
-                .multiple_values(true)
+                .action(ArgAction::Append)
+                .value_hint(ValueHint::DirPath)
                 .help("Path to directory"),
         )
         .arg(
@@ -27,16 +28,15 @@ fn main() {
                 .long("min-size")
                 .short('m')
                 .help("Minimum size filter")
-                .takes_value(true)
                 .required(false),
         )
         .get_matches();
 
     let mut map = HashMap::new();
 
-    let paths = matches.values_of("path").unwrap();
+    let paths = matches.get_many::<String>("path").unwrap();
     let min_size: u64 = matches
-        .value_of("min-size")
+        .get_one::<String>("min-size")
         .map(|x| ByteSize::from_str(x).unwrap().0)
         .unwrap_or(0);
 

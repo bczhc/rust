@@ -579,7 +579,7 @@ name = "cow-dedupe"
 version = "1.0.0"
 dependencies = [
  "bytesize",
- "clap 3.2.23",
+ "clap 4.0.29",
  "reflink",
  "sha2",
  "thiserror",
