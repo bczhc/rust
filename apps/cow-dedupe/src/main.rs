@@ -7,14 +7,14 @@ use std::path::Path;
 use std::str::FromStr;
 
 use clap::{Arg, Command};
-use cow_dedup::errors::*;
+use cow_dedupe::errors::*;
 use reflink::reflink;
 use sha2::digest::Digest;
 use sha2::Sha256;
 use walkdir::WalkDir;
 
 fn main() {
-    let matches = Command::new("cow-dedup")
+    let matches = Command::new("cow-dedupe")
         .about("A simple file-based deduplication tool using CoW semantic (reflink)")
         .arg(
             Arg::new("path")

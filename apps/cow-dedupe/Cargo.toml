@@ -1,5 +1,5 @@
 [package]
-name = "cow-dedup"
+name = "cow-dedupe"
 version = "1.0.0"
 edition = "2021"
 

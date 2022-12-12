@@ -22,7 +22,7 @@ members = [
     "apps/serial-cat",
     "apps/phone-transfer",
     "apps/to-human-readable",
-    "apps/cow-dedup",
+    "apps/cow-dedupe",
     "apps/reverse-read",
     "apps/image-track",
     "apps/archive",
