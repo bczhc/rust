@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use std::collections::HashMap;
 use std::fs::{remove_file, File};
 use std::io;
@@ -14,20 +15,23 @@ use walkdir::WalkDir;
 use cow_dedupe::cli::build_cli;
 use cow_dedupe::errors::*;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let matches = build_cli().get_matches();
     let paths = matches.get_many::<String>("path").unwrap();
-    let min_size: u64 = matches
+    let min_size = matches
         .get_one::<String>("min-size")
-        .map(|x| ByteSize::from_str(x).unwrap().0)
-        .unwrap_or(0);
+        .map(|x| x.as_str())
+        .unwrap_or("0");
+    let min_size = ByteSize::from_str(min_size)
+        .map_err(|e| anyhow!("Invalid size: {}", e))?
+        .0;
 
     let mut map = HashMap::new();
 
     let entries = paths.flat_map(WalkDir::new);
     for entry in entries {
-        let entry = entry.unwrap();
-        let metadata = entry.metadata().unwrap();
+        let entry = entry?;
+        let metadata = entry.metadata()?;
         if !metadata.is_file() {
             continue;
         }
@@ -58,7 +62,7 @@ fn main() {
         for path in dups {
             println!("Hashing ({}/{}) {:?}", count, total, path);
             count += 1_usize;
-            file_hash(path, &mut hash_buf).unwrap();
+            file_hash(path, &mut hash_buf)?;
             map.entry(hash_buf)
                 .or_insert_with(Vec::new)
                 .push(path.clone());
@@ -76,10 +80,12 @@ fn main() {
         for x in dups.iter().skip(1) {
             println!("Reflinking: ({}/{}) {:?}", count, total, x);
             count += 1_usize;
-            remove_file(x).unwrap();
-            reflink(first, x).unwrap();
+            remove_file(x)?;
+            reflink(first, x)?;
         }
     }
+
+    Ok(())
 }
 
 fn file_hash<P: AsRef<Path>>(path: P, buf: &mut [u8]) -> Result<()> {
