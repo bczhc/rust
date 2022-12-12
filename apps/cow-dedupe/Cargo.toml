@@ -9,7 +9,7 @@ edition = "2021"
 clap = "4.0.29"
 reflink = { git = "https://github.com/nicokoch/reflink", rev = "e8d93b46" }
 walkdir = "2.3.2"
-sha2 = "0.10.2"
 thiserror = "1.0.31"
 bytesize = "1.1.0"
 anyhow = "1.0.66"
+blake3 = "1.3.3"

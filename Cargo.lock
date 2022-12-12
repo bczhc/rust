@@ -585,10 +585,10 @@ name = "cow-dedupe"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "blake3",
  "bytesize",
  "clap 4.0.29",
  "reflink",
- "sha2",
  "thiserror",
  "walkdir",
 ]
@@ -2593,17 +2593,6 @@ name = "sha1_smol"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ae1a47186c03a32177042e55dbc5fd5aee900b8e0069a8d70fba96a9375cd012"
-
-[[package]]
-name = "sha2"
-version = "0.10.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82e6b795fe2e3b1e845bafcb27aa35405c4d47cdfc92af5fc8d3002f76cebdc0"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "digest",
-]
 
 [[package]]
 name = "shuffle-string"

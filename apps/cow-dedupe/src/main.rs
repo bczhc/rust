@@ -2,18 +2,19 @@ use anyhow::anyhow;
 use std::collections::HashMap;
 use std::fs::{remove_file, File};
 use std::io;
-use std::io::BufReader;
+use std::io::{BufReader, Cursor, Read};
 use std::path::Path;
 use std::str::FromStr;
 
 use bytesize::ByteSize;
 use reflink::reflink;
-use sha2::digest::Digest;
-use sha2::Sha256;
 use walkdir::WalkDir;
 
 use cow_dedupe::cli::build_cli;
 use cow_dedupe::errors::*;
+
+/// the hash length to be used; in bytes
+const HASH_LENGTH: usize = 64;
 
 fn main() -> anyhow::Result<()> {
     let matches = build_cli().get_matches();
@@ -56,7 +57,7 @@ fn main() -> anyhow::Result<()> {
     let total: usize = dup_files.iter().map(|x| x.len()).sum();
     let mut count = 1;
 
-    let mut hash_buf = [0_u8; 32];
+    let mut hash_buf = [0_u8; HASH_LENGTH];
     let mut dups_vec = Vec::new();
     for dups in dup_files.iter() {
         let mut map = HashMap::new();
@@ -121,14 +122,13 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn file_hash<P: AsRef<Path>>(path: P, buf: &mut [u8]) -> Result<()> {
-    let mut sha256 = Sha256::new();
+    let mut hasher = blake3::Hasher::new();
+    let mut reader = BufReader::new(File::open(path)?);
+    io::copy(&mut reader, &mut hasher)?;
 
-    let file = File::open(path)?;
-    let mut reader = BufReader::new(file);
-    io::copy(&mut reader, &mut sha256)?;
-    let array = sha256.finalize();
-    for x in array.iter().enumerate() {
-        buf[x.0] = *(x.1);
-    }
+    let mut output_reader = hasher.finalize_xof();
+    // there's no way this can encounter an IO error
+    output_reader.read_exact(buf).unwrap();
+
     Ok(())
 }
