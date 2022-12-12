@@ -1,15 +1,33 @@
+#![feature(const_size_of_val)]
+
 use std::io::stdout;
+use std::mem::{size_of, size_of_val};
 
 use clap::Command;
 use clap_complete::Generator;
 use once_cell::sync::Lazy;
 
+macro_rules! count {
+    () => (0_usize);
+    ($x:expr) => (1_usize);
+    ( $x:expr, $($xs:expr),* ) => (1usize + count!($($xs),*));
+}
+
+macro_rules! cli_builders {
+    ( $($f:expr),+ $(,)? ) => {
+        pub const CLI_BUILDERS: [CliBuilderFn; count![$($f),*]] = [$($f),*];
+    };
+}
+
 pub mod cli;
 
-pub static CLI_BUILDERS: [fn() -> Command; 2] =
-    [archive::build_cli, fourier_series::cli::build_cli];
+type CliBuilderFn = fn() -> Command;
 
-pub static BIN_NAMES: Lazy<[&str; 2]> = Lazy::new(|| {
+cli_builders![archive::build_cli, fourier_series::cli::build_cli];
+
+const CLI_BUILDERS_LEN: usize = size_of_val(&CLI_BUILDERS) / size_of::<CliBuilderFn>();
+
+pub static BIN_NAMES: Lazy<[&str; CLI_BUILDERS_LEN]> = Lazy::new(|| {
     CLI_BUILDERS.map(|x| Box::leak(String::from(x().get_name()).into_boxed_str()) as &'static str)
 });
 
