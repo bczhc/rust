@@ -82,6 +82,9 @@ fn main() -> anyhow::Result<()> {
             count += 1_usize;
             remove_file(x)?;
             reflink(first, x)?;
+            if !x.exists() {
+                panic!("Checking failed: {:?} doesn't exist", x);
+            }
         }
     }
 
