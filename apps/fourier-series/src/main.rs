@@ -106,13 +106,12 @@ where
                     ComplexValueF64::new(point.x, point.y)
                 },
             )
-        });
-        let epicycles = epicycles
             .map(|e| {
                 println!("{:?}", e);
                 e
             })
-            .collect::<Vec<_>>();
+            .collect::<Vec<_>>()
+        });
         println!("{:?}", epicycles);
     }
 }
