@@ -7,22 +7,20 @@ use std::thread::spawn;
 use clap::{value_parser, Arg, Command, ValueHint};
 use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
 use num::{FromPrimitive, Integer};
-use threadpool::ThreadPool;
+use rayon::prelude::*;
 
-fn definite_integrate<F>(f: F, bounds: (f64, f64), segments: u32) -> f64
+fn definite_integral_rayon<F>(function: F, bounds: (f64, f64), segments: u32) -> f64
 where
-    F: Fn(f64) -> f64,
+    F: Fn(f64) -> f64 + Send + Sync,
 {
-    let bounds_length = bounds.1 - bounds.0;
-    let increment = (bounds_length) / segments as f64;
+    let range = bounds.1 - bounds.0;
+    let d = range / segments as f64;
+    let x0 = bounds.0;
 
-    let mut sum = 0.0;
-    let mut i = 0.0;
-    while i + increment <= bounds.1 {
-        sum += (f(i) + f(i + increment)) / 2.0;
-        i += increment;
-    }
-    sum
+    (0..segments)
+        .into_par_iter()
+        .map(move |x| (function(x0 + x as f64 * d) + function(x0 + (x as f64 + 1.0) * d)) * d / 2.0)
+        .sum()
 }
 
 #[derive(Debug, Clone)]
@@ -51,7 +49,7 @@ where
 
     let calc_an = move |n: u32| {
         (2.0 / period)
-            * definite_integrate(
+            * definite_integral_rayon(
                 |t| f(t) * f64::cos(n as f64 * omega * t),
                 (0.0, period),
                 integral_segments,
@@ -59,42 +57,22 @@ where
     };
     let calc_bn = move |n: u32| {
         (2.0 / period)
-            * definite_integrate(
+            * definite_integral_rayon(
                 |t| f(t) * f64::sin(n as f64 * omega * t),
                 (0.0, period),
                 integral_segments,
             )
     };
-    let calc_a0 = move || (1.0 / period) * definite_integrate(f, (0.0, period), integral_segments);
+    let calc_a0 =
+        move || (1.0 / period) * definite_integral_rayon(f, (0.0, period), integral_segments);
     let calc_b0 = || 0.0;
 
-    let pool = ThreadPool::new(threads);
-
     coefficients[0] = SeriesCoefficient(calc_a0(), calc_b0());
-    let co_arc = Arc::new(Mutex::new(coefficients));
-    let i_arc = Arc::new(Mutex::new(0));
-
     for n in 1..=series_n {
-        let i = i_arc.clone();
-        let co = co_arc.clone();
-        pool.execute(move || {
-            let an_result = calc_an(n);
-            let bn_result = calc_bn(n);
-
-            let mut co_guard = co.lock().unwrap();
-            (&mut *co_guard)[n as usize] = SeriesCoefficient(an_result, bn_result);
-
-            let mut i_guard = i.lock().unwrap();
-            *i_guard += 1;
-
-            println!(
-                "Progress: {}%",
-                (*i_guard as f64 / (series_n + 1) as f64) * 100.0
-            );
-        });
+        coefficients[n as usize] = SeriesCoefficient(calc_an(n), calc_bn(n));
+        println!("Progress: {}%", n as f64 / series_n as f64 * 100.0);
     }
-    pool.join();
-    Arc::try_unwrap(co_arc).unwrap().into_inner().unwrap()
+    coefficients
 }
 
 fn fourier_series_evaluate(coefficients: &[SeriesCoefficient], period: f64, t: f64) -> f64 {
