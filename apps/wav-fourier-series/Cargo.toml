@@ -1,0 +1,14 @@
+[package]
+name = "wav-fourier-series"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bczhc_lib = { path = "../../lib" }
+clap = "3.2.23"
+hound = "3.5.0"
+num = "0.4.0"
+threadpool = "1.8.1"
+num_cpus = "1.14.0"

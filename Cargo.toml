@@ -31,4 +31,5 @@ members = [
     "apps/send-email",
     "apps/tcp-crypto-tunnel",
     "apps/enc",
+    "apps/wav-fourier-series",
 ]
