@@ -169,7 +169,7 @@ fn main() {
         }
 
         let out = t - f64::floor(t);
-        assert!((0.0..=1.0).contains(&out));
+        debug_assert!((0.0..=1.0).contains(&out));
 
         let samples = unsafe { std::slice::from_raw_parts(p as *const f64, samples_len) };
         linear_interpolate(samples[i], samples[i + 1], out)
