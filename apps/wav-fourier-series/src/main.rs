@@ -1,16 +1,12 @@
-use bczhc_lib::utils::get_args_without_self_path;
+use std::f64::consts::PI;
+use std::iter::Sum;
+use std::ops::{AddAssign, RangeInclusive};
+use std::sync::{Arc, Mutex};
+use std::thread::spawn;
+
 use clap::{App, Arg};
 use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
 use num::{FromPrimitive, Integer};
-use std::alloc::Layout;
-use std::convert::TryFrom;
-use std::f64::consts::PI;
-use std::io::{stdout, Write};
-use std::iter::Sum;
-use std::ops::{AddAssign, Deref, Div, Range, RangeBounds, RangeInclusive, Sub};
-use std::process::Output;
-use std::sync::{Arc, Mutex};
-use std::thread::spawn;
 use threadpool::ThreadPool;
 
 fn definite_integrate<F>(f: F, bounds: (f64, f64), segments: u32) -> f64
@@ -49,7 +45,7 @@ fn trig_fourier_series_calc<F>(
 where
     F: Fn(f64) -> f64 + Sync + 'static + Send + Copy,
 {
-    let mut coefficients = vec![SeriesCoefficient::default(); series_n as usize + 1];
+    let coefficients = vec![SeriesCoefficient::default(); series_n as usize + 1];
     let omega = 2.0 * PI / period;
 
     let calc_an = move |n: u32| {
@@ -97,13 +93,12 @@ where
     Arc::try_unwrap(co_arc).unwrap().into_inner().unwrap()
 }
 
-fn fourier_series_evaluate(coefficients: &Vec<SeriesCoefficient>, period: f64, t: f64) -> f64 {
+fn fourier_series_evaluate(coefficients: &[SeriesCoefficient], period: f64, t: f64) -> f64 {
     let omega = 2.0 * PI / period;
 
     let mut result = coefficients[0].0 / 2.0;
-    for n in 1..coefficients.len() {
-        result += coefficients[n].0 * f64::cos(n as f64 * omega * t)
-            + coefficients[n].1 * f64::sin(n as f64 * omega * t);
+    for (n, co) in coefficients.iter().enumerate().skip(1) {
+        result += co.0 * f64::cos(n as f64 * omega * t) + co.1 * f64::sin(n as f64 * omega * t);
     }
     result
 }
@@ -164,7 +159,7 @@ fn main() {
 
     // t is in 0..samples_len
     let p = samples.as_ptr() as usize;
-    let interpolation = move |mut t: f64| {
+    let interpolation = move |t: f64| {
         let mut i = f64::floor(t) as usize;
         if i + 1 >= samples_len {
             i = samples_len - 2;
@@ -174,7 +169,7 @@ fn main() {
         }
 
         let out = t - f64::floor(t);
-        assert!(out >= 0.0 && out <= 1.0);
+        assert!((0.0..=1.0).contains(&out));
 
         let samples = unsafe { std::slice::from_raw_parts(p as *const f64, samples_len) };
         linear_interpolate(samples[i], samples[i + 1], out)
@@ -183,7 +178,7 @@ fn main() {
     println!("Audio Fourier series:");
 
     let coefficients = trig_fourier_series_calc(
-        move |t| interpolation(t),
+        interpolation,
         samples_len as f64,
         config.series_n,
         total_period_integral_segments,
@@ -213,9 +208,9 @@ fn main() {
 
     let progress_display_divisor = samples_len / 1000;
 
-    for i in 0..ranges.len() {
-        let range = ranges[i].clone();
-        let mut progress_i = progress_i.clone();
+    for (i, range) in ranges.iter().enumerate() {
+        let range = range.clone();
+        let progress_i = progress_i.clone();
         let handler = spawn(move || {
             let coefficients = unsafe { &*(coefficient_p as *const Vec<SeriesCoefficient>) };
 
@@ -263,7 +258,7 @@ fn separate_range<Idx>(range: RangeInclusive<Idx>, mut segments: Idx) -> Vec<Ran
 where
     Idx: num::ToPrimitive + Integer + Clone + Copy + FromPrimitive + Sum + AddAssign<Idx>,
 {
-    let len: Idx = range.end().clone() - range.start().clone() + Idx::from_i32(1).unwrap();
+    let len: Idx = *range.end() - *range.start() + Idx::from_i32(1).unwrap();
 
     if len < segments {
         segments = len;
@@ -279,7 +274,7 @@ where
 
     let mut result = Vec::with_capacity(range_lengths.len());
 
-    let mut start = range.start().clone();
+    let mut start = *range.start();
     for length in range_lengths {
         result.push(start..=(start + length - Idx::from_i32(1).unwrap()));
         start += length;
