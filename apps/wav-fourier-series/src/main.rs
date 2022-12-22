@@ -81,7 +81,7 @@ fn fourier_series_evaluate(coefficients: &[SeriesCoefficient], period: f64, t: f
     let omega = 2.0 * PI / period;
 
     coefficients
-        .par_iter()
+        .iter()
         .enumerate()
         .skip(1)
         .map(|(n, co)| {
@@ -202,16 +202,10 @@ fn main() {
     println!("Evaluating Fourier series...");
 
     let result_samples_vec = (0..=(samples_len - 1))
-        .map(|sample_n| {
-            if sample_n % 1000 == 0 {
-                println!(
-                    "Progress: {}%",
-                    sample_n as f64 / samples_len as f64 * 100.0
-                );
-            }
-            fourier_series_evaluate(&coefficients, samples_len as f64, sample_n as f64)
-        })
-        .map(|x| (x * i32::MAX as f64) as i32);
+        .into_par_iter()
+        .map(|sample_n| fourier_series_evaluate(&coefficients, samples_len as f64, sample_n as f64))
+        .map(|x| (x * i32::MAX as f64) as i32)
+        .collect::<Vec<_>>();
 
     println!("Writing wav...");
 
