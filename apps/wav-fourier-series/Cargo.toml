@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 bczhc_lib = { path = "../../lib" }
-clap = "3.2.23"
+clap = "4.0.30"
 hound = "3.5.0"
 num = "0.4.0"
 threadpool = "1.8.1"

@@ -4,7 +4,7 @@ use std::ops::{AddAssign, RangeInclusive};
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
 
-use clap::{App, Arg};
+use clap::{value_parser, Arg, Command, ValueHint};
 use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
 use num::{FromPrimitive, Integer};
 use threadpool::ThreadPool;
@@ -117,29 +117,44 @@ struct Config {
 }
 
 fn main() {
-    let cpu_num_string = num_cpus::get().to_string();
-    let matches = App::new("audio-fourier-series")
-        .arg(Arg::with_name("src").required(true))
-        .arg(Arg::with_name("dest").required(true))
-        .arg(Arg::with_name("series-count").required(true))
-        .arg(Arg::with_name("integral-segments-in-1s").required(true))
+    let cpu_num_string = num_cpus::get().to_string().into_boxed_str();
+    let cpu_num_string: &str = Box::leak(cpu_num_string);
+
+    let matches = Command::new("audio-fourier-series")
         .arg(
-            Arg::with_name("thread-num")
+            Arg::new("src")
+                .required(true)
+                .value_hint(ValueHint::FilePath),
+        )
+        .arg(
+            Arg::new("dest")
+                .required(true)
+                .value_hint(ValueHint::FilePath),
+        )
+        .arg(
+            Arg::new("series-count")
+                .required(true)
+                .value_parser(value_parser!(u32)),
+        )
+        .arg(
+            Arg::new("integral-segments-in-1s")
+                .required(true)
+                .value_parser(value_parser!(u32)),
+        )
+        .arg(
+            Arg::new("thread-num")
                 .required(false)
-                .default_value(cpu_num_string.as_str()),
+                .default_value(cpu_num_string)
+                .value_parser(value_parser!(usize)),
         )
         .get_matches();
 
     let config = Config {
-        src: String::from(matches.value_of("src").unwrap()),
-        dest: String::from(matches.value_of("dest").unwrap()),
-        series_n: matches.value_of("series-count").unwrap().parse().unwrap(),
-        integral_segments_1s: matches
-            .value_of("integral-segments-in-1s")
-            .unwrap()
-            .parse()
-            .unwrap(),
-        thread_num: matches.value_of("thread-num").unwrap().parse().unwrap(),
+        src: String::from(matches.get_one::<String>("src").unwrap()),
+        dest: String::from(matches.get_one::<String>("dest").unwrap()),
+        series_n: *matches.get_one("series-count").unwrap(),
+        integral_segments_1s: *matches.get_one("integral-segments-in-1s").unwrap(),
+        thread_num: *matches.get_one("thread-num").unwrap(),
     };
 
     let mut reader = WavReader::open(&config.src).unwrap();
