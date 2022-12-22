@@ -167,9 +167,6 @@ fn main() {
         if i + 1 >= samples_len {
             i = samples_len - 2;
         }
-        if i <= 0 {
-            i = 0;
-        }
 
         let out = t - f64::floor(t);
         assert!((0.0..=1.0).contains(&out));
