@@ -157,12 +157,13 @@ fn main() {
     let samples_len = samples.len();
     println!("Total samples: {}", samples_len);
 
-    let total_period_integral_segments =
-        ((samples_len as f64 / sample_rate as f64) * config.integral_segments_1s as f64) as u32;
+    let seconds = samples_len as f64 / sample_rate as f64;
+    let total_period_integral_segments = (seconds * config.integral_segments_1s as f64) as u32;
 
-    // t is in 0..samples_len
     let p = samples.as_ptr() as usize;
+    // t is in 0..seconds
     let interpolation = move |t: f64| {
+        let t = t / seconds * samples_len as f64;
         let mut i = f64::floor(t) as usize;
         if i + 1 >= samples_len {
             i = samples_len - 2;
@@ -182,7 +183,7 @@ fn main() {
 
     let coefficients = trig_fourier_series_calc(
         interpolation,
-        samples_len as f64,
+        seconds,
         config.series_n,
         total_period_integral_segments,
         config.thread_num,
@@ -203,7 +204,13 @@ fn main() {
 
     let result_samples_vec = (0..=(samples_len - 1))
         .into_par_iter()
-        .map(|sample_n| fourier_series_evaluate(&coefficients, samples_len as f64, sample_n as f64))
+        .map(|sample_n| {
+            fourier_series_evaluate(
+                &coefficients,
+                seconds,
+                sample_n as f64 / samples_len as f64 * seconds,
+            )
+        })
         .map(|x| (x * i32::MAX as f64) as i32)
         .collect::<Vec<_>>();
 
