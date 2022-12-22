@@ -1,12 +1,7 @@
 use std::f64::consts::PI;
-use std::iter::Sum;
-use std::ops::{AddAssign, RangeInclusive};
-use std::sync::{Arc, Mutex};
-use std::thread::spawn;
 
 use clap::{value_parser, Arg, Command, ValueHint};
 use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
-use num::{FromPrimitive, Integer};
 use rayon::prelude::*;
 
 fn definite_integral_rayon<F>(function: F, bounds: (f64, f64), segments: u32) -> f64
