@@ -26,6 +26,7 @@ where
 }
 
 #[derive(Debug, Clone)]
+/// a_n, b_n
 struct SeriesCoefficient(f64, f64);
 
 impl Default for SeriesCoefficient {
@@ -45,7 +46,7 @@ fn trig_fourier_series_calc<F>(
 where
     F: Fn(f64) -> f64 + Sync + 'static + Send + Copy,
 {
-    let coefficients = vec![SeriesCoefficient::default(); series_n as usize + 1];
+    let mut coefficients = vec![SeriesCoefficient::default(); series_n as usize + 1];
     let omega = 2.0 * PI / period;
 
     let calc_an = move |n: u32| {
@@ -64,13 +65,16 @@ where
                 integral_segments,
             )
     };
+    let calc_a0 = move || (1.0 / period) * definite_integrate(f, (0.0, period), integral_segments);
+    let calc_b0 = || 0.0;
 
     let pool = ThreadPool::new(threads);
 
+    coefficients[0] = SeriesCoefficient(calc_a0(), calc_b0());
     let co_arc = Arc::new(Mutex::new(coefficients));
     let i_arc = Arc::new(Mutex::new(0));
 
-    for n in 0..=series_n {
+    for n in 1..=series_n {
         let i = i_arc.clone();
         let co = co_arc.clone();
         pool.execute(move || {
