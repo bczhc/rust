@@ -34,7 +34,6 @@ fn trig_fourier_series_calc<F>(
     period: f64,
     series_n: u32,
     integral_segments: u32,
-    threads: usize,
 ) -> Vec<SeriesCoefficient>
 where
     F: Fn(f64) -> f64 + Sync + 'static + Send + Copy,
@@ -96,7 +95,6 @@ struct Config {
     dest: String,
     series_n: u32,
     integral_segments_1s: u32,
-    thread_num: usize,
 }
 
 fn main() {
@@ -137,8 +135,13 @@ fn main() {
         dest: String::from(matches.get_one::<String>("dest").unwrap()),
         series_n: *matches.get_one("series-count").unwrap(),
         integral_segments_1s: *matches.get_one("integral-segments-in-1s").unwrap(),
-        thread_num: *matches.get_one("thread-num").unwrap(),
     };
+
+    let thread_num = *matches.get_one::<usize>("thread-num").unwrap();
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(thread_num)
+        .build_global()
+        .unwrap();
 
     let mut reader = WavReader::open(&config.src).unwrap();
     let samples: Vec<_> = reader
@@ -177,7 +180,6 @@ fn main() {
         samples_len as f64,
         config.series_n,
         total_period_integral_segments,
-        config.thread_num,
     );
 
     let mut writer = WavWriter::create(
