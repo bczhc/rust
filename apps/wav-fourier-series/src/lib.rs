@@ -9,13 +9,20 @@ pub fn definite_integral_rayon<F>(function: F, bounds: (f64, f64), segments: u32
 where
     F: Fn(f64) -> f64 + Send + Sync,
 {
+    let x0 = bounds.0;
     let range = bounds.1 - bounds.0;
     let d = range / segments as f64;
-    let x0 = bounds.0;
+    let multiplier = d / 6.0;
 
     (0..segments)
         .into_par_iter()
-        .map(move |x| (function(x0 + x as f64 * d) + function(x0 + (x as f64 + 1.0) * d)) * d / 2.0)
+        .map(|x| x as f64)
+        .map(move |n| {
+            multiplier
+                * (function(x0 + n * d)
+                    + function(x0 + (n + 0.5) * d) * 4.0
+                    + function(x0 + (n + 1.0) * d))
+        })
         .sum()
 }
 
