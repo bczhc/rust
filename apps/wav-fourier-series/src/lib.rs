@@ -1,5 +1,7 @@
 use rayon::prelude::*;
+use std::convert::Infallible;
 use std::f64::consts::PI;
+use std::str::FromStr;
 
 pub mod cli;
 
@@ -19,7 +21,7 @@ where
 
 #[derive(Debug, Clone)]
 /// a_n, b_n
-pub struct SeriesCoefficient(f64, f64);
+pub struct SeriesCoefficient(pub f64, pub f64);
 
 impl Default for SeriesCoefficient {
     #[inline]
@@ -94,4 +96,24 @@ pub struct Config {
     pub dest: String,
     pub series_n: u32,
     pub integral_segments_1s: u32,
+    pub mode: Mode,
+}
+
+pub enum Mode {
+    A2A,
+    T2A,
+    A2T,
+}
+
+impl FromStr for Mode {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "a2a" => Ok(Mode::A2A),
+            "t2a" => Ok(Mode::T2A),
+            "a2t" => Ok(Mode::A2T),
+            _ => Err(()),
+        }
+    }
 }

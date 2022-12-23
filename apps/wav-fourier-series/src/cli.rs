@@ -27,8 +27,17 @@ pub fn build_cli() -> Command {
         )
         .arg(
             Arg::new("thread-num")
+                .short('T')
+                .long("threads")
                 .required(false)
                 .default_value(cpu_num_string)
                 .value_parser(value_parser!(usize)),
+        )
+        .arg(
+            Arg::new("mode")
+                .short('m')
+                .long("mode")
+                .default_value("a2a")
+                .value_parser(["a2a", "a2t", "t2a"]),
         )
 }
