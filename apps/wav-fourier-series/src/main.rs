@@ -3,6 +3,8 @@ use std::io;
 use std::io::{BufReader, Write};
 use std::path::Path;
 use std::str::FromStr;
+use std::sync::mpsc::{channel, Receiver};
+use std::thread::spawn;
 
 use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
 use rayon::prelude::*;
@@ -198,15 +200,41 @@ fn evaluate_series<P: AsRef<Path>>(
 
     println!("Evaluating Fourier series...");
 
-    let result_samples_vec = (0..=(samples_len - 1))
+    let (tx, rx) = channel();
+
+    let t = spawn(move || {
+        let rx: Receiver<(usize, i32)> = rx;
+        let mut result_samples_vec = rx
+            .iter()
+            .enumerate()
+            .map(|x| {
+                if x.0 % 1000 == 0 {
+                    println!("Progress: {}%", x.0 as f64 / samples_len as f64 * 100.0);
+                }
+                x.1
+            })
+            .collect::<Vec<_>>();
+        result_samples_vec.sort_by_key(|x| x.0);
+
+        println!("Writing wav...");
+
+        for r in result_samples_vec {
+            writer.write_sample(r.1).unwrap();
+        }
+    });
+
+    (0..=(samples_len - 1))
         .into_par_iter()
-        .map(|sample_n| fourier_series_evaluate(coefficients, samples_len as f64, sample_n as f64))
-        .map(|x| (x * i32::MAX as f64) as i32)
-        .collect::<Vec<_>>();
+        .map(|sample_n| {
+            (
+                sample_n,
+                fourier_series_evaluate(coefficients, samples_len as f64, sample_n as f64),
+            )
+        })
+        .map(|x| (x.0, (x.1 * i32::MAX as f64) as i32))
+        .for_each_with(tx, |tx, x| {
+            tx.send(x).unwrap();
+        });
 
-    println!("Writing wav...");
-
-    for r in result_samples_vec {
-        writer.write_sample(r).unwrap();
-    }
+    t.join().unwrap();
 }
