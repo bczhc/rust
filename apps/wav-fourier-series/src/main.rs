@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io;
-use std::io::Write;
+use std::io::{BufReader, Write};
 use std::path::Path;
 use std::str::FromStr;
 
@@ -138,7 +138,7 @@ fn emit_text<W: Write>(
 }
 
 fn read_text<P: AsRef<Path>>(path: P) -> (Vec<SeriesCoefficient>, SampleInfo) {
-    let mut reader = File::open(path).unwrap();
+    let mut reader = BufReader::new(File::open(path).unwrap());
 
     let mut lines = reader.lines();
     let sample_rate = lines
@@ -157,7 +157,11 @@ fn read_text<P: AsRef<Path>>(path: P) -> (Vec<SeriesCoefficient>, SampleInfo) {
         .unwrap()
         .parse::<usize>()
         .unwrap();
+    println!("{:?}", (sample_rate, samples_len));
+    let lines = lines.collect::<Vec<_>>();
+    println!("Epicycle count: {}", lines.len());
     let coefficients = lines
+        .into_par_iter()
         .map(|line| {
             let parsed = line
                 .split_whitespace()
