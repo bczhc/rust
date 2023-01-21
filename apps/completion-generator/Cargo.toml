@@ -12,6 +12,7 @@ cow-dedupe = { path = "../cow-dedupe" }
 enc = { path = "../enc" }
 send-email = { path = "../send-email" }
 tcp-crypto-tunnel = { path = "../tcp-crypto-tunnel" }
+task-notify = { path = "../task-notify" }
 
 clap = "4.0.26"
 clap_complete = "4.0.5"

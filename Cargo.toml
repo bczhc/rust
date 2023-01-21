@@ -32,4 +32,5 @@ members = [
     "apps/tcp-crypto-tunnel",
     "apps/enc",
     "apps/wav-fourier-series",
+    "apps/task-notify",
 ]

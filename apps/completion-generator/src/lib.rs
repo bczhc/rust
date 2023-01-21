@@ -30,6 +30,7 @@ cli_builders![
     enc::cli::build_cli,
     send_email::cli::build_cli,
     tcp_crypto_tunnel::cli::build_cli,
+    task_notify::cli::build_cli,
 ];
 
 const CLI_BUILDERS_LEN: usize = size_of_val(&CLI_BUILDERS) / size_of::<CliBuilderFn>();
