@@ -33,4 +33,5 @@ members = [
     "apps/enc",
     "apps/wav-fourier-series",
     "apps/task-notify",
+    "apps/unicode-name",
 ]
