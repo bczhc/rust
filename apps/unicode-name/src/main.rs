@@ -24,6 +24,8 @@ fn main() -> anyhow::Result<()> {
     table.set_format(FormatBuilder::new().column_separator('|').build());
     table.add_row(row!["character", "byte", "UTF-32", "name", "block"]);
 
+    // TODO: print table row on each line. Now it only prints the
+    //  whole table after iterating all characters (that's, at EOF)
     let iter = CharInfoIter::new(&mut reader);
     for c in iter {
         let c = c?;
