@@ -34,4 +34,5 @@ members = [
     "apps/wav-fourier-series",
     "apps/task-notify",
     "apps/unicode-name",
+    "apps/network-monitor",
 ]

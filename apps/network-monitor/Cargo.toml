@@ -1,0 +1,10 @@
+[package]
+name = "network-monitor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sysinfo = "0.28.1"
+clap = "4.1.6"
+interfaces = "0.0.8"
+anyhow = "1.0.69"

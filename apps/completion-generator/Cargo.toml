@@ -13,6 +13,7 @@ enc = { path = "../enc" }
 send-email = { path = "../send-email" }
 tcp-crypto-tunnel = { path = "../tcp-crypto-tunnel" }
 task-notify = { path = "../task-notify" }
+network-monitor = { path = "../network-monitor" }
 
 clap = "4.0.26"
 clap_complete = "4.0.5"
