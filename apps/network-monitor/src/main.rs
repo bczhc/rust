@@ -8,6 +8,7 @@ use sysinfo::{NetworkExt, NetworksExt, RefreshKind, SystemExt};
 fn main() -> anyhow::Result<()> {
     let matches = build_cli().get_matches();
     let list_interfaces = matches.get_flag("interfaces");
+    let interval = *matches.get_one::<u32>("interval").unwrap();
 
     if list_interfaces {
         for name in interfaces_list() {
@@ -38,6 +39,6 @@ fn main() -> anyhow::Result<()> {
             network_data.total_transmitted(),
             network_data.total_received()
         );
-        thread::sleep(Duration::from_secs(1));
+        thread::sleep(Duration::from_secs(interval as u64));
     }
 }
