@@ -6,7 +6,7 @@ WORKDIR /
 # Install requirements and dependencies
 RUN apt update && \
     export DEBIAN_FRONTEND=noninteractive && \
-    apt install -y libudev-dev curl gcc libssl-dev pkg-config libclang-dev
+    apt install -y libudev-dev curl gcc libssl-dev pkg-config libclang-dev libsqlite3-dev
 
 # Install Rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer && \
