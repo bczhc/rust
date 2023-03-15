@@ -1,0 +1,20 @@
+[package]
+name = "ucd-parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+reqwest = { version = "0.11.14", features = ["stream"] }
+clap = "4.1.8"
+pbr = "1.1.1"
+tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread"] }
+futures-util = "0.3.27"
+zip = "0.6.4"
+quick-xml = "0.28.0"
+# `clear_bindings()` workaround
+# Because they haven't released a new version with this PR merged:
+# https://github.com/rusqlite/rusqlite/pull/1268
+rusqlite = { git = "https://github.com/rusqlite/rusqlite", rev = "964443213" }
+mktemp = "0.5.0"
+serde_json = "1.0.94"
+anyhow = "1.0.69"

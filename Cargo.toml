@@ -35,4 +35,5 @@ members = [
     "apps/task-notify",
     "apps/unicode-name",
     "apps/network-monitor",
+    "apps/ucd-parser",
 ]
