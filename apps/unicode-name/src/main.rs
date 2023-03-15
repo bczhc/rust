@@ -1,13 +1,17 @@
 use prettytable::format::FormatBuilder;
 use prettytable::{row, Table};
 use std::io::{stdin, BufRead, Cursor};
-use unicode_name::{char_utf32_string, CharInfoIter};
+use unicode_name::{char_utf32_string, CharInfoIter, Config, CONFIG};
 
 fn main() -> anyhow::Result<()> {
     let matches = unicode_name::cli::build_cli().get_matches();
     // TODO: grapheme support
     let _enable_grapheme = matches.get_flag("grapheme");
     let text = matches.get_one::<String>("text");
+    let ucd_database = matches.get_one::<String>("ucd db").unwrap();
+    CONFIG.lock().unwrap().replace(Config {
+        ucd_database: ucd_database.clone(),
+    });
 
     let mut reader: Box<dyn BufRead> = match text {
         Some(text) => {

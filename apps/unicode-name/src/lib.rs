@@ -1,9 +1,21 @@
 use std::io;
 use std::io::BufRead;
+use std::path::Path;
+use std::sync::Mutex;
 
+use once_cell::sync::Lazy;
+use rusqlite::{params, Connection};
 use utf8_chars::{BufReadCharsExt, Chars};
 
 pub mod cli;
+
+pub static CONFIG: Lazy<Mutex<Option<Config>>> = Lazy::new(|| Mutex::new(None));
+static UCD_DB: Lazy<Mutex<UcdDatabase>> = Lazy::new(|| {
+    let guard = CONFIG.lock().unwrap();
+    let database_path = &guard.as_ref().unwrap().ucd_database;
+    let connection = UcdDatabase::new(database_path).unwrap();
+    Mutex::new(connection)
+});
 
 fn char_name(c: char) -> Option<String> {
     // `na` UCD properties aren't present for these characters
@@ -45,11 +57,14 @@ fn char_name(c: char) -> Option<String> {
         0..=0x1F => Some(String::from(table[c as usize])),
         0x7F => Some(String::from("DELETE")),
         _ => {
-            let json = ucd_data::get(c);
+            let guard = UCD_DB.lock().unwrap();
+            let Some(json) = guard.query_json(c as u32).unwrap() else {
+                return None
+            };
             if json.is_empty() {
                 return None;
             }
-            let json: serde_json::Value = serde_json::from_str(json).unwrap();
+            let json: serde_json::Value = serde_json::from_str(&json).unwrap();
             for x in json.as_array().unwrap() {
                 let group = x.as_array().unwrap();
                 let key = group[0].as_str().unwrap();
@@ -145,4 +160,34 @@ pub fn char_encoded_string(c: char) -> String {
 
 pub fn char_utf32_string(c: char) -> String {
     format!("{:06X}", c as u32)
+}
+
+pub struct Config {
+    pub ucd_database: String,
+}
+
+struct UcdDatabase {
+    connection: Connection,
+}
+
+impl UcdDatabase {
+    fn new<P: AsRef<Path>>(path: P) -> rusqlite::Result<Self> {
+        let connection = Connection::open(path)?;
+        Ok(Self { connection })
+    }
+
+    fn query_json(&self, codepoint: u32) -> rusqlite::Result<Option<String>> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT json FROM ucd WHERE codepoint IS ?")?;
+        let mut rows = statement.query_map(params![codepoint], |row| {
+            let json: String = row.get(0).unwrap();
+            Ok(json)
+        })?;
+        match rows.next() {
+            None => Ok(None),
+            Some(Ok(json)) => Ok(Some(json)),
+            _ => unreachable!(),
+        }
+    }
 }

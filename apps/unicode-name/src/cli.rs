@@ -9,4 +9,12 @@ pub fn build_cli() -> Command {
                 .short('g')
                 .long("grapheme"),
         )
+        .arg(
+            Arg::new("ucd db")
+                .action(ArgAction::Set)
+                .short('d')
+                .long("database")
+                .required(false)
+                .default_value("/usr/local/share/ucd.db"),
+        )
 }
