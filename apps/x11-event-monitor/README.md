@@ -22,3 +22,10 @@ Key 1661327547868 15 TAB
 Key 1661327548379 29 LEFTCTRL
 Key 1661327548419 46 C
 ```
+
+## Usage
+<pre><u style="text-decoration-style:single"><b>Usage:</b></u> <b>x11-event-monitor</b> [OPTIONS]
+
+<u style="text-decoration-style:single"><b>Options:</b></u>
+  <b>-j</b>, <b>--json</b>  Print in JSON Lines format
+  <b>-h</b>, <b>--help</b>  Print help</pre>
