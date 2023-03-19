@@ -36,4 +36,6 @@ members = [
     "apps/unicode-name",
     "apps/network-monitor",
     "apps/ucd-parser",
+    "apps/rime-tui",
+    "apps/x11-event-monitor",
 ]

@@ -33,6 +33,7 @@ cli_builders![
     task_notify::cli::build_cli,
     network_monitor::cli::build_cli,
     ucd_parser::cli::build_cli,
+    x11_event_monitor::cli::build_cli,
 ];
 
 const CLI_BUILDERS_LEN: usize = size_of_val(&CLI_BUILDERS) / size_of::<CliBuilderFn>();
