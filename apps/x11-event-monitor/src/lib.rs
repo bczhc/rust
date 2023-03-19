@@ -13,7 +13,7 @@ pub struct Event<'a> {
 }
 
 #[derive(Serialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[serde(tag = "type")]
 pub enum EventType<'a> {
     MouseMotion {
         x: i32,
@@ -33,7 +33,9 @@ pub enum EventType<'a> {
         y: i32,
     },
     MouseWheel {
+        #[serde(rename = "xDelta")]
         x_delta: f32,
+        #[serde(rename = "yDelta")]
         y_delta: f32,
     },
     Clipboard {
