@@ -2,8 +2,8 @@ use chrono::Utc;
 use serde::Serialize;
 
 pub mod cli;
-#[cfg(unix)]
-pub mod unix;
+#[cfg(target_os = "linux")]
+pub mod linux;
 
 #[derive(Serialize)]
 pub struct Event<'a> {
