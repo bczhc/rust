@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use network_monitor::cli::build_cli;
+#[cfg(unix)]
 use network_monitor::interfaces_list;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -11,9 +12,12 @@ fn main() -> anyhow::Result<()> {
     let interval = *matches.get_one::<u32>("interval").unwrap();
 
     if list_interfaces {
+        #[cfg(unix)]
         for name in interfaces_list() {
             println!("{}", name);
         }
+        #[cfg(not(unix))]
+        println!("Interface listing isn't supported for non-*nix yet.");
         return Ok(());
     }
 

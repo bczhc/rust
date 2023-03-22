@@ -1,10 +1,9 @@
 use chrono::Utc;
-use std::os::raw::c_int;
-use std::ptr::null;
-
 use serde::Serialize;
 
 pub mod cli;
+#[cfg(unix)]
+pub mod unix;
 
 #[derive(Serialize)]
 pub struct Event<'a> {
@@ -90,40 +89,5 @@ pub fn print_event(event: &Event) {
                 println!("Selection {} {}", event.time, escaped);
             }
         }
-    }
-}
-
-pub struct XDo {
-    inner: *mut libxdo_sys::xdo_t,
-}
-
-impl XDo {
-    pub fn new() -> Option<XDo> {
-        let xdo = unsafe { libxdo_sys::xdo_new(null()) };
-        if xdo.is_null() {
-            return None;
-        }
-
-        Some(Self { inner: xdo })
-    }
-
-    pub fn mouse_location(&self) -> Option<(i32, i32)> {
-        let mut x = 0;
-        let mut y = 0;
-        let mut screen_num = 0;
-
-        let r = unsafe {
-            libxdo_sys::xdo_get_mouse_location(
-                self.inner,
-                &mut x as *mut c_int,
-                &mut y as *mut c_int,
-                &mut screen_num as *mut c_int,
-            )
-        };
-        if r != 0 {
-            return None;
-        }
-
-        Some((x, y))
     }
 }

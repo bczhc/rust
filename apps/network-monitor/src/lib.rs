@@ -2,6 +2,7 @@ use sysinfo::{RefreshKind, SystemExt};
 
 pub mod cli;
 
+#[cfg(unix)]
 pub fn interfaces_list() -> Vec<String> {
     let system = sysinfo::System::new_with_specifics(
         RefreshKind::new().with_networks().with_networks_list(),
