@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y libudev-dev
+          sudo apt install -y libudev-dev libxdo-dev
       - name: Build
         run: cargo build --workspace
       - name: Test
