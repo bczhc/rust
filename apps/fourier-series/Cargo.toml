@@ -8,10 +8,10 @@ name = "demo"
 path = "src/demo.rs"
 
 [dependencies]
-clap = { version = "4.0.22", features = ["derive"] }
-num_cpus = "1.14.0"
-once_cell = "1.16.0"
-rayon = "1.5.3"
+clap = { version = "4.1.13", features = ["derive"] }
+num_cpus = "1.15.0"
+once_cell = "1.17.1"
+rayon = "1.7.0"
 bczhc_lib = { path = "../../lib" }
-num-complex = "0.4.2"
+num-complex = "0.4.3"
 num-traits = "0.2.15"

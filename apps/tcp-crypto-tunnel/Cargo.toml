@@ -7,9 +7,9 @@ edition = "2021"
 
 [dependencies]
 bczhc_lib = {path = "../../lib"}
-clap = "4.0.29"
-thiserror = "1.0.37"
-once_cell = "1.16.0"
+clap = "4.1.13"
+thiserror = "1.0.40"
+once_cell = "1.17.1"
 blake3 = "1.3.3"
 rpassword = "7.2.0"
-polling = "2.5.1"
+polling = "2.6.0"

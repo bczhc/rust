@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-syn = "1.0.99"
-serde = { version = "1.0.144", features = ["derive"] }
-serde_json = "1.0.85"
-clap = "3.2.21"
+syn = "1.0.109"
+serde = { version = "1.0.158", features = ["derive"] }
+serde_json = "1.0.94"
+clap = "3.2.23"
 byteorder = "1.4.3"
 bczhc_lib = { path = "../../lib" }

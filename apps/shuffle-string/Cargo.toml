@@ -8,4 +8,4 @@ edition = "2021"
 
 [dependencies]
 bczhc_lib = {path = "../../lib", version = "1.0.0"}
-rand = "0.8.3"
+rand = "0.8.5"

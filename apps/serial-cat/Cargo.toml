@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "3.1.9"
-serialport = "4.1.0"
-polling = "2.2.0"
-thiserror = "1.0.30"
+clap = "3.2.23"
+serialport = "4.2.0"
+polling = "2.6.0"
+thiserror = "1.0.40"
 bczhc_lib = { path = "../../lib" }
 cfg-if = "1.0.0"

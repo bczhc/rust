@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "2.33.3"
-home = "0.5.3"
+clap = "2.34.0"
+home = "0.5.4"
 bczhc_lib = {path = "../../lib", version = "1.0.0"}
-sha1 = "0.6.0"
+sha1 = "0.6.1"
 byteorder = "1.4.3"
-once_cell = "1.9.0"
+once_cell = "1.17.1"
