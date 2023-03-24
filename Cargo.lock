@@ -183,7 +183,7 @@ dependencies = [
  "once_cell",
  "pathdiff",
  "pbr",
- "prettytable-rs 0.9.0",
+ "prettytable-rs",
  "serde",
  "serde_json",
  "thiserror",
@@ -3110,20 +3110,6 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
 name = "prettytable-rs"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f375cb74c23b51d23937ffdeb48b1fbf5b6409d4b9979c1418c1de58bc8f801"
-dependencies = [
- "atty",
- "csv",
- "encode_unicode 1.0.0",
- "lazy_static 1.4.0",
- "term",
- "unicode-width",
-]
-
-[[package]]
-name = "prettytable-rs"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eea25e07510aa6ab6547308ebe3c036016d162b8da920dbb079e3ba8acf3d95a"
@@ -4573,7 +4559,7 @@ dependencies = [
  "anyhow",
  "clap 4.1.11",
  "once_cell",
- "prettytable-rs 0.10.0",
+ "prettytable-rs",
  "rusqlite",
  "serde_json",
  "unic-ucd",
