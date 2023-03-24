@@ -35,6 +35,7 @@ pub mod list;
 pub mod reader;
 pub mod test;
 
+use crate::compressors::{create_decompressor, Decompress, ExternalFilter};
 pub use cli::build_cli;
 
 #[derive(Debug, Clone)]

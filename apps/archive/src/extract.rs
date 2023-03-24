@@ -1,11 +1,9 @@
 use std::ffi::{OsStr, OsString};
 use std::fs::{File, Permissions};
-
-use anyhow::anyhow;
 use std::io::stdout;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use std::{fs, io, os};
+use std::{fs, os};
 
 use cfg_if::cfg_if;
 use chrono::{TimeZone, Utc};
@@ -55,14 +53,25 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
             }
         }
 
+        let decompressor: Box<dyn Decompress> = match &header.compression {
+            Compression::External => match external_filter_cmd {
+                None => {
+                    return Err(Error::MissingDecompressor);
+                }
+                Some(ref cmd) => Box::new(ExternalFilter::new(cmd)),
+            },
+            _ => create_decompressor(header.compression),
+        };
+
         if pipe_mode {
             // only support regular file
             // TODO: decompress if the data is compressed
             if entry.file_type == FileType::Regular {
                 let mut stdout = stdout();
                 let mut reader = archive.retrieve_content(entry.offset, entry.stored_size);
-                io::copy(&mut reader, &mut stdout)?;
+                decompressor.decompress_to(&mut reader, &mut stdout)?;
             }
+            drop(decompressor);
             continue;
         }
 
@@ -80,17 +89,9 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                 }
                 let mut file = File::open_or_create(target_path)?;
 
-                let decompressor: Box<dyn Decompress> = match &header.compression {
-                    Compression::External => match external_filter_cmd {
-                        None => {
-                            return Err(Error::MissingDecompressor);
-                        }
-                        Some(ref cmd) => Box::new(ExternalFilter::new(cmd)),
-                    },
-                    _ => create_decompressor(header.compression),
-                };
                 let mut content_reader = archive.retrieve_content(entry.offset, stored_size);
                 decompressor.decompress_to(&mut content_reader, &mut file)?;
+                drop(decompressor);
 
                 cfg_if! {
                     if #[cfg(unix)] {
