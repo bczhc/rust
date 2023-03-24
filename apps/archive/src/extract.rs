@@ -1,9 +1,11 @@
 use std::ffi::{OsStr, OsString};
 use std::fs::{File, Permissions};
 
+use anyhow::anyhow;
+use std::io::stdout;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-use std::{fs, os};
+use std::{fs, io, os};
 
 use cfg_if::cfg_if;
 use chrono::{TimeZone, Utc};
@@ -26,11 +28,16 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
     let paths = matches
         .get_many::<String>("paths")
         .map(|x| x.map(OsString::from).collect::<Vec<_>>());
+    let pipe_mode = matches.get_flag("pipe");
 
     let mut archive = ArchiveReader::new(archive_path)?;
 
     let header = archive.header.clone();
     let entries = archive.entries();
+
+    if pipe_mode && paths.is_none() && header.entry_count >= 2 {
+        return Err("When in pipe mode, at least one <path> argument should be present".into());
+    }
 
     for entry in entries {
         let entry = entry?;
@@ -48,6 +55,18 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
             }
         }
 
+        if pipe_mode {
+            // only support regular file
+            // TODO: decompress if the data is compressed
+            if entry.file_type == FileType::Regular {
+                let mut stdout = stdout();
+                let mut reader = archive.retrieve_content(entry.offset, entry.stored_size);
+                io::copy(&mut reader, &mut stdout)?;
+            }
+            continue;
+        }
+
+        // write to files ↓↓
         println!("{}", path.as_os_str().to_string());
 
         match entry.file_type {

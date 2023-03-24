@@ -1,9 +1,9 @@
 use archive::cli::build_cli;
 
-fn main() -> Result<(), String> {
+fn main() -> anyhow::Result<()> {
     let matches = build_cli().get_matches();
 
-    let result = if let Some(matches) = matches.subcommand_matches("create") {
+    if let Some(matches) = matches.subcommand_matches("create") {
         archive::create::main(matches)
     } else if let Some(matches) = matches.subcommand_matches("list") {
         archive::list::main(matches)
@@ -15,10 +15,7 @@ fn main() -> Result<(), String> {
         archive::info::main(matches)
     } else {
         unreachable!()
-    };
-    if let Err(e) = result {
-        return Err(e.to_string());
-    }
+    }?;
 
     Ok(())
 }

@@ -99,6 +99,13 @@ pub fn build_cli() -> Command {
                         .value_hint(ValueHint::Other),
                 )
                 .arg(
+                    Arg::new("pipe")
+                        .short('p')
+                        .long("pipe")
+                        .action(ArgAction::SetTrue)
+                        .help("Pipe the data to stdout"),
+                )
+                .arg(
                     Arg::new("data-filter-cmd")
                         .long("data-filter")
                         .action(ArgAction::Append)
