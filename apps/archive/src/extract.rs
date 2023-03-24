@@ -15,7 +15,7 @@ use bczhc_lib::io::OpenOrCreate;
 use crate::compressors::{create_decompressor, Decompress, ExternalFilter};
 use crate::errors::*;
 use crate::reader::ArchiveReader;
-use crate::{Compression, FileType, GenericOsStrExt};
+use crate::{Compression, FileType, GenericOsStrExt, LocalResultExt};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let archive_path = matches.get_one::<String>("archive").unwrap();
@@ -107,10 +107,12 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
                         }
                     }
                 }
-                let time = Utc.timestamp(
-                    entry.modification_time.seconds,
-                    entry.modification_time.nanoseconds,
-                );
+                let time = Utc
+                    .timestamp_opt(
+                        entry.modification_time.seconds,
+                        entry.modification_time.nanoseconds,
+                    )
+                    .check()?;
                 filetime::set_file_mtime(target_path, FileTime::from(SystemTime::from(time)))?;
             }
             FileType::Link => {

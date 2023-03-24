@@ -1,9 +1,12 @@
-pub type Result<T> = std::result::Result<T, Error>;
-
-use crate::Entry;
+use std::fmt::Debug;
 use std::io;
 use std::string::FromUtf8Error;
+
 use thiserror::Error;
+
+use crate::Entry;
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -38,8 +41,18 @@ pub enum Error {
     FromUtf8(#[from] FromUtf8Error),
     #[error("Invalid info json")]
     InvalidInfoJson,
+    #[error("Invalid time")]
+    InvalidTime(TimeError),
     #[error("{0}")]
     Others(String),
+}
+
+#[derive(Error, Debug)]
+pub enum TimeError {
+    #[error("No such local time")]
+    None,
+    #[error("Ambiguous local time, range: {0:?}")]
+    Ambiguous(String),
 }
 
 impl From<&str> for Error {

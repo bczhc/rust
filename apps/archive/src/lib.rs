@@ -4,23 +4,25 @@ extern crate core;
 extern crate crc as crc_lib;
 
 use std::ffi::OsStr;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::io;
 use std::io::{Read, Write};
 use std::str::FromStr;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use cfg_if::cfg_if;
-use chrono::{Local, TimeZone};
+use chrono::{Local, LocalResult, TimeZone};
 use crc_lib::{Algorithm, Crc, Width};
 use num_derive::FromPrimitive;
 use serde::{Deserialize, Serialize};
 
 use bczhc_lib::field_size;
+pub use cli::build_cli;
 use errors::Result;
 
+use crate::compressors::Decompress;
 use crate::crc::DigestWriter;
-use crate::errors::Error;
+use crate::errors::{Error, TimeError};
 
 pub mod archive;
 pub mod cli;
@@ -34,9 +36,6 @@ pub mod line_progress;
 pub mod list;
 pub mod reader;
 pub mod test;
-
-use crate::compressors::{create_decompressor, Decompress, ExternalFilter};
-pub use cli::build_cli;
 
 #[derive(Debug, Clone)]
 pub struct Entry {
@@ -143,7 +142,7 @@ impl Display for Header {
         writeln!(
             f,
             "Creation time: {}",
-            Local.timestamp_millis(self.creation_time)
+            Local.timestamp_millis_opt(self.creation_time).unwrap(),
         )?;
         write!(f, "Entry count: {}", self.entry_count)?;
 
@@ -591,5 +590,28 @@ pub mod unit_test {
             offset: 0,
         };
         test_size(&entry);
+    }
+}
+
+pub trait LocalResultExt<T>
+where
+    T: Debug,
+{
+    fn check(self) -> Result<T>;
+}
+
+impl<T> LocalResultExt<T> for LocalResult<T>
+where
+    T: Debug,
+{
+    fn check(self) -> Result<T> {
+        match self {
+            LocalResult::None => Err(Error::InvalidTime(TimeError::None)),
+            LocalResult::Single(d) => Ok(d),
+            LocalResult::Ambiguous(d1, d2) => {
+                let range_string = format!("{:?}", (d1, d2));
+                Err(Error::InvalidTime(TimeError::Ambiguous(range_string)))
+            }
+        }
     }
 }
