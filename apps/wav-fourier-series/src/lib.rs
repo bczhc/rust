@@ -1,5 +1,5 @@
 use rayon::prelude::*;
-use std::convert::Infallible;
+
 use std::f64::consts::PI;
 use std::str::FromStr;
 

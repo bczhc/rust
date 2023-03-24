@@ -18,18 +18,16 @@ impl MsgPrinter {
     }
 
     pub fn show_msg(&self, msg_type: MsgType) -> Result<(), String> {
-        return match msg_type {
+        match msg_type {
             MsgType::Help => {
                 println!("{}", self.help_msg);
                 Ok(())
             }
             MsgType::InvalidArgumentCount(count) => {
-                return Err(format!("Invalid argument count: {}", count));
+                Err(format!("Invalid argument count: {}", count))
             }
-            MsgType::UnknownOption(option) => {
-                return Err(format!("Unknown option: {}", option));
-            }
-        };
+            MsgType::UnknownOption(option) => Err(format!("Unknown option: {}", option)),
+        }
     }
 }
 

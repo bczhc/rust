@@ -51,8 +51,11 @@ fn main() -> MyResult<()> {
         let timezone_offset_secs = author_time.offset_minutes() * 60;
         let timestamp = author_time.seconds();
 
-        let timezone = FixedOffset::east(timezone_offset_secs);
-        let time = Utc.timestamp(timestamp, 0).with_timezone(&timezone);
+        let timezone = FixedOffset::east_opt(timezone_offset_secs).unwrap();
+        let time = Utc
+            .timestamp_opt(timestamp, 0)
+            .unwrap()
+            .with_timezone(&timezone);
         let hour = time.hour();
         frequency_arr[hour as usize] += 1;
     }

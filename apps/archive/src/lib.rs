@@ -20,7 +20,7 @@ use bczhc_lib::field_size;
 pub use cli::build_cli;
 use errors::Result;
 
-use crate::compressors::Decompress;
+
 use crate::crc::DigestWriter;
 use crate::errors::{Error, TimeError};
 
