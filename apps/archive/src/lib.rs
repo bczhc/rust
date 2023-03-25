@@ -1,19 +1,22 @@
 #![feature(const_size_of_val)]
+#![feature(variant_count)]
 
 extern crate core;
 extern crate crc as crc_lib;
 
 use std::ffi::OsStr;
 use std::fmt::{Debug, Display, Formatter};
-use std::io;
 use std::io::{Read, Write};
 use std::str::FromStr;
+use std::{io, mem};
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use cfg_if::cfg_if;
 use chrono::{Local, LocalResult, TimeZone};
 use crc_lib::{Algorithm, Crc, Width};
 use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 use bczhc_lib::field_size;
@@ -81,6 +84,20 @@ pub enum Compression {
     Brotli = 6,
     Bzip3 = 7,
 }
+
+const COMPRESSION_COUNT: usize = mem::variant_count::<Compression>();
+
+pub static COMPRESSIONS: Lazy<[Compression; COMPRESSION_COUNT]> = Lazy::new(|| {
+    let mut index = 0;
+    [(); COMPRESSION_COUNT].map(|_| {
+        // the ordinal should be continuous
+        index += 1;
+        Compression::from_u8(index as u8 - 1).unwrap()
+    })
+});
+
+pub static COMPRESSION_NAMES: Lazy<[&str; COMPRESSION_COUNT]> =
+    Lazy::new(|| (*COMPRESSIONS).map(|x| x.as_str()));
 
 impl Display for Compression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -192,8 +209,8 @@ impl ReadFrom for Header {
         let info_json = String::from_utf8(info_json_buf)?;
 
         // checks
-        let compression = num_traits::FromPrimitive::from_u8(compression)
-            .ok_or(Error::UnknownCompressionMethod)?;
+        let compression =
+            FromPrimitive::from_u8(compression).ok_or(Error::UnknownCompressionMethod)?;
 
         Ok(Self {
             magic_number,
@@ -227,22 +244,12 @@ pub struct Options {}
 impl FromStr for Compression {
     type Err = ();
 
-    // TODO: avoid manually exhaustively enumerating all these names
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let name = s.to_lowercase();
-        let compressor = match name {
-            _ if name == Compression::None.as_str() => Compression::None,
-            _ if name == Compression::Gzip.as_str() => Compression::Gzip,
-            _ if name == Compression::Bzip2.as_str() => Compression::Bzip2,
-            _ if name == Compression::Zstd.as_str() => Compression::Zstd,
-            _ if name == Compression::Xz.as_str() => Compression::Xz,
-            _ if name == Compression::Brotli.as_str() => Compression::Brotli,
-            _ if name == Compression::Bzip3.as_str() => Compression::Bzip3,
-            _ => {
-                return Err(());
-            }
-        };
-        Ok(compressor)
+        match COMPRESSIONS.into_iter().find(|x| x.as_str() == name) {
+            None => Err(()),
+            Some(c) => Ok(c),
+        }
     }
 }
 
@@ -261,9 +268,9 @@ impl Compression {
         }
     }
 
-    pub fn as_str(&self) -> &str {
+    pub fn as_str(&self) -> &'static str {
         match self {
-            Compression::External => unreachable!(),
+            Compression::External => "external",
             Compression::Gzip => "gzip",
             Compression::Xz => "xz",
             Compression::Zstd => "zstd",
@@ -325,8 +332,7 @@ impl ReadFrom for Entry {
         if &magic_buf != ENTRY_MAGIC {
             return Err(Error::InvalidEntryHeader);
         }
-        let file_type =
-            num_traits::FromPrimitive::from_u8(file_type).ok_or(Error::UnknownFileType)?;
+        let file_type = FromPrimitive::from_u8(file_type).ok_or(Error::UnknownFileType)?;
 
         Ok(Self {
             magic_number: magic_buf,

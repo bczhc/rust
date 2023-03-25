@@ -1,6 +1,14 @@
 use clap::{Arg, ArgAction, Command, ValueHint};
 
+use crate::{Compression, COMPRESSIONS};
+
 pub fn build_cli() -> Command {
+    let compression_names = COMPRESSIONS
+        .into_iter()
+        .filter(|x| *x != Compression::External)
+        .map(|x| Box::leak(String::from(x.as_str()).into_boxed_str()) as &'static str)
+        .collect::<Vec<_>>();
+
     Command::new("archive")
         .version("1.0.0")
         .subcommand(
@@ -37,7 +45,7 @@ pub fn build_cli() -> Command {
                         .short('c')
                         .long("compress")
                         .value_name("method")
-                        .value_parser(["gzip", "xz", "zstd", "bzip2", "brotli", "bzip3", "none"])
+                        .value_parser(compression_names)
                         .help("Compression method used for each file, \"none\" for not used")
                         .default_value("none")
                         .ignore_case(true)
