@@ -37,7 +37,7 @@ pub fn build_cli() -> Command {
                         .short('c')
                         .long("compress")
                         .value_name("method")
-                        .value_parser(["gzip", "xz", "zstd", "bzip2", "brotli", "none"])
+                        .value_parser(["gzip", "xz", "zstd", "bzip2", "brotli", "bzip3", "none"])
                         .help("Compression method used for each file, \"none\" for not used")
                         .default_value("none")
                         .ignore_case(true)

@@ -5,6 +5,8 @@ use std::process::{Command, Stdio};
 use std::str::FromStr;
 use std::thread::spawn;
 
+use bytesize::ByteSize;
+
 use crate::errors::Result;
 use crate::{Compression, Error};
 
@@ -50,6 +52,9 @@ pub fn create_compressor(method: Compression, level: Level) -> Box<dyn Compress>
         Compression::Bzip2 => Box::new(Bzip2Compressor::new(level)),
         Compression::None => Box::new(NoCompressor::new()),
         Compression::Brotli => Box::new(BrotliCompressor::new(level)),
+        Compression::Bzip3 => Box::new(Bzip3Compressor::new(Bzip3Compressor::level_to_block_size(
+            level,
+        ))),
         Compression::External => {
             unreachable!("Invalid argument")
         }
@@ -64,6 +69,7 @@ pub fn create_decompressor(method: Compression) -> Box<dyn Decompress> {
         Compression::Bzip2 => Box::new(Bzip2Decompressor),
         Compression::None => Box::new(NoDecompressor),
         Compression::Brotli => Box::new(BrotliDecompressor),
+        Compression::Bzip3 => Box::new(Bzip3Decompressor),
         Compression::External => {
             unreachable!("Invalid argument")
         }
@@ -188,12 +194,47 @@ impl Compress for BrotliCompressor {
     }
 }
 
+struct Bzip3Compressor {
+    block_size: usize,
+}
+
+impl Compress for Bzip3Compressor {
+    fn compress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+        let mut encoder = match bzip3::read::Bz3Encoder::new(from, self.block_size) {
+            Ok(d) => d,
+            Err(e) => return Err(Error::CompressorError(format!("{}", e))),
+        };
+        Ok(io::copy(&mut encoder, to)?)
+    }
+}
+
+impl Bzip3Compressor {
+    pub fn new(block_size: usize) -> Self {
+        Self { block_size }
+    }
+
+    /// Level ranging from 1 to 9 -> block size ranging from 65kiB to 511MiB
+    /// block size will be coerced within its valid range when level is outside 1..=9
+    fn level_to_block_size(level: u32) -> usize {
+        let low = ByteSize::kib(65).0 as usize;
+        let up = ByteSize::mib(511).0 as usize;
+        let part = (up - low) / 9;
+
+        match level {
+            l @ 2..=8 => low + l as usize * part,
+            u32::MIN..=1 => low,
+            9..=u32::MAX => up,
+        }
+    }
+}
+
 pub struct GzipDecompressor;
 pub struct XzDecompressor;
 pub struct ZstdDecompressor;
 pub struct Bzip2Decompressor;
 pub struct NoDecompressor;
 pub struct BrotliDecompressor;
+pub struct Bzip3Decompressor;
 
 impl Decompress for GzipDecompressor {
     fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
@@ -289,5 +330,15 @@ impl Decompress for BrotliDecompressor {
     fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
         let mut reader = brotli::Decompressor::new(from, 4096);
         Ok(io::copy(&mut reader, to)?)
+    }
+}
+
+impl Decompress for Bzip3Decompressor {
+    fn decompress_to(&self, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
+        let mut decoder = match bzip3::read::Bz3Decoder::new(from) {
+            Ok(d) => d,
+            Err(e) => return Err(Error::DecompressorError(format!("{}", e))),
+        };
+        Ok(io::copy(&mut decoder, to)?)
     }
 }

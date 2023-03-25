@@ -20,7 +20,6 @@ use bczhc_lib::field_size;
 pub use cli::build_cli;
 use errors::Result;
 
-
 use crate::crc::DigestWriter;
 use crate::errors::{Error, TimeError};
 
@@ -80,6 +79,7 @@ pub enum Compression {
     Zstd = 4,
     Bzip2 = 5,
     Brotli = 6,
+    Bzip3 = 7,
 }
 
 impl Display for Compression {
@@ -227,6 +227,7 @@ pub struct Options {}
 impl FromStr for Compression {
     type Err = ();
 
+    // TODO: avoid manually exhaustively enumerating all these names
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let name = s.to_lowercase();
         let compressor = match name {
@@ -236,6 +237,7 @@ impl FromStr for Compression {
             _ if name == Compression::Zstd.as_str() => Compression::Zstd,
             _ if name == Compression::Xz.as_str() => Compression::Xz,
             _ if name == Compression::Brotli.as_str() => Compression::Brotli,
+            _ if name == Compression::Bzip3.as_str() => Compression::Bzip3,
             _ => {
                 return Err(());
             }
@@ -246,6 +248,7 @@ impl FromStr for Compression {
 
 impl Compression {
     pub fn best_level(&self) -> u32 {
+        // TODO: maybe as a property in the trait
         match self {
             Compression::Gzip => flate2::Compression::best().level(),
             Compression::Xz => 9,
@@ -254,6 +257,7 @@ impl Compression {
             Compression::Bzip2 => bzip2::Compression::best().level(),
             Compression::Brotli => 11,
             Compression::External => panic!("Unexpected method"),
+            Compression::Bzip3 => 9,
         }
     }
 
@@ -266,6 +270,7 @@ impl Compression {
             Compression::Bzip2 => "bzip2",
             Compression::None => "none",
             Compression::Brotli => "brotli",
+            Compression::Bzip3 => "bzip3",
         }
     }
 }

@@ -43,6 +43,10 @@ pub enum Error {
     InvalidInfoJson,
     #[error("Invalid time")]
     InvalidTime(TimeError),
+    #[error("Error from compressor: {0}")]
+    CompressorError(String),
+    #[error("Error from decompressor: {0}")]
+    DecompressorError(String),
     #[error("{0}")]
     Others(String),
 }
