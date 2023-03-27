@@ -40,7 +40,11 @@ fn main() -> anyhow::Result<()> {
             continue;
         }
 
-        println!("Indexing {:?}", (size, entry.path()));
+        println!(
+            "Indexing {} {:?}",
+            ByteSize(size).to_string_as(true),
+            entry.path()
+        );
         map.entry(size)
             .or_insert_with(Vec::new)
             .push(entry.path().to_path_buf());
@@ -78,7 +82,7 @@ fn main() -> anyhow::Result<()> {
             // pick the first file as reflinking source, since these files are all identical
             let first = &dups[0];
             for x in dups.iter().skip(1) {
-                println!("Reflinking: ({}/{}) {:?}", i + 1, total, x);
+                println!("Reflinking: ({}/{}) {:?} -> {:?}", i + 1, total, first, x);
                 remove_file(x)?;
                 reflink(first, x)?;
                 if !x.exists() {
