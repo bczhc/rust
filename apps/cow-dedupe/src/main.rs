@@ -71,34 +71,7 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    if dry_run {
-        let mut dupes_sum = 0_u64;
-        for dupe in &dups_vec {
-            dupes_sum += dupe[0].metadata()?.len();
-        }
-
-        let mut reflink_sum = 0_u64;
-        for (mut dupe_count, first) in dups_vec.iter().map(|x| (x.len(), &x[0])) {
-            let first_size = first.metadata()?.len();
-            if dupe_count >= 1 {
-                dupe_count -= 1;
-            }
-            reflink_sum += dupe_count as u64 * first_size;
-        }
-
-        println!(
-            "Size of unique duplicated files: {}",
-            ByteSize(dupes_sum).to_string_as(true)
-        );
-        println!(
-            "Size of all duplicated files: {}",
-            ByteSize(dupes_sum + reflink_sum).to_string_as(true)
-        );
-        println!(
-            "Size of files to be reflinked: {}",
-            ByteSize(reflink_sum).to_string_as(true)
-        );
-    } else {
+    if !dry_run {
         let total = dups_vec.iter().map(|x| x.len()).sum::<usize>() - dups_vec.len();
         for (i, dups) in dups_vec.iter().enumerate() {
             assert!(dups.len() > 1);
@@ -114,6 +87,33 @@ fn main() -> anyhow::Result<()> {
             }
         }
     }
+
+    let mut dupes_sum = 0_u64;
+    for dupe in &dups_vec {
+        dupes_sum += dupe[0].metadata()?.len();
+    }
+
+    let mut reflink_sum = 0_u64;
+    for (mut dupe_count, first) in dups_vec.iter().map(|x| (x.len(), &x[0])) {
+        let first_size = first.metadata()?.len();
+        if dupe_count >= 1 {
+            dupe_count -= 1;
+        }
+        reflink_sum += dupe_count as u64 * first_size;
+    }
+
+    println!(
+        "Size of unique duplicated files: {}",
+        ByteSize(dupes_sum).to_string_as(true)
+    );
+    println!(
+        "Size of all duplicated files: {}",
+        ByteSize(dupes_sum + reflink_sum).to_string_as(true)
+    );
+    println!(
+        "Size of files to be reflinked: {}",
+        ByteSize(reflink_sum).to_string_as(true)
+    );
 
     Ok(())
 }
