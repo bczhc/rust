@@ -928,8 +928,10 @@ dependencies = [
  "blake3",
  "bytesize",
  "clap 4.1.13",
+ "digest",
  "reflink",
  "sha2",
+ "static_assertions",
  "thiserror",
  "walkdir",
 ]

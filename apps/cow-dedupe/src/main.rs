@@ -12,5 +12,6 @@ fn main() -> anyhow::Result<()> {
             cow_dedupe::dedupe::main(&args)?;
         }
     }
+
     Ok(())
 }
