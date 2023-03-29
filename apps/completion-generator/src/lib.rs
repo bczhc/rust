@@ -26,7 +26,7 @@ type CliBuilderFn = fn() -> Command;
 cli_builders![
     archive::build_cli,
     fourier_series::cli::build_cli,
-    cow_dedupe::cli::build_cli,
+    // cow_dedupe::cli::build_cli,
     enc::cli::build_cli,
     send_email::cli::build_cli,
     tcp_crypto_tunnel::cli::build_cli,
