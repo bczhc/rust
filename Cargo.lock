@@ -929,6 +929,7 @@ dependencies = [
  "bytesize",
  "clap 4.1.13",
  "digest",
+ "rayon",
  "reflink",
  "sha2",
  "static_assertions",
