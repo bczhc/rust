@@ -2,6 +2,7 @@ use anybase::cli::CliConfig;
 use anyhow::anyhow;
 use clap::Parser;
 use num::{BigInt, Integer, ToPrimitive, Zero};
+use std::collections::HashMap;
 use std::io::{stdin, stdout, BufWriter, Read, Write};
 
 fn main() -> anyhow::Result<()> {
@@ -22,16 +23,6 @@ fn main() -> anyhow::Result<()> {
     let mut data = Vec::new();
     stdin().read_to_end(&mut data)?;
 
-    if config.decode {
-        decode(&data, &config)?;
-    } else {
-        encode(&data, &config)?;
-    }
-
-    Ok(())
-}
-
-fn encode(data: &[u8], config: &CliConfig) -> anyhow::Result<()> {
     let mut sum = BigInt::from(0);
     for (i, &b) in data.iter().rev().enumerate() {
         sum += BigInt::from(b) * BigInt::from(256).pow(i as u32);
@@ -64,9 +55,6 @@ fn encode(data: &[u8], config: &CliConfig) -> anyhow::Result<()> {
             stdout.write_all(&[b])?;
         }
     }
-    Ok(())
-}
 
-fn decode(data: &[u8], config: &CliConfig) -> anyhow::Result<()> {
     Ok(())
 }
