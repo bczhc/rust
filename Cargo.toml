@@ -37,4 +37,5 @@ members = [
     "apps/network-monitor",
     "apps/ucd-parser",
     "apps/x11-event-monitor",
+    "apps/anybase",
 ]

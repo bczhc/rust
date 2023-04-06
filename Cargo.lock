@@ -155,6 +155,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "anybase"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap 4.1.13",
+ "num 0.4.0",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.70"
 source = "registry+https://github.com/rust-lang/crates.io-index"
