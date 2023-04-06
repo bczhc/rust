@@ -1,58 +1,60 @@
-use anybase::cli::CliConfig;
-use anyhow::anyhow;
+use std::io::{stdin, stdout, Read, Write};
+
 use clap::Parser;
-use num::{BigInt, Integer, ToPrimitive, Zero};
-use std::collections::HashMap;
-use std::io::{stdin, stdout, BufWriter, Read, Write};
+
+use anybase::cli::CliConfig;
+use anybase::{
+    base10_to_other, check_mapping_table, map_bytes_to_string, map_string_to_bytes, to_base10,
+};
 
 fn main() -> anyhow::Result<()> {
     let config = CliConfig::parse();
-    let to_base = config.base;
-    let mut alphabet_table = config.alphabet_table.as_ref();
-    if let Some(a) = alphabet_table.as_mut() {
-        let chars = a.chars().collect::<Vec<_>>();
-        if chars.len() != to_base as usize {
-            return Err(anyhow!("Alphabet table not equal to the output base"));
-        }
-        let has_duplicates = (1..chars.len()).any(|i| chars[i..].contains(&chars[i - 1]));
-        if has_duplicates {
-            return Err(anyhow!("Alphabet table characters should be all unique"));
-        }
+
+    if let Some(t) = config.from_table.as_ref() {
+        check_mapping_table(t, config.from_base)?;
+    }
+    if let Some(t) = config.to_table.as_ref() {
+        check_mapping_table(t, config.to_base)?;
     }
 
     let mut data = Vec::new();
     stdin().read_to_end(&mut data)?;
 
-    let mut sum = BigInt::from(0);
-    for (i, &b) in data.iter().rev().enumerate() {
-        sum += BigInt::from(b) * BigInt::from(256).pow(i as u32);
-    }
-
-    let mut num = sum.clone();
-    let mut digits = Vec::new();
-    loop {
-        let (q, r) = num.div_rem(&BigInt::from(config.base));
-        let terminate = q.is_zero();
-        num = q;
-        digits.push(r.to_u8().unwrap());
-        if terminate {
-            break;
+    // if from_table present, map input string to bytes
+    let from_data = match config.from_table.as_ref() {
+        None => data,
+        Some(from_table) => {
+            let chars = from_table.chars().collect::<Vec<_>>();
+            match String::from_utf8(data) {
+                Ok(mut d) => {
+                    // when using `echo`, the argument may end with a newline
+                    // we need to process it
+                    if d.ends_with('\n') && !from_table.contains('\n') {
+                        d.remove(d.len() - 1);
+                    }
+                    map_string_to_bytes(&d, &chars)
+                }
+                Err(e) => {
+                    return Err(anyhow::anyhow!(
+                        "Invalid UTF-8 encoding in input string: {}",
+                        e
+                    ));
+                }
+            }
         }
-    }
+    };
+    // use base10 bignum as an conversion intermediate
+    let base10 = to_base10(&from_data, config.from_base);
 
-    let stdout = stdout().lock();
-    let mut stdout = BufWriter::new(stdout);
-    let rev_digits = digits.into_iter().rev();
-    let alphabet_table = config.alphabet_table.as_ref();
-    if let Some(table) = alphabet_table {
-        let char_table = table.chars().collect::<Vec<_>>();
-        for b in rev_digits {
-            write!(&mut stdout, "{}", char_table[b as usize])?;
+    let to_bytes = base10_to_other(base10, config.to_base);
+    match config.to_table.as_ref() {
+        None => {
+            stdout().write_all(&to_bytes)?;
         }
-        writeln!(&mut stdout)?;
-    } else {
-        for b in rev_digits {
-            stdout.write_all(&[b])?;
+        Some(to_table) => {
+            let chars = to_table.chars().collect::<Vec<_>>();
+            let output_string = map_bytes_to_string(&to_bytes, &chars);
+            println!("{}", output_string);
         }
     }
 
