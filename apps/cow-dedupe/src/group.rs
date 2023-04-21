@@ -15,30 +15,32 @@ pub fn main(args: &GroupArgs) -> anyhow::Result<()> {
     eprintln!("Grouping by size...");
     group_by_size(&mut files);
     eprintln!("File entries: {}", files.len());
-    eprintln!("Grouping by file fragments");
-    group_by_fragments(&mut files)?;
-    eprintln!("File entries: {}", files.len());
-    eprintln!("Grouping by file content...");
+
     match args.common.hash_fn {
-        HashFn::B3_256 => generic_group_by_content::<B3_256>(&mut files),
-        HashFn::B3_512 => generic_group_by_content::<B3_512>(&mut files),
-        HashFn::B3_1024 => generic_group_by_content::<B3_1024>(&mut files),
-        HashFn::Sha256 => generic_group_by_content::<Sha256>(&mut files),
-        HashFn::Sha512 => generic_group_by_content::<Sha512>(&mut files),
+        HashFn::B3_256 => generic_group_files_using_hash::<B3_256>(&mut files),
+        HashFn::B3_512 => generic_group_files_using_hash::<B3_512>(&mut files),
+        HashFn::B3_1024 => generic_group_files_using_hash::<B3_1024>(&mut files),
+        HashFn::Sha256 => generic_group_files_using_hash::<Sha256>(&mut files),
+        HashFn::Sha512 => generic_group_files_using_hash::<Sha512>(&mut files),
     }?;
-    eprintln!("File entries: {}", files.len());
 
     // print these entries out
 
     Ok(())
 }
 
-fn generic_group_by_content<H: FixedDigest>(files: &mut Vec<FileEntry>) -> anyhow::Result<()>
+fn generic_group_files_using_hash<H: FixedDigest>(files: &mut Vec<FileEntry>) -> anyhow::Result<()>
 where
     [(); H::OutputSize::USIZE]:,
     [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,
 {
+    eprintln!("Grouping by file fragments");
+    group_by_fragments(files)?;
+    eprintln!("File entries: {}", files.len());
+    eprintln!("Grouping by file content...");
     group_by_content::<H>(files)?;
+    eprintln!("File entries: {}", files.len());
+
     Ok(())
 }
 
