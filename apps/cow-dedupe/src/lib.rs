@@ -8,7 +8,7 @@ use digest::typenum::Unsigned;
 use digest::{Digest, FixedOutput, OutputSizeUser};
 
 use crate::group::FileEntry;
-use crate::hash::HashWriter;
+use crate::hash::{FixedDigest, HashWriter};
 
 pub mod cli;
 pub mod dedupe;
@@ -28,9 +28,7 @@ pub fn group_by_fragments(entries: &mut Vec<FileEntry>) -> io::Result<()> {
     Ok(())
 }
 
-pub fn group_by_full_content<H: Digest + FixedOutput>(
-    entries: &mut Vec<FileEntry>,
-) -> io::Result<()>
+pub fn group_by_content<H: FixedDigest>(entries: &mut Vec<FileEntry>) -> io::Result<()>
 where
     [(); H::OutputSize::USIZE]:,
     [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,

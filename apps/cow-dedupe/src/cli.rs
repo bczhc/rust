@@ -48,6 +48,7 @@ pub struct CommonArgs {
 pub enum HashFn {
     B3_256,
     B3_512,
+    B3_1024,
     Sha256,
     Sha512,
 }

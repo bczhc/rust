@@ -2,7 +2,18 @@ use std::io;
 use std::io::Write;
 
 use digest::consts::{U128, U64};
-use digest::{ExtendableOutput, Output, Update};
+use digest::generic_array::GenericArray;
+use digest::typenum::Unsigned;
+use digest::{ExtendableOutput, HashMarker, Output, Update};
+
+pub trait FixedDigest: Update + digest::FixedOutput + Default + HashMarker {}
+impl<T> FixedDigest for T
+where
+    T: Update + digest::FixedOutput + Default + HashMarker,
+    [(); T::OutputSize::USIZE]:,
+    [u8; T::OutputSize::USIZE]: From<GenericArray<u8, T::OutputSize>>,
+{
+}
 
 pub struct HashWriter<H>(pub H)
 where
@@ -42,6 +53,8 @@ macro_rules! impl_b3_xof {
                 Update::update(&mut self.inner, data);
             }
         }
+
+        impl HashMarker for $name {}
 
         impl digest::OutputSizeUser for $name {
             type OutputSize = $size;
