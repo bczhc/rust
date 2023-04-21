@@ -938,6 +938,8 @@ dependencies = [
  "bytesize",
  "clap 4.1.13",
  "digest",
+ "once_cell",
+ "rayon",
  "reflink",
  "sha2",
  "static_assertions",
