@@ -26,7 +26,7 @@ pub fn main(args: &GroupArgs) -> anyhow::Result<()> {
     eprintln!("File entries: {}", entries.len());
     eprintln!("Grouping by size...");
     let mut groups = group_by_size(&mut entries);
-    eprintln!("File entries: {}", entries.len());
+    eprintln!("Group count: {}", groups.len());
 
     match args.common.hash_fn {
         HashFn::B3_128 => generic_group_files_by_hash::<B3_128>(&mut groups),
@@ -53,10 +53,12 @@ where
 {
     eprintln!("Grouping by file fragments");
     // group_by_fragments(files)?;
-    eprintln!("File entries: {}", files.len());
+    // eprintln!("File entries: {}", files.len());
     eprintln!("Grouping by file content...");
     let groups = group_by_content::<H>(files)?;
-    eprintln!("File entries: {}", files.len());
+    eprintln!("Group count: {}", groups.len());
+    let duplicated_file_group_count = groups.iter().filter(|x| x.1.len() >= 2).count();
+    eprintln!("Duplicated file groups: {}", duplicated_file_group_count);
 
     // print out
     for x in groups.iter().filter(|x| x.1.len() >= 2) {
