@@ -1,7 +1,7 @@
 use std::io;
 use std::io::Write;
 
-use digest::consts::{U128, U64};
+use digest::consts::{U128, U16, U20, U32, U512, U64};
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
 use digest::{ExtendableOutput, HashMarker, Output, Update};
@@ -68,5 +68,8 @@ macro_rules! impl_b3_xof {
     };
 }
 
+impl_b3_xof!(B3_128, U16);
+impl_b3_xof!(B3_160, U20);
 impl_b3_xof!(B3_512, U64);
 impl_b3_xof!(B3_1024, U128);
+impl_b3_xof!(B3_2048, U512);

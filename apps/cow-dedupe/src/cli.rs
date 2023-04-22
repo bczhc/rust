@@ -40,15 +40,20 @@ pub struct CommonArgs {
     #[arg(required = true)]
     pub path: Vec<String>,
     /// Hashing algorithm to be used
-    #[arg(long)]
+    #[arg(long, default_value = "b3-512")]
     pub hash_fn: HashFn,
 }
 
 #[derive(clap::ValueEnum, Debug, Clone, Copy)]
 pub enum HashFn {
+    B3_128,
+    B3_160,
     B3_256,
     B3_512,
     B3_1024,
+    B3_2048,
     Sha256,
     Sha512,
+    Sha3_256,
+    Sha3_512,
 }

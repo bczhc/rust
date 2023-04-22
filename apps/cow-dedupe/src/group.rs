@@ -4,9 +4,10 @@ use std::path::PathBuf;
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
 use sha2::{Sha256, Sha512};
+use sha3::{Sha3_256, Sha3_512};
 
 use crate::cli::{GroupArgs, HashFn};
-use crate::hash::{FixedDigest, B3_1024, B3_256, B3_512};
+use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
 use crate::{group_by_content, group_by_size};
 
 pub fn main(args: &GroupArgs) -> anyhow::Result<()> {
@@ -19,11 +20,16 @@ pub fn main(args: &GroupArgs) -> anyhow::Result<()> {
     eprintln!("File entries: {}", entries.len());
 
     match args.common.hash_fn {
+        HashFn::B3_128 => generic_group_files_by_hash::<B3_128>(&mut groups),
+        HashFn::B3_160 => generic_group_files_by_hash::<B3_160>(&mut groups),
         HashFn::B3_256 => generic_group_files_by_hash::<B3_256>(&mut groups),
         HashFn::B3_512 => generic_group_files_by_hash::<B3_512>(&mut groups),
         HashFn::B3_1024 => generic_group_files_by_hash::<B3_1024>(&mut groups),
+        HashFn::B3_2048 => generic_group_files_by_hash::<B3_2048>(&mut groups),
         HashFn::Sha256 => generic_group_files_by_hash::<Sha256>(&mut groups),
         HashFn::Sha512 => generic_group_files_by_hash::<Sha512>(&mut groups),
+        HashFn::Sha3_256 => generic_group_files_by_hash::<Sha3_256>(&mut groups),
+        HashFn::Sha3_512 => generic_group_files_by_hash::<Sha3_512>(&mut groups),
     }?;
 
     Ok(())
