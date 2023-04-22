@@ -21,6 +21,7 @@ use std::time::SystemTime;
 
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
+use crate::Group;
 
 use crate::group::FileEntry;
 
@@ -33,29 +34,8 @@ pub struct Output {
     pub groups: Vec<Group>,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Group {
-    pub file_size: u64,
-    pub hash: String,
-    pub files: Vec<OsString>,
-}
-
-pub fn build_output<const L: usize>(groups: &[([u8; L], Vec<FileEntry>)]) -> Output {
+pub fn build_output(groups: Vec<Group>) -> Output {
     let time = DateTime::<Local>::from(SystemTime::now()).to_rfc3339();
-
-    let groups = groups
-        .iter()
-        .map(|x| Group {
-            hash: hex::encode(x.0),
-            file_size: x.1[0].size,
-            files: x
-                .1
-                .iter()
-                .map(|x| x.path.clone().into_os_string())
-                .collect(),
-        })
-        .collect::<Vec<_>>();
 
     let cmd_args = args_os().skip(1).collect::<Vec<_>>();
 

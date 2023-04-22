@@ -1,6 +1,3 @@
-use anyhow::anyhow;
-use bytesize::ByteSize;
-use colored::Colorize;
 use std::cmp::Reverse;
 use std::fs::File;
 use std::io;
@@ -8,8 +5,9 @@ use std::io::{stdout, Read};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use bczhc_lib::mutex_lock;
-use bczhc_lib::str::GenericOsStrExt;
+use anyhow::anyhow;
+use bytesize::ByteSize;
+use colored::Colorize;
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -18,10 +16,13 @@ use rayon::prelude::ParallelSliceMut;
 use sha2::{Sha256, Sha512};
 use sha3::{Sha3_256, Sha3_512};
 
-use crate::cli::{GroupArgs, HashFn, OutputFormat};
+use bczhc_lib::mutex_lock;
+use bczhc_lib::str::GenericOsStrExt;
+
+use crate::cli::{CommonArgs, GroupArgs, HashFn, OutputFormat};
 use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
 use crate::serde::{build_output, Output};
-use crate::{group_by_content, group_by_size};
+use crate::{group_by_content, group_by_size, Group};
 
 static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
 
@@ -34,19 +35,38 @@ pub fn main(args: GroupArgs) -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let min_size = match &args.common.min_size.parse::<ByteSize>() {
+    let groups = collect_and_group_files(&args.common)?;
+
+    // print out
+    let output_format = mutex_lock!(ARGS).as_ref().unwrap().output_format;
+    match output_format {
+        OutputFormat::Default => print_groups(&groups),
+        OutputFormat::Json => {
+            let json = serde_json::to_string_pretty(&build_output(groups.into())).unwrap();
+            println!("{}", json);
+        }
+        OutputFormat::Binary => {
+            bincode::serialize_into(&mut stdout(), &build_output(groups.into())).unwrap();
+        }
+    }
+
+    Ok(())
+}
+
+fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> {
+    let min_size = match args.min_size.parse::<ByteSize>() {
         Ok(s) => s.0,
         Err(e) => return Err(anyhow::anyhow!("Invalid min size: {}", e)),
     };
 
-    let paths = &args.common.path;
+    let paths = &args.path;
     let mut entries = collect_file(paths, min_size)?;
     eprintln!("File entries: {}", entries.len());
     eprintln!("Grouping by size...");
     let mut groups = group_by_size(&mut entries);
     eprintln!("Group count: {}", groups.len());
 
-    match args.common.hash_fn {
+    let groups = match args.hash_fn {
         HashFn::B3_128 => generic_group_files_by_hash::<B3_128>(&mut groups),
         HashFn::B3_160 => generic_group_files_by_hash::<B3_160>(&mut groups),
         HashFn::B3_256 => generic_group_files_by_hash::<B3_256>(&mut groups),
@@ -59,12 +79,20 @@ pub fn main(args: GroupArgs) -> anyhow::Result<()> {
         HashFn::Sha3_512 => generic_group_files_by_hash::<Sha3_512>(&mut groups),
     }?;
 
-    Ok(())
+    Ok(groups
+        .into_iter()
+        .map(|g| Group {
+            file_size: g.1[0].size,
+            hash: hex::encode(g.0),
+            files: g.1.iter().map(|x| x.path.clone()).collect(),
+        })
+        .collect())
 }
 
+/// returns a vec of tuples, and each tuple is (hash, duplicated files)
 fn generic_group_files_by_hash<H: FixedDigest>(
     files: &mut Vec<Vec<FileEntry>>,
-) -> anyhow::Result<()>
+) -> anyhow::Result<Vec<(Vec<u8>, Vec<FileEntry>)>>
 where
     [(); H::OutputSize::USIZE]:,
     [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,
@@ -83,20 +111,14 @@ where
     // select duplicated items
     groups.retain(|x| x.1.len() >= 2);
 
-    // print out
-    let output_format = mutex_lock!(ARGS).as_ref().unwrap().output_format;
-    match output_format {
-        OutputFormat::Default => print_groups(&build_output(&groups)),
-        OutputFormat::Json => {
-            let json = serde_json::to_string_pretty(&build_output(&groups)).unwrap();
-            println!("{}", json);
-        }
-        OutputFormat::Binary => {
-            bincode::serialize_into(&mut stdout(), &build_output(&groups)).unwrap();
-        }
-    }
-
-    Ok(())
+    let r = groups
+        .into_iter()
+        .map(|g| {
+            let hash = Vec::from(g.0);
+            (hash, g.1)
+        })
+        .collect();
+    Ok(r)
 }
 
 #[derive(Clone, Debug)]
@@ -136,10 +158,10 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>
     Ok(files_vec)
 }
 
-fn print_groups(output: &Output) {
+fn print_groups(groups: &[Group]) {
     let compact_hash = !mutex_lock!(ARGS).as_ref().unwrap().full_hash;
 
-    for x in output.groups.iter() {
+    for x in groups.iter() {
         let file_count = x.files.len();
 
         let hash_str = if compact_hash {
@@ -174,12 +196,12 @@ fn parse_and_print<P: AsRef<Path>>(input: P) -> anyhow::Result<()> {
         // treat as json
         let json_str = std::str::from_utf8(&data)?;
         let output: Output = serde_json::from_str(json_str)?;
-        print_groups(&output);
+        print_groups(&output.groups);
         return Ok(());
     }
 
     // binary format
     let output: Output = bincode::deserialize(&data)?;
-    print_groups(&output);
+    print_groups(&output.groups);
     Ok(())
 }

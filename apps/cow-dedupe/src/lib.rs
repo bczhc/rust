@@ -2,9 +2,11 @@
 #![feature(generic_const_exprs)]
 #![feature(slice_group_by)]
 
+use std::ffi::OsString;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
+use std::path::PathBuf;
 
 use ::serde::{Deserialize, Serialize};
 use colored::Colorize;
@@ -101,4 +103,12 @@ where
         progress(read_size);
     }
     Ok(())
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Group {
+    pub file_size: u64,
+    pub hash: String,
+    pub files: Vec<PathBuf>,
 }
