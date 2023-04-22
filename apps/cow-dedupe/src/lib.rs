@@ -6,7 +6,7 @@ extern crate core;
 
 use std::fs::File;
 use std::io;
-use std::io::{Read, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 
 use ::serde::{Deserialize, Serialize};
@@ -52,10 +52,18 @@ where
 
 /// Hash the whole file
 pub struct FileFullHasher;
-/// 1. 50 bytes from file start
-/// 1. 50 bytes from file end
-/// 1. 100 bytes through file middle
+/// 1. some portion from file start
+/// 1. some portion from file end
+/// 1. some portion bytes through file middle
+///
+/// :)
 pub struct FileFragmentsHasher;
+
+impl FileFragmentsHasher {
+    const HEAD_SIZE: usize = 50;
+    const TAIL_SIZE: usize = 50;
+    const MIDDLE_SIZE: usize = 100;
+}
 
 impl<H> FileHash<H> for FileFullHasher
 where
@@ -72,6 +80,60 @@ where
         let mut hasher = HashWriter(H::new());
         io_copy_with_progress(&mut file, &mut hasher, progress)?;
         Ok(hasher.0.finalize_fixed().into())
+    }
+}
+
+impl<H> FileHash<H> for FileFragmentsHasher
+where
+    H: FixedDigest,
+{
+    fn hash<P: AsRef<Path>, F>(p: P, progress: F) -> io::Result<[u8; H::OutputSize::USIZE]>
+    where
+        [(); H::OutputSize::USIZE]:,
+        [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,
+        F: Fn(usize),
+    {
+        // everytime for this call, the final data to be hashed has the size
+        // HEAD_SIZE + TAIL_SIZE + MIDDLE_SIZE;
+        // for files smaller than the needed read size, pad with zeros.
+        let mut buf = [0_u8; max(max(Self::HEAD_SIZE, Self::TAIL_SIZE), Self::MIDDLE_SIZE)];
+        let mut hasher = H::new();
+
+        let mut file = File::open(p)?;
+        let file_len = file.metadata()?.len();
+
+        // read the first 50 bytes; coerced to <file_size> if needed
+        let read_size = (Self::HEAD_SIZE as u64).min(file_len);
+        file.read_exact(&mut buf[..read_size as usize])?;
+        buf[..Self::HEAD_SIZE][read_size as usize..].fill(0);
+        hasher.update(&buf[..Self::HEAD_SIZE]);
+
+        // read the last 50 bytes; coerced to <file_size> if needed
+        let read_size = (Self::TAIL_SIZE as u64).min(file_len);
+        file.seek(SeekFrom::End(-(read_size as i64)))?;
+        file.read_exact(&mut buf[..read_size as usize])?;
+        buf[..Self::TAIL_SIZE][read_size as usize..].fill(0);
+        hasher.update(&buf[..Self::TAIL_SIZE]);
+
+        // read 100 bytes at file middle; coerced to <file_size> if needed
+        let read_size = (Self::MIDDLE_SIZE as u64).min(file_len);
+        let start = if file_len < Self::MIDDLE_SIZE as u64 {
+            0_u64
+        } else {
+            file_len / 2 - Self::MIDDLE_SIZE as u64 / 2
+        };
+
+        file.seek(SeekFrom::Start(start))?;
+        file.read_exact(&mut buf[..read_size as usize])?;
+        buf[..Self::MIDDLE_SIZE][read_size as usize..].fill(0);
+        hasher.update(&buf[..Self::MIDDLE_SIZE]);
+
+        progress(max(
+            max(Self::HEAD_SIZE, Self::TAIL_SIZE),
+            Self::MIDDLE_SIZE,
+        ));
+
+        Ok(hasher.finalize_fixed().into())
     }
 }
 
@@ -159,4 +221,8 @@ pub fn parse_input_file<P: AsRef<Path>>(input: P) -> anyhow::Result<Vec<Group>> 
     // binary format
     let output: Output = bincode::deserialize(&data)?;
     Ok(output.groups)
+}
+
+const fn max(a: usize, b: usize) -> usize {
+    [a, b][(a < b) as usize]
 }

@@ -20,7 +20,9 @@ use bczhc_lib::str::GenericOsStrExt;
 use crate::cli::{CommonArgs, GroupArgs, HashFn, OutputFormat};
 use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
 use crate::serde::build_output;
-use crate::{group_by_hash, group_by_size, parse_input_file, FileFullHasher, Group};
+use crate::{
+    group_by_hash, group_by_size, parse_input_file, FileFragmentsHasher, FileFullHasher, Group,
+};
 
 static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
 
@@ -97,11 +99,12 @@ where
     [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,
 {
     eprintln!("Grouping by file fragments");
-    // group_by_fragments(files)?;
-    // eprintln!("File entries: {}", files.len());
+    let groups =
+        group_by_hash::<H, FileFragmentsHasher, _, _>(|| files.iter().map(|x| x.as_slice()))?;
+    eprintln!("File entries: {}", groups.len());
     eprintln!("Grouping by file content...");
     let mut groups =
-        group_by_hash::<H, FileFullHasher, _, _>(|| files.iter().map(|x| x.as_slice()))?;
+        group_by_hash::<H, FileFullHasher, _, _>(|| groups.iter().map(|x| x.1.as_slice()))?;
     eprintln!("Group count: {}", groups.len());
     let duplicated_file_group_count = groups.iter().filter(|x| x.1.len() >= 2).count();
     eprintln!("Duplicated file groups: {}", duplicated_file_group_count);
