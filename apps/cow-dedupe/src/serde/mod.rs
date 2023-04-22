@@ -15,18 +15,18 @@ pub mod json;
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Output {
-    creation_time: String,
-    cmd_args: Vec<OsString>,
-    base_dir: Option<PathBuf>,
-    groups: Vec<Group>,
+    pub creation_time: String,
+    pub cmd_args: Vec<OsString>,
+    pub base_dir: Option<PathBuf>,
+    pub groups: Vec<Group>,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Group {
-    file_size: u64,
-    hash: String,
-    files: Vec<OsString>,
+    pub file_size: u64,
+    pub hash: String,
+    pub files: Vec<OsString>,
 }
 
 pub fn build_output<const L: usize>(groups: &[([u8; L], Vec<FileEntry>)]) -> Output {

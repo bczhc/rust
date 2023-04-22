@@ -18,21 +18,24 @@ pub enum Subcommands {
 
 #[derive(clap::Args, Debug, Clone)]
 pub struct GroupArgs {
-    /// Don't do anything; just print the size of duplicated files
-    #[arg(short, long)]
-    pub dry_run: bool,
     /// Print only the first 20 bytes of each file's hash
     #[arg(long, default_value = "true")]
     pub compact_hash: bool,
     /// Output format
     #[arg(short = 'f', long, default_value = "default")]
     pub output_format: OutputFormat,
+    /// JSON or binary input file
+    #[arg(short, long)]
+    pub input_file: Option<String>,
     #[command(flatten)]
     pub common: CommonArgs,
 }
 
 #[derive(clap::Args, Debug)]
 pub struct DedupeArgs {
+    /// Don't do anything; just print the size of duplicated files
+    #[arg(short, long)]
+    pub dry_run: bool,
     #[command(flatten)]
     pub common: CommonArgs,
 }
