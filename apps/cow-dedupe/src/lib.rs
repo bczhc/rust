@@ -4,6 +4,7 @@
 
 extern crate core;
 
+use std::any::TypeId;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -63,6 +64,9 @@ impl FileFragmentsHasher {
     const HEAD_SIZE: usize = 50;
     const TAIL_SIZE: usize = 50;
     const MIDDLE_SIZE: usize = 100;
+
+    const BUF_SIZE: usize = max(max(Self::HEAD_SIZE, Self::TAIL_SIZE), Self::MIDDLE_SIZE);
+    const TOTAL_SIZE: usize = Self::HEAD_SIZE + Self::TAIL_SIZE + Self::MIDDLE_SIZE;
 }
 
 impl<H> FileHash<H> for FileFullHasher
@@ -96,7 +100,7 @@ where
         // everytime for this call, the final data to be hashed has the size
         // HEAD_SIZE + TAIL_SIZE + MIDDLE_SIZE;
         // for files smaller than the needed read size, pad with zeros.
-        let mut buf = [0_u8; max(max(Self::HEAD_SIZE, Self::TAIL_SIZE), Self::MIDDLE_SIZE)];
+        let mut buf = [0_u8; Self::BUF_SIZE];
         let mut hasher = H::new();
 
         let mut file = File::open(p)?;
@@ -128,16 +132,13 @@ where
         buf[..Self::MIDDLE_SIZE][read_size as usize..].fill(0);
         hasher.update(&buf[..Self::MIDDLE_SIZE]);
 
-        progress(max(
-            max(Self::HEAD_SIZE, Self::TAIL_SIZE),
-            Self::MIDDLE_SIZE,
-        ));
+        progress(Self::TOTAL_SIZE);
 
         Ok(hasher.finalize_fixed().into())
     }
 }
 
-pub fn group_by_hash<'a, H, FH: FileHash<H>, G, I>(
+pub fn group_by_hash<'a, H, FH: FileHash<H> + 'static, G, I>(
     entries_iter_getter: G,
 ) -> io::Result<Vec<([u8; H::OutputSize::USIZE], Vec<FileEntry>)>>
 where
@@ -147,11 +148,18 @@ where
     G: Fn() -> I,
     I: Iterator<Item = &'a [FileEntry]>,
 {
+    let total_file_size = if TypeId::of::<FH>() == TypeId::of::<FileFragmentsHasher>() {
+        entries_iter_getter()
+            .map(|x| x.len() as u64 * FileFragmentsHasher::TOTAL_SIZE as u64)
+            .sum::<u64>()
+    } else {
+        entries_iter_getter()
+            .map(|x| x.iter().map(|x| x.size).sum::<u64>())
+            .sum::<u64>()
+    };
+
     let mut groups = Vec::new();
 
-    let total_file_size = entries_iter_getter()
-        .map(|x| x.iter().map(|x| x.size).sum::<u64>())
-        .sum();
     let progress_bar = ProgressBar::new(total_file_size);
     progress_bar.set_style(
         ProgressStyle::default_bar()
