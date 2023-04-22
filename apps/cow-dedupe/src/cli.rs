@@ -18,9 +18,9 @@ pub enum Subcommands {
 
 #[derive(clap::Args, Debug, Clone)]
 pub struct GroupArgs {
-    /// Print only the first 20 bytes of each file's hash
-    #[arg(long, default_value = "true")]
-    pub compact_hash: bool,
+    /// Print the whole hash of each file. Otherwise it will print the only first 20 bytes.
+    #[arg(long, default_value = "false")]
+    pub full_hash: bool,
     /// Output format
     #[arg(short = 'f', long, default_value = "default")]
     pub output_format: OutputFormat,

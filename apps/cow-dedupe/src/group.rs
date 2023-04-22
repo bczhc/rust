@@ -137,7 +137,7 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>
 }
 
 fn print_groups(output: &Output) {
-    let compact_hash = mutex_lock!(ARGS).as_ref().unwrap().compact_hash;
+    let compact_hash = !mutex_lock!(ARGS).as_ref().unwrap().full_hash;
 
     for x in output.groups.iter() {
         let file_count = x.files.len();
