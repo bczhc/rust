@@ -84,6 +84,10 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
                 }
             } else {
                 // use `reflink` crate
+                // TODO: by this approach I'm not familiar about its internal details
+                //  and have some trouble preserving the file timestamp, which is
+                //  important in my use case. So I by default choose using
+                //  `ls --reflink -a` command.
                 if args.dry_run {
                     println!("{:?} -> {:?}", src, dest);
                 } else {

@@ -21,9 +21,8 @@ use std::time::SystemTime;
 
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
-use crate::Group;
 
-use crate::group::FileEntry;
+use crate::Group;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

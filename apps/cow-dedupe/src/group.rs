@@ -41,11 +41,11 @@ pub fn main(args: GroupArgs) -> anyhow::Result<()> {
     match output_format {
         OutputFormat::Default => print_groups(&groups),
         OutputFormat::Json => {
-            let json = serde_json::to_string_pretty(&build_output(groups.into())).unwrap();
+            let json = serde_json::to_string_pretty(&build_output(groups)).unwrap();
             println!("{}", json);
         }
         OutputFormat::Binary => {
-            bincode::serialize_into(&mut stdout(), &build_output(groups.into())).unwrap();
+            bincode::serialize_into(&mut stdout(), &build_output(groups)).unwrap();
         }
     }
 

@@ -2,7 +2,6 @@
 #![feature(generic_const_exprs)]
 #![feature(slice_group_by)]
 
-use std::ffi::OsString;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
@@ -13,7 +12,7 @@ use anyhow::anyhow;
 use colored::Colorize;
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
-use digest::{Digest, FixedOutput, OutputSizeUser};
+use digest::Digest;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::ParallelSliceMut;
 
