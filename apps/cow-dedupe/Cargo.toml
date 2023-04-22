@@ -21,3 +21,4 @@ sha3 = "0.10.7"
 bczhc_lib = { path = "../../lib" }
 colored = "2.0.0"
 indicatif = "0.17.3"
+jwalk = "0.8.1"

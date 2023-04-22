@@ -113,7 +113,7 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>
 
     let mut files_vec = Vec::new();
     for path in paths {
-        let files = walkdir::WalkDir::new(path);
+        let files = jwalk::WalkDir::new(path);
         for entry in files {
             let entry = entry?;
             if !entry.file_type().is_file() {
@@ -123,7 +123,7 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>
             let file_size = metadata.len();
             if file_size >= min_size {
                 files_vec.push(FileEntry {
-                    path: entry.path().into(),
+                    path: entry.path(),
                     size: file_size,
                 });
             }
