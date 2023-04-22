@@ -68,4 +68,5 @@ pub enum HashFn {
 pub enum OutputFormat {
     Default,
     Json,
+    Binary,
 }

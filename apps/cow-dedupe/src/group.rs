@@ -2,6 +2,7 @@ use bytesize::ByteSize;
 use colored::Colorize;
 use std::cmp::Reverse;
 use std::io;
+use std::io::stdout;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
@@ -17,7 +18,7 @@ use sha3::{Sha3_256, Sha3_512};
 
 use crate::cli::{GroupArgs, HashFn, OutputFormat};
 use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
-use crate::serde::json::to_json_output;
+use crate::serde::build_output;
 use crate::{group_by_content, group_by_size};
 
 static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
@@ -71,13 +72,19 @@ where
 
     groups.par_sort_by_key(|x| Reverse(x.1[0].size));
 
+    // select duplicated items
+    groups.retain(|x| x.1.len() >= 2);
+
     // print out
     let output_format = mutex_lock!(ARGS).as_ref().unwrap().output_format;
     match output_format {
         OutputFormat::Default => print_groups(&groups),
         OutputFormat::Json => {
-            let json = serde_json::to_string_pretty(&to_json_output(&groups)).unwrap();
+            let json = serde_json::to_string_pretty(&build_output(&groups)).unwrap();
             println!("{}", json);
+        }
+        OutputFormat::Binary => {
+            bincode::serialize_into(&mut stdout(), &build_output(&groups)).unwrap();
         }
     }
 
@@ -124,7 +131,7 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>
 fn print_groups<const L: usize>(groups: &[([u8; L], Vec<FileEntry>)]) {
     let compact_hash = mutex_lock!(ARGS).as_ref().unwrap().compact_hash;
 
-    for x in groups.iter().filter(|x| x.1.len() >= 2) {
+    for x in groups.iter() {
         let file_count = x.1.len();
 
         let hash_string = if compact_hash {
