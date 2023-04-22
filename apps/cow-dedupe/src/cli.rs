@@ -24,6 +24,9 @@ pub struct GroupArgs {
     /// Print only the first 20 bytes of each file's hash
     #[arg(long, default_value = "true")]
     pub compact_hash: bool,
+    /// Output format
+    #[arg(short = 'f', long, default_value = "default")]
+    pub output_format: OutputFormat,
     #[command(flatten)]
     pub common: CommonArgs,
 }
@@ -59,4 +62,10 @@ pub enum HashFn {
     Sha512,
     Sha3_256,
     Sha3_512,
+}
+
+#[derive(clap::ValueEnum, Debug, Clone, Copy)]
+pub enum OutputFormat {
+    Default,
+    Json,
 }

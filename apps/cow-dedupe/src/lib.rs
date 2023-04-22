@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
 
+use ::serde::{Deserialize, Serialize};
 use colored::Colorize;
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
@@ -23,6 +24,7 @@ pub mod dedupe;
 pub mod errors;
 pub mod group;
 pub mod hash;
+pub mod serde;
 
 pub fn group_by_size(entries: &mut Vec<FileEntry>) -> Vec<Vec<FileEntry>> {
     entries.par_sort_by_key(|x| x.size);

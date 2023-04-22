@@ -15,8 +15,9 @@ use rayon::prelude::ParallelSliceMut;
 use sha2::{Sha256, Sha512};
 use sha3::{Sha3_256, Sha3_512};
 
-use crate::cli::{GroupArgs, HashFn};
+use crate::cli::{GroupArgs, HashFn, OutputFormat};
 use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
+use crate::serde::json::to_json_output;
 use crate::{group_by_content, group_by_size};
 
 static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
@@ -68,32 +69,16 @@ where
     let duplicated_file_group_count = groups.iter().filter(|x| x.1.len() >= 2).count();
     eprintln!("Duplicated file groups: {}", duplicated_file_group_count);
 
-    let compact_hash = mutex_lock!(ARGS).as_ref().unwrap().compact_hash;
-
     groups.par_sort_by_key(|x| Reverse(x.1[0].size));
-    // print out
-    for x in groups.iter().filter(|x| x.1.len() >= 2) {
-        let file_count = x.1.len();
 
-        let hash_string = if compact_hash {
-            hex::encode(&x.0[..20])
-        } else {
-            hex::encode(x.0)
-        };
-        println!(
-            "{}",
-            format!(
-                "{}, {} * {}",
-                hash_string,
-                bytesize::to_string(x.1[0].size, true),
-                file_count
-            )
-            .yellow()
-        );
-        for x in &x.1 {
-            println!("{}", x.path.as_os_str().escape_to_string());
+    // print out
+    let output_format = mutex_lock!(ARGS).as_ref().unwrap().output_format;
+    match output_format {
+        OutputFormat::Default => print_groups(&groups),
+        OutputFormat::Json => {
+            let json = serde_json::to_string_pretty(&to_json_output(&groups)).unwrap();
+            println!("{}", json);
         }
-        println!()
     }
 
     Ok(())
@@ -134,4 +119,32 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>
         }
     }
     Ok(files_vec)
+}
+
+fn print_groups<const L: usize>(groups: &[([u8; L], Vec<FileEntry>)]) {
+    let compact_hash = mutex_lock!(ARGS).as_ref().unwrap().compact_hash;
+
+    for x in groups.iter().filter(|x| x.1.len() >= 2) {
+        let file_count = x.1.len();
+
+        let hash_string = if compact_hash {
+            hex::encode(&x.0[..20])
+        } else {
+            hex::encode(x.0)
+        };
+        println!(
+            "{}",
+            format!(
+                "{}, {} * {}",
+                hash_string,
+                bytesize::to_string(x.1[0].size, true),
+                file_count
+            )
+            .yellow()
+        );
+        for x in &x.1 {
+            println!("{}", x.path.as_os_str().escape_to_string());
+        }
+        println!()
+    }
 }
