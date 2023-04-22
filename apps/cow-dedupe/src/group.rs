@@ -44,7 +44,7 @@ where
     eprintln!("File entries: {}", files.len());
 
     // print out
-    for x in groups {
+    for x in groups.iter().filter(|x| x.1.len() >= 2) {
         println!(
             "{}, {}",
             hex::encode(x.0),
