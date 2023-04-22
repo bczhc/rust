@@ -37,8 +37,8 @@ pub struct DedupeArgs {
 #[derive(clap::Args, Debug, Clone)]
 pub struct CommonArgs {
     /// Minimum size filter
-    #[arg(short, long)]
-    pub min_size: Option<String>,
+    #[arg(short, long, default_value = "1B")]
+    pub min_size: String,
     /// Paths
     #[arg(required = true)]
     pub path: Vec<String>,

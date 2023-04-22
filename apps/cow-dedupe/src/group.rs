@@ -20,12 +20,9 @@ static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
 pub fn main(args: GroupArgs) -> anyhow::Result<()> {
     mutex_lock!(ARGS).replace(args.clone());
 
-    let min_size = match &args.common.min_size {
-        None => 0,
-        Some(s) => match s.parse::<ByteSize>() {
-            Ok(s) => s.0,
-            Err(e) => return Err(anyhow::anyhow!("Invalid min size: {}", e)),
-        },
+    let min_size = match &args.common.min_size.parse::<ByteSize>() {
+        Ok(s) => s.0,
+        Err(e) => return Err(anyhow::anyhow!("Invalid min size: {}", e)),
     };
 
     let paths = &args.common.path;
