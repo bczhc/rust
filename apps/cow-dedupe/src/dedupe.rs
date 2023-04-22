@@ -19,21 +19,36 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
     let groups = collect_and_group_files(&args.common)?;
 
     let operation_count = groups.iter().map(|x| x.files.len() as u64 - 1).sum::<u64>();
-    let pb = ProgressBar::new(operation_count);
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template("{msg} {bar:50} {pos}/{len}")
-            .unwrap(),
+    let pb = if args.dry_run {
+        None
+    } else {
+        let pb = ProgressBar::new(operation_count);
+        pb.set_style(
+            ProgressStyle::default_bar()
+                .template("{msg} {bar:50} {pos}/{len}")
+                .unwrap(),
+        );
+        pb.set_message("Reflinking".cyan().bold().to_string());
+        Some(pb)
+    };
+
+    let redundant_size = groups
+        .iter()
+        .map(|x| x.file_size * (x.files.len() as u64 - 1))
+        .sum::<u64>();
+    eprintln!(
+        "Redundant size: {}",
+        bytesize::to_string(redundant_size, true)
     );
-    pb.set_message("Reflinking".cyan().bold().to_string());
 
     // TODO: to many messy branches
     for group in groups {
         let files = &group.files;
         let src = &files[0];
         for dest in files.iter().skip(1) {
-            pb.inc(1);
-
+            if let Some(ref x) = pb {
+                x.inc(1)
+            };
             if args.use_cp_cmd.yes() {
                 // use `cp` command
                 let cmd = [
