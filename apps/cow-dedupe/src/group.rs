@@ -1,4 +1,5 @@
 use bytesize::ByteSize;
+use colored::Colorize;
 use std::io;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -79,10 +80,14 @@ where
             hex::encode(x.0)
         };
         println!(
-            "{}, {} * {}",
-            hash_string,
-            bytesize::to_string(x.1[0].size, true),
-            file_count
+            "{}",
+            format!(
+                "{}, {} * {}",
+                hash_string,
+                bytesize::to_string(x.1[0].size, true),
+                file_count
+            )
+            .yellow()
         );
         for x in x.1 {
             println!("{}", x.path.display());

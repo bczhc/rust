@@ -836,6 +836,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
 
 [[package]]
+name = "colored"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3616f750b84d8f0de8a58bda93e08e2a81ad3f523089b05f1dffecab48c6cbd"
+dependencies = [
+ "atty",
+ "lazy_static 1.4.0",
+ "winapi",
+]
+
+[[package]]
 name = "completion-generator"
 version = "1.0.0"
 dependencies = [
@@ -938,6 +949,7 @@ dependencies = [
  "blake3",
  "bytesize",
  "clap 4.1.13",
+ "colored",
  "digest",
  "hex",
  "once_cell",
