@@ -6,10 +6,10 @@ fn main() -> anyhow::Result<()> {
 
     match args.command {
         Subcommands::Group(args) => {
-            cow_dedupe::group::main(&args)?;
+            cow_dedupe::group::main(args)?;
         }
         Subcommands::Dedupe(args) => {
-            cow_dedupe::dedupe::main(&args)?;
+            cow_dedupe::dedupe::main(args)?;
         }
     }
 

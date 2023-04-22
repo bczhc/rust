@@ -934,6 +934,7 @@ name = "cow-dedupe"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "bczhc_lib",
  "blake3",
  "bytesize",
  "clap 4.1.13",

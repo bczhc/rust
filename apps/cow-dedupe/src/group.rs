@@ -1,9 +1,12 @@
 use bytesize::ByteSize;
 use std::io;
 use std::path::PathBuf;
+use std::sync::Mutex;
 
+use bczhc_lib::mutex_lock;
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
+use once_cell::sync::Lazy;
 use sha2::{Sha256, Sha512};
 use sha3::{Sha3_256, Sha3_512};
 
@@ -11,7 +14,11 @@ use crate::cli::{GroupArgs, HashFn};
 use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
 use crate::{group_by_content, group_by_size};
 
-pub fn main(args: &GroupArgs) -> anyhow::Result<()> {
+static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
+
+pub fn main(args: GroupArgs) -> anyhow::Result<()> {
+    mutex_lock!(ARGS).replace(args.clone());
+
     let min_size = match &args.common.min_size {
         None => 0,
         Some(s) => match s.parse::<ByteSize>() {
@@ -60,11 +67,18 @@ where
     let duplicated_file_group_count = groups.iter().filter(|x| x.1.len() >= 2).count();
     eprintln!("Duplicated file groups: {}", duplicated_file_group_count);
 
+    let compact_hash = mutex_lock!(ARGS).as_ref().unwrap().compact_hash;
+
     // print out
     for x in groups.iter().filter(|x| x.1.len() >= 2) {
+        let hash_string = if compact_hash {
+            hex::encode(&x.0[..20])
+        } else {
+            hex::encode(x.0)
+        };
         println!(
             "{}, {}",
-            hex::encode(x.0),
+            hash_string,
             bytesize::to_string(x.1[0].size, true)
         );
         for x in x.1 {

@@ -16,11 +16,14 @@ pub enum Subcommands {
     Dedupe(DedupeArgs),
 }
 
-#[derive(clap::Args, Debug)]
+#[derive(clap::Args, Debug, Clone)]
 pub struct GroupArgs {
     /// Don't do anything; just print the size of duplicated files
     #[arg(short, long)]
     pub dry_run: bool,
+    /// Print only the first 20 bytes of each file's hash
+    #[arg(long, default_value = "true")]
+    pub compact_hash: bool,
     #[command(flatten)]
     pub common: CommonArgs,
 }
@@ -31,7 +34,7 @@ pub struct DedupeArgs {
     pub common: CommonArgs,
 }
 
-#[derive(clap::Args, Debug)]
+#[derive(clap::Args, Debug, Clone)]
 pub struct CommonArgs {
     /// Minimum size filter
     #[arg(short, long)]
