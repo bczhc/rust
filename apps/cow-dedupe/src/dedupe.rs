@@ -1,10 +1,13 @@
-use crate::cli::DedupeArgs;
-use crate::group::collect_and_group_files;
-use anyhow::anyhow;
 use std::ffi::OsStr;
 use std::fs::remove_file;
-use std::path::Path;
 use std::process::{Command, Stdio};
+
+use anyhow::anyhow;
+use colored::Colorize;
+use indicatif::{ProgressBar, ProgressStyle};
+
+use crate::cli::DedupeArgs;
+use crate::group::collect_and_group_files;
 
 macro_rules! os_str {
     ($s:expr) => {
@@ -15,12 +18,22 @@ macro_rules! os_str {
 pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
     let groups = collect_and_group_files(&args.common)?;
 
+    let operation_count = groups.iter().map(|x| x.files.len() as u64 - 1).sum::<u64>();
+    let pb = ProgressBar::new(operation_count);
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("{msg} {bar:50} {pos}/{len}")
+            .unwrap(),
+    );
+    pb.set_message("Reflinking".cyan().bold().to_string());
+
     // TODO: to many messy branches
-    // TODO: progress bar
     for group in groups {
         let files = &group.files;
         let src = &files[0];
         for dest in files.iter().skip(1) {
+            pb.inc(1);
+
             if args.use_cp_cmd.yes() {
                 // use `cp` command
                 let cmd = [
