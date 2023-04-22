@@ -76,7 +76,7 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
                     let status = child.wait()?;
                     if !status.success() {
                         return Err(anyhow!(
-                            "Program exited with non-zero status: {}; {:?}",
+                            "Program exited with non-zero status: {}; cmd: {:?}",
                             status,
                             cmd
                         ));
@@ -88,8 +88,10 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
                     println!("{:?} -> {:?}", src, dest);
                 } else {
                     // first the dest file should be deleted
-                    remove_file(dest)?;
-                    reflink::reflink(src, dest)?;
+                    remove_file(dest).map_err(|e| anyhow!("Dest file lost: {}, {:?}", e, dest))?;
+                    reflink::reflink(src, dest).map_err(|e| {
+                        anyhow!("Failed to reflink: {}, {:?} -> {:?}", e, src, dest)
+                    })?;
                     if !dest.exists() {
                         return Err(anyhow!(
                             "Check failed: destination file doesn't exist: {:?}",
