@@ -1,3 +1,18 @@
+//! TODO: see known issues
+//!
+//! # Known issues
+//!
+//! serde_json will fail when serializing `Path`s containing invalid
+//! UTF-8; also if serializing `OsString` fields, the json output
+//! will not be human-readable (it's like this:
+//! `"f":{"Unix":[112,97,115,115,119,100]}`)
+//!
+//! Also `bincode` v2.0 removes ser/de capabilities for `OsString`s.
+//! Currently `bincode` v1 is still used.
+//!
+//! I haven't come up with an elegant idea to handle these
+//! maybe-non-UTF8-encoded strings
+
 use std::env;
 use std::env::args_os;
 use std::ffi::OsString;
@@ -8,9 +23,6 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
 use crate::group::FileEntry;
-
-pub mod binary;
-pub mod json;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
