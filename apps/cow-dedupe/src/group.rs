@@ -71,15 +71,18 @@ where
 
     // print out
     for x in groups.iter().filter(|x| x.1.len() >= 2) {
+        let file_count = x.1.len();
+
         let hash_string = if compact_hash {
             hex::encode(&x.0[..20])
         } else {
             hex::encode(x.0)
         };
         println!(
-            "{}, {}",
+            "{}, {} * {}",
             hash_string,
-            bytesize::to_string(x.1[0].size, true)
+            bytesize::to_string(x.1[0].size, true),
+            file_count
         );
         for x in x.1 {
             println!("{}", x.path.display());
