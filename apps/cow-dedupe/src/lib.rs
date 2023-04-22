@@ -2,21 +2,21 @@
 #![feature(generic_const_exprs)]
 #![feature(slice_group_by)]
 
-const IO_BUF_SIZE: usize = 4096;
-
-use colored::Colorize;
-use std::collections::HashMap;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
 
+use colored::Colorize;
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
 use digest::{Digest, FixedOutput, OutputSizeUser};
 use indicatif::{ProgressBar, ProgressStyle};
+use rayon::prelude::ParallelSliceMut;
 
 use crate::group::FileEntry;
 use crate::hash::{FixedDigest, HashWriter};
+
+const IO_BUF_SIZE: usize = 4096;
 
 pub mod cli;
 pub mod dedupe;
@@ -25,7 +25,7 @@ pub mod group;
 pub mod hash;
 
 pub fn group_by_size(entries: &mut Vec<FileEntry>) -> Vec<Vec<FileEntry>> {
-    entries.sort_by_key(|x| x.size);
+    entries.par_sort_by_key(|x| x.size);
     entries
         .group_by(|a, b| a.size == b.size)
         .map(Vec::from)
@@ -41,12 +41,12 @@ pub fn group_by_fragments(entries: &mut Vec<Vec<FileEntry>>) -> io::Result<()> {
 
 pub fn group_by_content<H: FixedDigest>(
     entries: &mut Vec<Vec<FileEntry>>,
-) -> io::Result<HashMap<[u8; H::OutputSize::USIZE], Vec<FileEntry>>>
+) -> io::Result<Vec<([u8; H::OutputSize::USIZE], Vec<FileEntry>)>>
 where
     [(); H::OutputSize::USIZE]:,
     [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,
 {
-    let mut groups = HashMap::new();
+    let mut groups = Vec::new();
 
     let total_file_size = entries
         .iter()
@@ -72,11 +72,11 @@ where
             let digest: [u8; H::OutputSize::USIZE] = hasher.0.finalize_fixed().into();
             vec.push((x.clone(), digest));
         }
-        vec.sort_by_key(|x| x.1);
+        vec.par_sort_by_key(|x| x.1);
         for x in vec.group_by(|a, b| a.1 == b.1) {
             let hash = x[0].1;
             let group = x.iter().map(|x| x.0.clone()).collect::<Vec<_>>();
-            groups.insert(hash, group);
+            groups.push((hash, group));
         }
     }
     Ok(groups)

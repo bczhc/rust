@@ -1,5 +1,6 @@
 use bytesize::ByteSize;
 use colored::Colorize;
+use std::cmp::Reverse;
 use std::io;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -10,6 +11,7 @@ use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
 use indicatif::{ProgressBar, ProgressStyle};
 use once_cell::sync::Lazy;
+use rayon::prelude::ParallelSliceMut;
 use sha2::{Sha256, Sha512};
 use sha3::{Sha3_256, Sha3_512};
 
@@ -61,13 +63,14 @@ where
     // group_by_fragments(files)?;
     // eprintln!("File entries: {}", files.len());
     eprintln!("Grouping by file content...");
-    let groups = group_by_content::<H>(files)?;
+    let mut groups = group_by_content::<H>(files)?;
     eprintln!("Group count: {}", groups.len());
     let duplicated_file_group_count = groups.iter().filter(|x| x.1.len() >= 2).count();
     eprintln!("Duplicated file groups: {}", duplicated_file_group_count);
 
     let compact_hash = mutex_lock!(ARGS).as_ref().unwrap().compact_hash;
 
+    groups.par_sort_by_key(|x| Reverse(x.1[0].size));
     // print out
     for x in groups.iter().filter(|x| x.1.len() >= 2) {
         let file_count = x.1.len();
@@ -87,7 +90,7 @@ where
             )
             .yellow()
         );
-        for x in x.1 {
+        for x in &x.1 {
             println!("{}", x.path.as_os_str().escape_to_string());
         }
         println!()
