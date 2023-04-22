@@ -1,11 +1,9 @@
 use std::cmp::Reverse;
-use std::fs::File;
 use std::io;
-use std::io::{stdout, Read};
-use std::path::{Path, PathBuf};
+use std::io::stdout;
+use std::path::PathBuf;
 use std::sync::Mutex;
 
-use anyhow::anyhow;
 use bytesize::ByteSize;
 use colored::Colorize;
 use digest::generic_array::GenericArray;
@@ -21,17 +19,18 @@ use bczhc_lib::str::GenericOsStrExt;
 
 use crate::cli::{CommonArgs, GroupArgs, HashFn, OutputFormat};
 use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
-use crate::serde::{build_output, Output};
-use crate::{group_by_content, group_by_size, Group};
+use crate::serde::build_output;
+use crate::{group_by_content, group_by_size, parse_input_file, Group};
 
 static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
 
 pub fn main(args: GroupArgs) -> anyhow::Result<()> {
     mutex_lock!(ARGS).replace(args.clone());
 
-    if let Some(path) = args.input_file {
+    if let Some(path) = args.common.input_file {
         // input file is present; only parse and print them
-        parse_and_print(path)?;
+        let groups = parse_input_file(path)?;
+        print_groups(&groups);
         return Ok(());
     }
 
@@ -184,24 +183,4 @@ fn print_groups(groups: &[Group]) {
         }
         println!()
     }
-}
-
-fn parse_and_print<P: AsRef<Path>>(input: P) -> anyhow::Result<()> {
-    let mut data = Vec::new();
-    File::open(input)?.read_to_end(&mut data)?;
-    if data.is_empty() {
-        return Err(anyhow!("Empty input file"));
-    }
-    if data[0] == b'{' {
-        // treat as json
-        let json_str = std::str::from_utf8(&data)?;
-        let output: Output = serde_json::from_str(json_str)?;
-        print_groups(&output.groups);
-        return Ok(());
-    }
-
-    // binary format
-    let output: Output = bincode::deserialize(&data)?;
-    print_groups(&output.groups);
-    Ok(())
 }

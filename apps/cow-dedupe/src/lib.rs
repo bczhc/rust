@@ -6,9 +6,10 @@ use std::ffi::OsString;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use ::serde::{Deserialize, Serialize};
+use anyhow::anyhow;
 use colored::Colorize;
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
@@ -18,6 +19,7 @@ use rayon::prelude::ParallelSliceMut;
 
 use crate::group::FileEntry;
 use crate::hash::{FixedDigest, HashWriter};
+use crate::serde::Output;
 
 const IO_BUF_SIZE: usize = 4096;
 
@@ -111,4 +113,22 @@ pub struct Group {
     pub file_size: u64,
     pub hash: String,
     pub files: Vec<PathBuf>,
+}
+
+pub fn parse_input_file<P: AsRef<Path>>(input: P) -> anyhow::Result<Vec<Group>> {
+    let mut data = Vec::new();
+    File::open(input)?.read_to_end(&mut data)?;
+    if data.is_empty() {
+        return Err(anyhow!("Empty input file"));
+    }
+    if data[0] == b'{' {
+        // treat as json
+        let json_str = std::str::from_utf8(&data)?;
+        let output: Output = serde_json::from_str(json_str)?;
+        return Ok(output.groups);
+    }
+
+    // binary format
+    let output: Output = bincode::deserialize(&data)?;
+    Ok(output.groups)
 }

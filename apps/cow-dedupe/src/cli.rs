@@ -24,9 +24,6 @@ pub struct GroupArgs {
     /// Output format
     #[arg(short = 'f', long, default_value = "default")]
     pub output_format: OutputFormat,
-    /// JSON or binary input file
-    #[arg(short, long)]
-    pub input_file: Option<String>,
     #[command(flatten)]
     pub common: CommonArgs,
 }
@@ -53,6 +50,9 @@ pub struct CommonArgs {
     /// Hashing algorithm to be used
     #[arg(long, default_value = "b3-512")]
     pub hash_fn: HashFn,
+    /// JSON or binary input file
+    #[arg(short, long)]
+    pub input_file: Option<String>,
 }
 
 #[derive(clap::ValueEnum, Debug, Clone, Copy)]

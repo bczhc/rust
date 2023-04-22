@@ -8,6 +8,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::cli::DedupeArgs;
 use crate::group::collect_and_group_files;
+use crate::parse_input_file;
 
 macro_rules! os_str {
     ($s:expr) => {
@@ -16,7 +17,10 @@ macro_rules! os_str {
 }
 
 pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
-    let groups = collect_and_group_files(&args.common)?;
+    let groups = match args.common.input_file {
+        None => collect_and_group_files(&args.common)?,
+        Some(f) => parse_input_file(&f)?,
+    };
 
     let operation_count = groups.iter().map(|x| x.files.len() as u64 - 1).sum::<u64>();
     let pb = if args.dry_run {
