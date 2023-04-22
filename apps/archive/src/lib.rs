@@ -439,36 +439,6 @@ impl CalcCrcChecksum<u32> for Entry {
     }
 }
 
-pub trait GenericOsStrExt {
-    fn from_bytes(_: &[u8]) -> &OsStr;
-
-    fn to_string(&self) -> String;
-}
-
-impl GenericOsStrExt for OsStr {
-    fn from_bytes(bytes: &[u8]) -> &OsStr {
-        cfg_if! {
-            if #[cfg(unix)] {
-                std::os::unix::ffi::OsStrExt::from_bytes(bytes)
-            } else {
-                let str = std::str::from_utf8(bytes).expect("Invalid UTF-8 meets");
-                OsStr::new(str)
-            }
-        }
-    }
-
-    fn to_string(&self) -> String {
-        cfg_if! {
-            if #[cfg(unix)] {
-                use std::os::unix::ffi::OsStrExt;
-                bczhc_lib::str::escape_utf8_bytes(self.as_bytes())
-            } else {
-                bczhc_lib::str::escape_utf8_bytes(self.to_str().expect("Invalid UTF-8 meets").as_bytes())
-            }
-        }
-    }
-}
-
 pub struct StreamPipe<'a, W>
 where
     W: Write,

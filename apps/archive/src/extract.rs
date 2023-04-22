@@ -11,11 +11,12 @@ use clap::ArgMatches;
 use filetime::FileTime;
 
 use bczhc_lib::io::OpenOrCreate;
+use bczhc_lib::str::GenericOsStrExt;
 
 use crate::compressors::{create_decompressor, Decompress, ExternalFilter};
 use crate::errors::*;
 use crate::reader::ArchiveReader;
-use crate::{Compression, FileType, GenericOsStrExt, LocalResultExt};
+use crate::{Compression, FileType, LocalResultExt};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let archive_path = matches.get_one::<String>("archive").unwrap();
@@ -76,7 +77,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         }
 
         // write to files ↓↓
-        println!("{}", path.as_os_str().to_string());
+        println!("{}", path.as_os_str().escape_to_string());
 
         match entry.file_type {
             FileType::Regular => {

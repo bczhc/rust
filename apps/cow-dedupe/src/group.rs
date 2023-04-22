@@ -5,8 +5,10 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 use bczhc_lib::mutex_lock;
+use bczhc_lib::str::GenericOsStrExt;
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
+use indicatif::{ProgressBar, ProgressStyle};
 use once_cell::sync::Lazy;
 use sha2::{Sha256, Sha512};
 use sha3::{Sha3_256, Sha3_512};
@@ -26,7 +28,6 @@ pub fn main(args: GroupArgs) -> anyhow::Result<()> {
     };
 
     let paths = &args.common.path;
-    eprintln!("Collecting files...");
     let mut entries = collect_file(paths, min_size)?;
     eprintln!("File entries: {}", entries.len());
     eprintln!("Grouping by size...");
@@ -87,7 +88,7 @@ where
             .yellow()
         );
         for x in x.1 {
-            println!("{}", x.path.display());
+            println!("{}", x.path.as_os_str().escape_to_string());
         }
         println!()
     }
@@ -101,8 +102,15 @@ pub struct FileEntry {
     pub size: u64,
 }
 
-/// Returns (path, file size)
 fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>> {
+    let progress_bar = ProgressBar::new_spinner();
+    progress_bar.set_style(
+        ProgressStyle::default_spinner()
+            .template("{msg} {pos}")
+            .unwrap(),
+    );
+    progress_bar.set_message("Collecting files".cyan().bold().to_string());
+
     let mut files_vec = Vec::new();
     for path in paths {
         let files = walkdir::WalkDir::new(path);
@@ -119,6 +127,7 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>
                     size: file_size,
                 });
             }
+            progress_bar.inc(1);
         }
     }
     Ok(files_vec)

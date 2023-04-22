@@ -18,13 +18,14 @@ use chrono::{DateTime, Utc};
 use crc_lib::Crc;
 
 use bczhc_lib::field_size;
+use bczhc_lib::str::GenericOsStrExt;
 
 use crate::compressors::Compress;
 use crate::crc::write::CrcFilter;
 use crate::errors::Result;
 use crate::{
-    CalcCrcChecksum, Compression, Entry, EntryChecksum, FileType, FixedStoredSize, GenericOsStrExt,
-    GetStoredSize, Header, Info, Timestamp, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
+    CalcCrcChecksum, Compression, Entry, EntryChecksum, FileType, FixedStoredSize, GetStoredSize,
+    Header, Info, Timestamp, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
 };
 
 pub struct Archive<'a, W>
@@ -144,7 +145,7 @@ where
         cfg_if! {
             if #[cfg(unix)] {
                 if file_type.is_socket() {
-                    eprintln!("{}: socket ignored", path.to_string());
+                    eprintln!("{}: socket ignored", path.escape_to_string());
                     return Ok(());
                 }
             }
@@ -261,7 +262,7 @@ where
 
         for (path, entry) in self.entries.iter_mut() {
             let stored_path = OsStr::from_bytes(&entry.path);
-            println!("{}", stored_path.to_string());
+            println!("{}", stored_path.escape_to_string());
 
             if entry.file_type != FileType::Regular {
                 continue;

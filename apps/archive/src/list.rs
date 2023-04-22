@@ -1,12 +1,13 @@
 use std::ffi::OsStr;
 
+use bczhc_lib::str::GenericOsStrExt;
 use clap::ArgMatches;
 use prettytable::{format, row, Table};
 
 use crate::errors::Result;
 use crate::info::print_info;
 use crate::reader::ArchiveReader;
-use crate::{FileType, GenericOsStrExt};
+use crate::FileType;
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let path = matches.get_one::<String>("archive").unwrap();
@@ -31,7 +32,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         let entry = entry?;
         let path_bytes = &entry.path[..];
         let path = OsStr::from_bytes(path_bytes);
-        let path_string = path.to_string();
+        let path_string = path.escape_to_string();
 
         if entry.file_type == FileType::Regular {
             let compression_ratio = entry.original_size as f64 / entry.stored_size as f64;
