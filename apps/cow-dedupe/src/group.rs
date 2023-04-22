@@ -20,7 +20,7 @@ use bczhc_lib::str::GenericOsStrExt;
 use crate::cli::{CommonArgs, GroupArgs, HashFn, OutputFormat};
 use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
 use crate::serde::build_output;
-use crate::{group_by_content, group_by_size, parse_input_file, Group};
+use crate::{group_by_hash, group_by_size, parse_input_file, FileFullHasher, Group};
 
 static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
 
@@ -100,7 +100,8 @@ where
     // group_by_fragments(files)?;
     // eprintln!("File entries: {}", files.len());
     eprintln!("Grouping by file content...");
-    let mut groups = group_by_content::<H>(files)?;
+    let mut groups =
+        group_by_hash::<H, FileFullHasher, _, _>(|| files.iter().map(|x| x.as_slice()))?;
     eprintln!("Group count: {}", groups.len());
     let duplicated_file_group_count = groups.iter().filter(|x| x.1.len() >= 2).count();
     eprintln!("Duplicated file groups: {}", duplicated_file_group_count);

@@ -2,6 +2,8 @@
 #![feature(generic_const_exprs)]
 #![feature(slice_group_by)]
 
+extern crate core;
+
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
@@ -37,24 +39,55 @@ pub fn group_by_size(entries: &mut Vec<FileEntry>) -> Vec<Vec<FileEntry>> {
         .collect::<Vec<_>>()
 }
 
-/// 50 bytes after file start
-/// 50 bytes before file end
-/// middle 100 bytes
-pub fn group_by_fragments(entries: &mut Vec<Vec<FileEntry>>) -> io::Result<()> {
-    todo!()
+pub trait FileHash<H>
+where
+    H: FixedDigest,
+{
+    fn hash<P: AsRef<Path>, F>(p: P, progress: F) -> io::Result<[u8; H::OutputSize::USIZE]>
+    where
+        [(); H::OutputSize::USIZE]:,
+        [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,
+        F: Fn(usize);
 }
 
-pub fn group_by_content<H: FixedDigest>(
-    entries: &mut Vec<Vec<FileEntry>>,
+/// Hash the whole file
+pub struct FileFullHasher;
+/// 1. 50 bytes from file start
+/// 1. 50 bytes from file end
+/// 1. 100 bytes through file middle
+pub struct FileFragmentsHasher;
+
+impl<H> FileHash<H> for FileFullHasher
+where
+    H: FixedDigest,
+{
+    fn hash<P: AsRef<Path>, F>(p: P, progress: F) -> io::Result<[u8; H::OutputSize::USIZE]>
+    where
+        [(); H::OutputSize::USIZE]:,
+        [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,
+        F: Fn(usize),
+    {
+        let mut file = File::open(p)?;
+
+        let mut hasher = HashWriter(H::new());
+        io_copy_with_progress(&mut file, &mut hasher, progress)?;
+        Ok(hasher.0.finalize_fixed().into())
+    }
+}
+
+pub fn group_by_hash<'a, H, FH: FileHash<H>, G, I>(
+    entries_iter_getter: G,
 ) -> io::Result<Vec<([u8; H::OutputSize::USIZE], Vec<FileEntry>)>>
 where
+    H: FixedDigest,
     [(); H::OutputSize::USIZE]:,
     [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,
+    G: Fn() -> I,
+    I: Iterator<Item = &'a [FileEntry]>,
 {
     let mut groups = Vec::new();
 
-    let total_file_size = entries
-        .iter()
+    let total_file_size = entries_iter_getter()
         .map(|x| x.iter().map(|x| x.size).sum::<u64>())
         .sum();
     let progress_bar = ProgressBar::new(total_file_size);
@@ -65,16 +98,12 @@ where
     );
     progress_bar.set_message("Hashing files".cyan().bold().to_string());
 
-    for g in entries {
+    for g in entries_iter_getter() {
         let mut vec: Vec<(FileEntry, [u8; H::OutputSize::USIZE])> = Vec::new();
         for x in g.iter() {
-            let mut hasher = HashWriter(H::new());
-            let mut file = File::open(&x.path)?;
-            io_copy_with_progress(&mut file, &mut hasher, |s| {
+            let digest = FH::hash(&x.path, |s| {
                 progress_bar.inc(s as u64);
             })?;
-
-            let digest: [u8; H::OutputSize::USIZE] = hasher.0.finalize_fixed().into();
             vec.push((x.clone(), digest));
         }
         vec.par_sort_by_key(|x| x.1);
