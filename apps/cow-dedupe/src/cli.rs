@@ -35,7 +35,7 @@ pub struct DedupeArgs {
 pub struct CommonArgs {
     /// Minimum size filter
     #[arg(short, long)]
-    pub min_size: Option<u64>,
+    pub min_size: Option<String>,
     /// Paths
     #[arg(required = true)]
     pub path: Vec<String>,
