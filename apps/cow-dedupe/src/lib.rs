@@ -37,6 +37,7 @@ pub fn group_by_size(entries: &mut Vec<FileEntry>) -> Vec<Vec<FileEntry>> {
     entries
         .group_by(|a, b| a.size == b.size)
         .map(Vec::from)
+        .filter(|x| x.len() >= 2)
         .collect::<Vec<_>>()
 }
 
@@ -180,7 +181,9 @@ where
         for x in vec.group_by(|a, b| a.1 == b.1) {
             let hash = x[0].1;
             let group = x.iter().map(|x| x.0.clone()).collect::<Vec<_>>();
-            groups.push((hash, group));
+            if group.len() >= 2 {
+                groups.push((hash, group));
+            }
         }
     }
     Ok(groups)

@@ -65,7 +65,11 @@ pub fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> 
     eprintln!("File entries: {}", entries.len());
     eprintln!("Grouping by size...");
     let mut groups = group_by_size(&mut entries);
-    eprintln!("Group count: {}", groups.len());
+    groups.retain(|x| x.len() >= 2);
+    eprintln!(
+        "File entries: {}",
+        groups.iter().map(|x| x.len()).sum::<usize>()
+    );
 
     let groups = match args.hash_fn {
         HashFn::B3_128 => generic_group_files_by_hash::<B3_128>(&mut groups),
@@ -92,7 +96,7 @@ pub fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> 
 
 /// returns a vec of tuples, and each tuple is (hash, duplicated files)
 fn generic_group_files_by_hash<H: FixedDigest>(
-    files: &mut Vec<Vec<FileEntry>>,
+    files: &mut [Vec<FileEntry>],
 ) -> anyhow::Result<Vec<(Vec<u8>, Vec<FileEntry>)>>
 where
     [(); H::OutputSize::USIZE]:,
