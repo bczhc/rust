@@ -53,7 +53,7 @@ pub fn main(args: GroupArgs) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> {
+pub fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> {
     let min_size = match args.min_size.parse::<ByteSize>() {
         Ok(s) => s.0,
         Err(e) => return Err(anyhow::anyhow!("Invalid min size: {}", e)),

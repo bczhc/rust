@@ -36,6 +36,8 @@ pub struct DedupeArgs {
     /// Don't do anything; just print the size of duplicated files
     #[arg(short, long)]
     pub dry_run: bool,
+    #[arg(long, default_value = "yes")]
+    pub use_cp_cmd: YesNoChoice,
     #[command(flatten)]
     pub common: CommonArgs,
 }
@@ -72,4 +74,22 @@ pub enum OutputFormat {
     Default,
     Json,
     Binary,
+}
+
+#[derive(clap::ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum YesNoChoice {
+    Yes,
+    No,
+}
+
+impl YesNoChoice {
+    #[inline]
+    pub fn yes(&self) -> bool {
+        *self == Self::Yes
+    }
+
+    #[inline]
+    pub fn no(&self) -> bool {
+        !self.yes()
+    }
 }
