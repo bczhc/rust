@@ -64,16 +64,20 @@ pub fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> 
 
     let paths = &args.path;
     let entries = collect_file(paths, min_size);
-    eprintln!("File entries: {}", entries.len());
-    eprintln!("Removing hardlinks...");
+    println!("{}", format!("File entries: {}", entries.len()).cyan());
+    eprintln!("{}", "Removing hardlinks...".cyan());
     let mut entries = unique_by_hardlinks(&entries);
-    eprintln!("File entries: {}", entries.len());
-    eprintln!("Grouping by size...");
+    println!("{}", format!("File entries: {}", entries.len()).cyan());
+    eprintln!("{}", "Grouping by size...".cyan());
     let mut groups = group_by_size(&mut entries);
     groups.retain(|x| x.len() >= 2);
-    eprintln!(
-        "File entries: {}",
-        groups.iter().map(|x| x.len()).sum::<usize>()
+    println!(
+        "{}",
+        format!(
+            "File entries: {}",
+            groups.iter().map(|x| x.len()).sum::<usize>()
+        )
+        .cyan()
     );
 
     let groups = match args.hash_fn {
@@ -107,16 +111,19 @@ where
     [(); H::OutputSize::USIZE]:,
     [u8; H::OutputSize::USIZE]: From<GenericArray<u8, H::OutputSize>>,
 {
-    eprintln!("Grouping by file fragments");
+    eprintln!("{}", "Grouping by file fragments".cyan());
     let groups =
         group_by_hash::<H, FileFragmentsHasher, _, _>(|| files.iter().map(|x| x.as_slice()))?;
-    eprintln!("File entries: {}", groups.len());
-    eprintln!("Grouping by file content...");
+    println!("{}", format!("File entries: {}", groups.len()).cyan());
+    eprintln!("{}", "Grouping by file content...".cyan());
     let mut groups =
         group_by_hash::<H, FileFullHasher, _, _>(|| groups.iter().map(|x| x.1.as_slice()))?;
-    eprintln!("Group count: {}", groups.len());
+    println!("{}", format!("Group count: {}", groups.len()).cyan());
     let duplicated_file_group_count = groups.iter().filter(|x| x.1.len() >= 2).count();
-    eprintln!("Duplicated file groups: {}", duplicated_file_group_count);
+    println!(
+        "{}",
+        format!("Duplicated file groups: {}", duplicated_file_group_count).cyan()
+    );
 
     groups.par_sort_by_key(|x| Reverse(x.1[0].size));
 
