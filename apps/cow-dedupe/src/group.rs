@@ -63,7 +63,7 @@ pub fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> 
     };
 
     let paths = &args.path;
-    let entries = collect_file(paths, min_size)?;
+    let entries = collect_file(paths, min_size);
     eprintln!("File entries: {}", entries.len());
     eprintln!("Removing hardlinks...");
     let mut entries = unique_by_hardlinks(&entries);
@@ -140,7 +140,7 @@ pub struct FileEntry {
     pub inode: Option<u64>,
 }
 
-fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>> {
+fn collect_file(paths: &Vec<String>, min_size: u64) -> Vec<FileEntry> {
     let progress_bar = ProgressBar::new_spinner();
     progress_bar.set_style(
         ProgressStyle::default_spinner()
@@ -153,29 +153,34 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>
     for path in paths {
         let files = jwalk::WalkDir::new(path);
         for entry in files {
-            let entry = entry?;
-            if !entry.file_type().is_file() {
-                continue;
-            }
-            let metadata = entry.metadata()?;
-            let file_size = metadata.len();
-            if file_size >= min_size {
-                let mut entry = FileEntry {
-                    path: entry.path(),
-                    size: file_size,
-                    inode: None,
-                };
-                #[cfg(unix)]
-                {
-                    use std::os::unix::prelude::MetadataExt;
-                    entry.inode = Some(metadata.ino());
+            let result: io::Result<()> = try {
+                let entry = entry?;
+                if !entry.file_type().is_file() {
+                    continue;
                 }
-                files_vec.push(entry);
+                let metadata = entry.metadata()?;
+                let file_size = metadata.len();
+                if file_size >= min_size {
+                    let mut entry = FileEntry {
+                        path: entry.path(),
+                        size: file_size,
+                        inode: None,
+                    };
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::prelude::MetadataExt;
+                        entry.inode = Some(metadata.ino());
+                    }
+                    files_vec.push(entry);
+                }
+            };
+            if let Err(e) = result {
+                eprintln!("Entry read error: {}", e);
             }
             progress_bar.inc(1);
         }
     }
-    Ok(files_vec)
+    files_vec
 }
 
 fn print_groups(groups: &[Group]) {

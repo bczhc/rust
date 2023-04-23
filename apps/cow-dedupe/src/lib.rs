@@ -1,6 +1,7 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 #![feature(slice_group_by)]
+#![feature(try_blocks)]
 
 extern crate core;
 
@@ -154,6 +155,7 @@ where
             .map(|x| x.len() as u64 * FileFragmentsHasher::TOTAL_SIZE as u64)
             .sum::<u64>()
     } else {
+        assert_eq!(TypeId::of::<FH>(), TypeId::of::<FileFullHasher>());
         entries_iter_getter()
             .map(|x| x.iter().map(|x| x.size).sum::<u64>())
             .sum::<u64>()
