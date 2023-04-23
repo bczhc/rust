@@ -174,10 +174,15 @@ where
     for g in entries_iter_getter() {
         let mut vec: Vec<(FileEntry, [u8; H::OutputSize::USIZE])> = Vec::new();
         for x in g.iter() {
-            let digest = FH::hash(&x.path, |s| {
-                progress_bar.inc(s as u64);
-            })?;
-            vec.push((x.clone(), digest));
+            let result: io::Result<()> = try {
+                let digest = FH::hash(&x.path, |s| {
+                    progress_bar.inc(s as u64);
+                })?;
+                vec.push((x.clone(), digest));
+            };
+            if let Err(e) = result {
+                eprintln!("File hashing failed: {}", e);
+            }
         }
         vec.par_sort_by_key(|x| x.1);
         for x in vec.group_by(|a, b| a.1 == b.1) {

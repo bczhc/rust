@@ -46,56 +46,60 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
             if let Some(ref x) = pb {
                 x.inc(1)
             };
-            if args.use_cp_cmd.yes() {
-                // use `cp` command
-                let cmd = [
-                    os_str!("cp"),
-                    os_str!("--reflink"),
-                    // archive mode
-                    os_str!("-a"),
-                    src.as_os_str(),
-                    dest.as_os_str(),
-                ];
+            let result: anyhow::Result<()> = try {
+                if args.use_cp_cmd.yes() {
+                    // use `cp` command
+                    let cmd = [
+                        os_str!("cp"),
+                        os_str!("--reflink"),
+                        // archive mode
+                        os_str!("-a"),
+                        src.as_os_str(),
+                        dest.as_os_str(),
+                    ];
 
-                if args.dry_run {
-                    println!("{:?}", cmd);
+                    if args.dry_run {
+                        println!("{:?}", cmd);
+                    } else {
+                        let mut child = Command::new(cmd[0])
+                            .args(&cmd[1..])
+                            .stdin(Stdio::null())
+                            .stdout(Stdio::inherit())
+                            .stderr(Stdio::inherit())
+                            .spawn()?;
+                        let status = child.wait()?;
+                        if !status.success() {
+                            Err(anyhow!(
+                                "Program exited with non-zero status: {}; cmd: {:?}",
+                                status,
+                                cmd
+                            ))?;
+                        }
+                    }
                 } else {
-                    let mut child = Command::new(cmd[0])
-                        .args(&cmd[1..])
-                        .stdin(Stdio::null())
-                        .stdout(Stdio::inherit())
-                        .stderr(Stdio::inherit())
-                        .spawn()?;
-                    let status = child.wait()?;
-                    if !status.success() {
-                        return Err(anyhow!(
-                            "Program exited with non-zero status: {}; cmd: {:?}",
-                            status,
-                            cmd
-                        ));
+                    // use `reflink` crate
+                    // TODO: by this approach I'm not familiar about its internal details
+                    //  and have some trouble preserving the file timestamp, which is
+                    //  important in my use case. So I by default choose using
+                    //  `ls --reflink -a` command.
+                    if args.dry_run {
+                        println!("{:?} -> {:?}", src, dest);
+                    } else {
+                        // first the dest file should be deleted
+                        remove_file(dest)
+                            .map_err(|e| anyhow!("Dest file lost: {}, {:?}", e, dest))?;
+                        reflink::reflink(src, dest)?;
+                        if !dest.exists() {
+                            Err(anyhow!(
+                                "Check failed: destination file doesn't exist: {:?}",
+                                dest
+                            ))?;
+                        }
                     }
                 }
-            } else {
-                // use `reflink` crate
-                // TODO: by this approach I'm not familiar about its internal details
-                //  and have some trouble preserving the file timestamp, which is
-                //  important in my use case. So I by default choose using
-                //  `ls --reflink -a` command.
-                if args.dry_run {
-                    println!("{:?} -> {:?}", src, dest);
-                } else {
-                    // first the dest file should be deleted
-                    remove_file(dest).map_err(|e| anyhow!("Dest file lost: {}, {:?}", e, dest))?;
-                    reflink::reflink(src, dest).map_err(|e| {
-                        anyhow!("Failed to reflink: {}, {:?} -> {:?}", e, src, dest)
-                    })?;
-                    if !dest.exists() {
-                        return Err(anyhow!(
-                            "Check failed: destination file doesn't exist: {:?}",
-                            dest
-                        ));
-                    }
-                }
+            };
+            if let Err(e) = result {
+                eprintln!("Reflinking error: {}", e);
             }
         }
     }
