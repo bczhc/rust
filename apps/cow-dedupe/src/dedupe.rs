@@ -43,9 +43,7 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
         let files = &group.files;
         let src = &files[0];
         for dest in files.iter().skip(1) {
-            if let Some(ref x) = pb {
-                x.inc(1)
-            };
+            pb.then(|x| x.inc(1));
             let result: anyhow::Result<()> = try {
                 if args.use_cp_cmd.yes() {
                     // use `cp` command
@@ -61,17 +59,33 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
                     if args.dry_run {
                         println!("{:?}", cmd);
                     } else {
-                        let mut child = Command::new(cmd[0])
+                        let child = Command::new(cmd[0])
                             .args(&cmd[1..])
                             .stdin(Stdio::null())
-                            .stdout(Stdio::inherit())
-                            .stderr(Stdio::inherit())
+                            .stderr(Stdio::piped())
+                            .stdout(Stdio::piped())
                             .spawn()?;
-                        let status = child.wait()?;
-                        if !status.success() {
+                        let output = child.wait_with_output()?;
+                        if !output.stderr.is_empty() {
+                            pb.then(|x| {
+                                x.println(format!(
+                                    "cmd stderr: {}",
+                                    String::from_utf8_lossy(&output.stderr)
+                                ));
+                            });
+                        }
+                        if !output.stdout.is_empty() {
+                            pb.then(|x| {
+                                x.println(format!(
+                                    "cmd stdout: {}",
+                                    String::from_utf8_lossy(&output.stdout)
+                                ))
+                            });
+                        };
+                        if !output.status.success() {
                             Err(anyhow!(
                                 "Program exited with non-zero status: {}; cmd: {:?}",
-                                status,
+                                output.status,
                                 cmd
                             ))?;
                         }
@@ -98,11 +112,29 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
                     }
                 }
             };
-            if let Err(e) = result {
-                eprintln!("Reflinking error: {}", e);
+            if let Err(e) = result && let Some(ref b) = pb {
+                b.println(format!("Reflinking error: {}", e));
             }
         }
     }
 
     Ok(())
+}
+
+trait OptionThen<T> {
+    fn then<F>(&self, f: F)
+    where
+        F: Fn(&T);
+}
+
+impl<T> OptionThen<T> for Option<T> {
+    #[inline]
+    fn then<F>(&self, f: F)
+    where
+        F: Fn(&T),
+    {
+        if let Some(s) = self {
+            f(s)
+        }
+    }
 }

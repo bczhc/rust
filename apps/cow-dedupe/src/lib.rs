@@ -2,6 +2,7 @@
 #![feature(generic_const_exprs)]
 #![feature(slice_group_by)]
 #![feature(try_blocks)]
+#![feature(let_chains)]
 
 extern crate core;
 
@@ -181,7 +182,7 @@ where
                 vec.push((x.clone(), digest));
             };
             if let Err(e) = result {
-                eprintln!("File hashing failed: {}", e);
+                progress_bar.println(format!("File hashing failed: {}", e));
             }
         }
         vec.par_sort_by_key(|x| x.1);

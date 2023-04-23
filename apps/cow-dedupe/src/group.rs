@@ -182,7 +182,7 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> Vec<FileEntry> {
                 }
             };
             if let Err(e) = result {
-                eprintln!("Entry read error: {}", e);
+                progress_bar.println(format!("Entry read error: {}", e));
             }
             progress_bar.inc(1);
         }
