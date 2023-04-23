@@ -8,7 +8,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::cli::DedupeArgs;
 use crate::group::collect_and_group_files;
-use crate::parse_input_file;
+use crate::{parse_input_file, print_redundant_size};
 
 macro_rules! os_str {
     ($s:expr) => {
@@ -21,6 +21,8 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
         None => collect_and_group_files(&args.common)?,
         Some(f) => parse_input_file(&f)?,
     };
+
+    print_redundant_size(&groups);
 
     let operation_count = groups.iter().map(|x| x.files.len() as u64 - 1).sum::<u64>();
     let pb = if args.dry_run {
@@ -35,15 +37,6 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
         pb.set_message("Reflinking".cyan().bold().to_string());
         Some(pb)
     };
-
-    let redundant_size = groups
-        .iter()
-        .map(|x| x.file_size * (x.files.len() as u64 - 1))
-        .sum::<u64>();
-    eprintln!(
-        "Redundant size: {}",
-        bytesize::to_string(redundant_size, true)
-    );
 
     // TODO: to many messy branches
     for group in groups {

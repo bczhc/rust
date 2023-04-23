@@ -256,3 +256,17 @@ pub fn unique_by_hardlinks(entries: &[FileEntry]) -> Vec<FileEntry> {
     inode_none.extend(inode_some);
     inode_none
 }
+
+pub fn group_redundant_size(groups: &[Group]) -> u64 {
+    groups
+        .iter()
+        .map(|x| x.file_size * (x.files.len() as u64 - 1))
+        .sum::<u64>()
+}
+
+pub fn print_redundant_size(groups: &[Group]) {
+    eprintln!(
+        "Redundant size: {}",
+        bytesize::to_string(group_redundant_size(groups), true)
+    );
+}

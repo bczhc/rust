@@ -21,8 +21,8 @@ use crate::cli::{CommonArgs, GroupArgs, HashFn, OutputFormat};
 use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
 use crate::serde::build_output;
 use crate::{
-    group_by_hash, group_by_size, parse_input_file, unique_by_hardlinks, FileFragmentsHasher,
-    FileFullHasher, Group,
+    group_by_hash, group_by_size, parse_input_file, print_redundant_size, unique_by_hardlinks,
+    FileFragmentsHasher, FileFullHasher, Group,
 };
 
 static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
@@ -38,6 +38,7 @@ pub fn main(args: GroupArgs) -> anyhow::Result<()> {
     }
 
     let groups = collect_and_group_files(&args.common)?;
+    print_redundant_size(&groups);
 
     // print out
     let output_format = mutex_lock!(ARGS).as_ref().unwrap().output_format;
