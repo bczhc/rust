@@ -237,3 +237,22 @@ pub fn parse_input_file<P: AsRef<Path>>(input: P) -> anyhow::Result<Vec<Group>> 
 const fn max(a: usize, b: usize) -> usize {
     [a, b][(a < b) as usize]
 }
+
+pub fn unique_by_hardlinks(entries: &[FileEntry]) -> Vec<FileEntry> {
+    let mut inode_none = Vec::from_iter(
+        entries
+            .iter()
+            .filter(|x| x.inode.is_none())
+            .map(Clone::clone),
+    );
+    let mut inode_some = Vec::from_iter(
+        entries
+            .iter()
+            .filter(|x| x.inode.is_some())
+            .map(Clone::clone),
+    );
+    inode_some.par_sort_by_key(|x| x.inode.unwrap());
+    inode_some.dedup_by_key(|x| x.inode.unwrap());
+    inode_none.extend(inode_some);
+    inode_none
+}

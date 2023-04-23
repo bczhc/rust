@@ -21,7 +21,8 @@ use crate::cli::{CommonArgs, GroupArgs, HashFn, OutputFormat};
 use crate::hash::{FixedDigest, B3_1024, B3_128, B3_160, B3_2048, B3_256, B3_512};
 use crate::serde::build_output;
 use crate::{
-    group_by_hash, group_by_size, parse_input_file, FileFragmentsHasher, FileFullHasher, Group,
+    group_by_hash, group_by_size, parse_input_file, unique_by_hardlinks, FileFragmentsHasher,
+    FileFullHasher, Group,
 };
 
 static ARGS: Lazy<Mutex<Option<GroupArgs>>> = Lazy::new(|| Mutex::new(None));
@@ -61,7 +62,10 @@ pub fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> 
     };
 
     let paths = &args.path;
-    let mut entries = collect_file(paths, min_size)?;
+    let entries = collect_file(paths, min_size)?;
+    eprintln!("File entries: {}", entries.len());
+    eprintln!("Removing hardlinks...");
+    let mut entries = unique_by_hardlinks(&entries);
     eprintln!("File entries: {}", entries.len());
     eprintln!("Grouping by size...");
     let mut groups = group_by_size(&mut entries);
@@ -132,6 +136,7 @@ where
 pub struct FileEntry {
     pub path: PathBuf,
     pub size: u64,
+    pub inode: Option<u64>,
 }
 
 fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>> {
@@ -154,10 +159,17 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> io::Result<Vec<FileEntry>
             let metadata = entry.metadata()?;
             let file_size = metadata.len();
             if file_size >= min_size {
-                files_vec.push(FileEntry {
+                let mut entry = FileEntry {
                     path: entry.path(),
                     size: file_size,
-                });
+                    inode: None,
+                };
+                #[cfg(unix)]
+                {
+                    use std::os::unix::prelude::MetadataExt;
+                    entry.inode = Some(metadata.ino());
+                }
+                files_vec.push(entry);
             }
             progress_bar.inc(1);
         }
