@@ -32,7 +32,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         let entry = entry?;
         let path_bytes = &entry.path[..];
         let path = OsStr::from_bytes(path_bytes);
-        let path_string = path.escape_to_string();
+        let path_string = path.escape();
 
         if entry.file_type == FileType::Regular {
             let compression_ratio = entry.original_size as f64 / entry.stored_size as f64;

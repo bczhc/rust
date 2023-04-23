@@ -183,11 +183,7 @@ where
                 vec.push((x.clone(), digest));
             };
             if let Err(e) = result {
-                progress_bar.println(format!(
-                    "File hashing failed ({}): {}",
-                    x.path.as_os_str().escape_to_string(),
-                    e
-                ));
+                progress_bar.println(format!("File hashing failed ({}): {}", x.path.escape(), e));
             }
         }
         vec.par_sort_by_key(|x| x.1);

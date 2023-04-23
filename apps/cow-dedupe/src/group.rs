@@ -212,7 +212,7 @@ fn print_groups(groups: &[Group]) {
             .yellow()
         );
         for x in &x.files {
-            println!("{}", x.as_os_str().escape_to_string());
+            println!("{}", x.escape());
         }
         println!()
     }

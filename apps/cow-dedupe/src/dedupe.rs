@@ -116,8 +116,8 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
             if let Err(e) = result && let Some(ref b) = pb {
                 b.println(format!(
                     "Reflinking error: ({} -> {}) {}",
-                    src.as_os_str().escape_to_string(),
-                    dest.as_os_str().escape_to_string(),
+                    src.escape(),
+                    dest.escape(),
                     e
                 ));
             }

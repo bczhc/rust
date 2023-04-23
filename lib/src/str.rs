@@ -81,10 +81,13 @@ pub trait GenericOsStrExt {
     /// On windows, when the data is not UTF-8 encoded, this panics!
     fn from_bytes(_: &[u8]) -> &OsStr;
 
-    fn escape_to_string(&self) -> String;
+    fn escape(&self) -> String;
 }
 
-impl GenericOsStrExt for OsStr {
+impl<T> GenericOsStrExt for T
+where
+    T: AsRef<OsStr>,
+{
     fn from_bytes(bytes: &[u8]) -> &OsStr {
         cfg_if! {
             if #[cfg(unix)] {
@@ -96,11 +99,11 @@ impl GenericOsStrExt for OsStr {
         }
     }
 
-    fn escape_to_string(&self) -> String {
+    fn escape(&self) -> String {
         cfg_if! {
             if #[cfg(unix)] {
                 use std::os::unix::ffi::OsStrExt;
-                escape_utf8_bytes(self.as_bytes())
+                escape_utf8_bytes(self.as_ref().as_bytes())
             } else {
                 escape_utf8_bytes(self.to_str().expect("Invalid UTF-8 meets").as_bytes())
             }

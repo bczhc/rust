@@ -47,7 +47,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
             }
         };
 
-        let path_name = OsStr::from_bytes(&entry.path).escape_to_string();
+        let path_name = OsStr::from_bytes(&entry.path).escape();
         line_progress.update(progress, path_name.clone())?;
 
         if entry.file_type != FileType::Regular {

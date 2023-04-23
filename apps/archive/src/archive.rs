@@ -145,7 +145,7 @@ where
         cfg_if! {
             if #[cfg(unix)] {
                 if file_type.is_socket() {
-                    eprintln!("{}: socket ignored", path.escape_to_string());
+                    eprintln!("{}: socket ignored", path.escape());
                     return Ok(());
                 }
             }
@@ -262,7 +262,7 @@ where
 
         for (path, entry) in self.entries.iter_mut() {
             let stored_path = OsStr::from_bytes(&entry.path);
-            println!("{}", stored_path.escape_to_string());
+            println!("{}", stored_path.escape());
 
             if entry.file_type != FileType::Regular {
                 continue;

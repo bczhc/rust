@@ -77,7 +77,7 @@ pub fn main(matches: &ArgMatches) -> Result<()> {
         }
 
         // write to files ↓↓
-        println!("{}", path.as_os_str().escape_to_string());
+        println!("{}", path.escape());
 
         match entry.file_type {
             FileType::Regular => {
