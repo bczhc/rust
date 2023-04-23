@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 
 use ::serde::{Deserialize, Serialize};
 use anyhow::anyhow;
+use bczhc_lib::str::GenericOsStrExt;
 use colored::Colorize;
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
@@ -182,7 +183,11 @@ where
                 vec.push((x.clone(), digest));
             };
             if let Err(e) = result {
-                progress_bar.println(format!("File hashing failed: {}", e));
+                progress_bar.println(format!(
+                    "File hashing failed ({}): {}",
+                    x.path.as_os_str().escape_to_string(),
+                    e
+                ));
             }
         }
         vec.par_sort_by_key(|x| x.1);

@@ -3,6 +3,7 @@ use std::fs::remove_file;
 use std::process::{Command, Stdio};
 
 use anyhow::anyhow;
+use bczhc_lib::str::GenericOsStrExt;
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 
@@ -113,7 +114,12 @@ pub fn main(args: DedupeArgs) -> anyhow::Result<()> {
                 }
             };
             if let Err(e) = result && let Some(ref b) = pb {
-                b.println(format!("Reflinking error: {}", e));
+                b.println(format!(
+                    "Reflinking error: ({} -> {}) {}",
+                    src.as_os_str().escape_to_string(),
+                    dest.as_os_str().escape_to_string(),
+                    e
+                ));
             }
         }
     }
