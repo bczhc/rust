@@ -596,3 +596,25 @@ where
         }
     }
 }
+
+pub trait OsStrExt {
+    /// Convert raw bytes to OsStr
+    ///
+    /// # Panics
+    ///
+    /// On windows, when the data is not UTF-8 encoded, this panics!
+    fn from_bytes(_: &[u8]) -> &OsStr;
+}
+
+impl OsStrExt for OsStr {
+    fn from_bytes(bytes: &[u8]) -> &OsStr {
+        cfg_if! {
+            if #[cfg(unix)] {
+                std::os::unix::ffi::OsStrExt::from_bytes(bytes)
+            } else {
+                let str = std::str::from_utf8(bytes).expect("Invalid UTF-8 meets");
+                OsStr::new(str)
+            }
+        }
+    }
+}

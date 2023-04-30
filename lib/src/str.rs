@@ -74,13 +74,6 @@ pub fn escape_utf8_bytes(data: &[u8]) -> String {
 }
 
 pub trait GenericOsStrExt {
-    /// Convert raw bytes to OsStr
-    ///
-    /// # Panics
-    ///
-    /// On windows, when the data is not UTF-8 encoded, this panics!
-    fn from_bytes(_: &[u8]) -> &OsStr;
-
     fn escape(&self) -> String;
 }
 
@@ -88,24 +81,13 @@ impl<T> GenericOsStrExt for T
 where
     T: AsRef<OsStr>,
 {
-    fn from_bytes(bytes: &[u8]) -> &OsStr {
-        cfg_if! {
-            if #[cfg(unix)] {
-                std::os::unix::ffi::OsStrExt::from_bytes(bytes)
-            } else {
-                let str = std::str::from_utf8(bytes).expect("Invalid UTF-8 meets");
-                OsStr::new(str)
-            }
-        }
-    }
-
     fn escape(&self) -> String {
         cfg_if! {
             if #[cfg(unix)] {
                 use std::os::unix::ffi::OsStrExt;
                 escape_utf8_bytes(self.as_ref().as_bytes())
             } else {
-                escape_utf8_bytes(self.to_str().expect("Invalid UTF-8 meets").as_bytes())
+                escape_utf8_bytes(self.as_ref().to_str().expect("Invalid UTF-8 meets").as_bytes())
             }
         }
     }

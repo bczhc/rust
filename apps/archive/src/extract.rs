@@ -16,7 +16,7 @@ use bczhc_lib::str::GenericOsStrExt;
 use crate::compressors::{create_decompressor, Decompress, ExternalFilter};
 use crate::errors::*;
 use crate::reader::ArchiveReader;
-use crate::{Compression, FileType, LocalResultExt};
+use crate::{Compression, FileType, LocalResultExt, OsStrExt};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let archive_path = matches.get_one::<String>("archive").unwrap();

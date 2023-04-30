@@ -10,7 +10,7 @@ use crate::errors::*;
 use crate::info::print_info;
 use crate::line_progress::LineProgress;
 use crate::reader::ArchiveReader;
-use crate::{DigestWriter, FileType, FILE_CRC_64};
+use crate::{DigestWriter, FileType, OsStrExt, FILE_CRC_64};
 
 pub fn main(matches: &ArgMatches) -> Result<()> {
     let mut has_error = false;

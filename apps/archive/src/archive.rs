@@ -25,7 +25,7 @@ use crate::crc::write::CrcFilter;
 use crate::errors::Result;
 use crate::{
     CalcCrcChecksum, Compression, Entry, EntryChecksum, FileType, FixedStoredSize, GetStoredSize,
-    Header, Info, Timestamp, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
+    Header, Info, OsStrExt, Timestamp, WriteTo, ENTRY_MAGIC, FILE_CRC_64, FILE_MAGIC, VERSION,
 };
 
 pub struct Archive<'a, W>
