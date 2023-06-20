@@ -38,4 +38,5 @@ members = [
     "apps/ucd-parser",
     "apps/x11-event-monitor",
     "apps/anybase",
+    "apps/image-stegano-bg",
 ]
