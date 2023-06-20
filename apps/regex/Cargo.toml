@@ -6,4 +6,5 @@ edition = "2021"
 [dependencies]
 regex = "1.7.2"
 clap = "2.34.0"
-pcre2 = { git = "https://github.com/bczhc/rust-pcre2", branch = "aarch64-disable-jit" }
+pcre2-sys = "0.2.6"
+pcre2 = "0.2.4"
