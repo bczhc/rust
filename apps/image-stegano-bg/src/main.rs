@@ -10,6 +10,10 @@ use image_stegano_bg::cli::CliArgs;
 fn main() -> anyhow::Result<()> {
     let args = CliArgs::parse();
 
+    if !(0.0..=1.0).contains(&args.image1_dim) || !(0.0..=1.0).contains(&args.image2_dim) {
+        return Err(anyhow!("dim value should be within 0.0 and 1.0"));
+    }
+
     println!("Loading...");
     let image1 = image::open(&args.image1)?;
     let image2 = image::open(&args.image2)?;
@@ -29,8 +33,8 @@ fn main() -> anyhow::Result<()> {
 
     println!("Processing...");
     for (x, y, p) in image1.pixels() {
-        let luma1 = p.to_luma().0[0] as f64 / u8::MAX as f64;
-        let mut luma2 = image2.get_pixel(x, y).to_luma().0[0] as f64 / u8::MAX as f64;
+        let luma1 = p.to_luma().0[0] as f64 / u8::MAX as f64 * args.image1_dim;
+        let luma2 = image2.get_pixel(x, y).to_luma().0[0] as f64 / u8::MAX as f64 * args.image2_dim;
 
         // // image1 should be brighter than image2
         // if luma2 > luma1 {
