@@ -39,4 +39,5 @@ members = [
     "apps/x11-event-monitor",
     "apps/anybase",
     "apps/image-stegano-bg",
+    "apps/btc-tools",
 ]
