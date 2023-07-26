@@ -671,6 +671,7 @@ dependencies = [
  "anyhow",
  "bitcoin",
  "clap 4.3.19",
+ "hex",
  "num_cpus",
  "rand",
 ]
