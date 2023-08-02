@@ -1,8 +1,7 @@
 #[derive(Debug, clap::Parser)]
 #[command(
     author = "bczhc <bczhc0@126.com>",
-    about = "Some Bitcoin-related tools\n\
-Note: For security considerations, this tool is supposed to be run on a cold wallet side"
+    about = "Some Bitcoin-related tools"
 )]
 pub struct Args {
     #[command(subcommand)]
