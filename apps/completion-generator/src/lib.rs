@@ -20,6 +20,12 @@ pub mod cli;
 
 type CliBuilderFn = fn() -> Command;
 
+/// Can only define self-cli-name via this. Because
+/// when using `crate::cli::build_cli().get_name()`, this
+/// function needs "self-cli-name" field, which causes
+/// a loop.
+const SELF_CRATE_NAME: &str = env!("CARGO_PKG_NAME");
+
 use clap::CommandFactory;
 cli_builders![
     archive::build_cli,
@@ -39,8 +45,12 @@ cli_builders![
 
 const CLI_BUILDERS_LEN: usize = CLI_BUILDERS.len();
 
-pub static BIN_NAMES: Lazy<[&str; CLI_BUILDERS_LEN]> = Lazy::new(|| {
-    CLI_BUILDERS.map(|x| Box::leak(String::from(x().get_name()).into_boxed_str()) as &'static str)
+pub static BIN_NAMES: Lazy<[&str; CLI_BUILDERS_LEN + 1]> = Lazy::new(|| {
+    let app_names = CLI_BUILDERS
+        .map(|x| Box::leak(String::from(x().get_name()).into_boxed_str()) as &'static str);
+    let mut include_self = [SELF_CRATE_NAME; CLI_BUILDERS_LEN + 1];
+    include_self[1..].copy_from_slice(&app_names);
+    include_self
 });
 
 pub fn print_completions<G: Generator>(generator: G, mut command: Command) {

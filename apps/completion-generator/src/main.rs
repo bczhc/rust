@@ -7,7 +7,12 @@ fn main() {
     let shell = *matches.get_one::<Shell>("shell").unwrap();
 
     let index = BIN_NAMES.iter().position(|x| *x == app_name).unwrap();
-    let command = CLI_BUILDERS[index]();
 
+    let command = if index == 0 {
+        // self
+        completion_generator::cli::build_cli()
+    } else {
+        CLI_BUILDERS[index + 1]()
+    };
     print_completions(shell, command);
 }
