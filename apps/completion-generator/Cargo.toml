@@ -3,8 +3,6 @@ name = "completion-generator"
 version = "1.0.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 archive = { path = "../archive" }
 fourier-series = { path = "../fourier-series" }
@@ -16,6 +14,9 @@ task-notify = { path = "../task-notify" }
 network-monitor = { path = "../network-monitor" }
 ucd-parser = { path = "../ucd-parser" }
 x11-event-monitor = { path = "../x11-event-monitor" }
+btc-tools = { path = "../btc-tools" }
+anybase = { path = "../anybase" }
+image-stegano-bg = { path = "../image-stegano-bg" }
 
 clap = "4.1.13"
 clap_complete = "4.1.5"

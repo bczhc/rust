@@ -972,12 +972,15 @@ dependencies = [
 name = "completion-generator"
 version = "1.0.0"
 dependencies = [
+ "anybase",
  "archive",
+ "btc-tools",
  "clap 4.3.19",
  "clap_complete",
  "cow-dedupe",
  "enc",
  "fourier-series",
+ "image-stegano-bg",
  "network-monitor",
  "once_cell",
  "send-email",

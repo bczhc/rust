@@ -1,7 +1,4 @@
-#![feature(const_size_of_val)]
-
 use std::io::stdout;
-use std::mem::{size_of, size_of_val};
 
 use clap::Command;
 use clap_complete::Generator;
@@ -23,10 +20,11 @@ pub mod cli;
 
 type CliBuilderFn = fn() -> Command;
 
+use clap::CommandFactory;
 cli_builders![
     archive::build_cli,
     fourier_series::cli::build_cli,
-    // cow_dedupe::cli::build_cli,
+    cow_dedupe::cli::CliConfig::command,
     enc::cli::build_cli,
     send_email::cli::build_cli,
     tcp_crypto_tunnel::cli::build_cli,
@@ -34,9 +32,12 @@ cli_builders![
     network_monitor::cli::build_cli,
     ucd_parser::cli::build_cli,
     x11_event_monitor::cli::build_cli,
+    btc_tools::cli::Args::command,
+    anybase::cli::CliConfig::command,
+    image_stegano_bg::cli::CliArgs::command,
 ];
 
-const CLI_BUILDERS_LEN: usize = size_of_val(&CLI_BUILDERS) / size_of::<CliBuilderFn>();
+const CLI_BUILDERS_LEN: usize = CLI_BUILDERS.len();
 
 pub static BIN_NAMES: Lazy<[&str; CLI_BUILDERS_LEN]> = Lazy::new(|| {
     CLI_BUILDERS.map(|x| Box::leak(String::from(x().get_name()).into_boxed_str()) as &'static str)
