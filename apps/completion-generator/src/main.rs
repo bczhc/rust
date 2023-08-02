@@ -12,7 +12,7 @@ fn main() {
         // self
         completion_generator::cli::build_cli()
     } else {
-        CLI_BUILDERS[index + 1]()
+        CLI_BUILDERS[index - 1]()
     };
     print_completions(shell, command);
 }
