@@ -18,6 +18,8 @@ pub enum Subcommands {
     Base58Decode(Base58StringArg),
     Base58DecodeCheck(Base58StringArg),
     PublicToAddress(PublicToAddress),
+    WifToAddress(WifToAddressArgs),
+    EcToAddress(EcToAddressArgs),
     GenerateVanityWallet(GenerateVanityWalletArgs),
 }
 
@@ -33,6 +35,14 @@ pub struct EcToWif {
     pub hex: String,
     #[arg(short, long, required = false)]
     pub compressed: bool,
+}
+
+#[derive(Debug, clap::Args)]
+pub struct EcToAddressArgs {
+    #[command(flatten)]
+    pub ec_to_wif_args: EcToWif,
+    #[command(flatten)]
+    pub r#type_args: AddressTypeArg,
 }
 
 #[derive(Debug, clap::Args)]
@@ -69,8 +79,22 @@ pub struct Base58StringArg {
 pub struct PublicToAddress {
     #[arg(help = "Raw hex-encoded public key")]
     pub key: String,
+    #[command(flatten)]
+    pub r#type: AddressTypeArg,
+}
+
+#[derive(Debug, clap::Args)]
+pub struct AddressTypeArg {
     #[arg(help = "Address type")]
     pub r#type: AddressType,
+}
+
+#[derive(Debug, clap::Args)]
+pub struct WifToAddressArgs {
+    #[command(flatten)]
+    pub wif: WifArg,
+    #[command(flatten)]
+    pub r#type: AddressTypeArg,
 }
 
 #[derive(Debug, Copy, Clone, clap::ValueEnum)]
