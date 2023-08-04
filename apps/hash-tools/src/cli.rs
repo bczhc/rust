@@ -28,13 +28,14 @@ pub enum Subcommand {
     Sha1,
     Sha256,
     Sha512,
-    Blake3(Blake3Args),
-}
-
-#[derive(Debug, clap::Args)]
-pub struct Blake3Args {
-    #[command(flatten)]
-    pub xof_args: XofDigestArgs,
+    Sha3_256,
+    Sha3_512,
+    Ripemd128,
+    Ripemd160,
+    Ripemd256,
+    Blake2b512,
+    Blake2s256,
+    Blake3(XofDigestArgs),
 }
 
 #[derive(Debug, clap::Args)]

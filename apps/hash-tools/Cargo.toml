@@ -12,3 +12,6 @@ sha2 = "0.10.7"
 blake3 = { version = "1.4.1", features = ["digest", "traits-preview"] }
 anyhow = "1.0.72"
 hex = "0.4.3"
+blake2 = "0.10.6"
+sha3 = "0.10.8"
+ripemd = "0.1.3"
