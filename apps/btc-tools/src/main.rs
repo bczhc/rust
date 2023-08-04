@@ -34,7 +34,7 @@ fn main() -> anyhow::Result<()> {
         }
         Subcommands::PublicToAddress(a) => {
             let public_key = PublicKey::from_slice(&hex::decode(a.key)?)?;
-            println!("{:?}", public_to_address(&public_key, a.r#type.r#type)?);
+            println!("{}", public_to_address(&public_key, a.r#type.r#type)?);
         }
         Subcommands::WifToAddress(a) => {
             let public_key = wif_to_public(&a.wif.wif)?;
