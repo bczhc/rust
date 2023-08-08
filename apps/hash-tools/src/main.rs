@@ -2,23 +2,31 @@
 #![allow(incomplete_features, const_evaluatable_unchecked)]
 #![feature(generic_const_exprs)]
 
-use std::io::{stdin, stdout, Write};
+use std::io::{stderr, stdin, stdout, Write};
 
 use clap::Parser;
 
+use bczhc_lib::io::duplicator::DuplicationReader;
 use hash_tools::cli::Subcommand;
 use hash_tools::{cli, fixed_output_hash, xof_output_hash};
 
 fn main() -> anyhow::Result<()> {
     let args = cli::Args::parse();
 
-    let reader = stdin().lock();
     let iter_num = args.iter_count;
     let raw = args.raw;
+    let pipe_input = args.pipe_input;
+    let stdin = stdin().lock();
 
     macro_rules! flh_box {
         ($t:ty) => {
-            Box::new(fixed_output_hash::<$t, _>(reader, iter_num)?)
+            if pipe_input {
+                let stdout = stdout().lock();
+                let dupe_reader = DuplicationReader::new(stdin, stdout);
+                Box::new(fixed_output_hash::<$t, _>(dupe_reader, iter_num)?)
+            } else {
+                Box::new(fixed_output_hash::<$t, _>(stdin, iter_num)?)
+            }
         };
     }
 
@@ -28,7 +36,7 @@ fn main() -> anyhow::Result<()> {
         Subcommand::Sha256 => flh_box!(sha2::Sha256),
         Subcommand::Sha512 => flh_box!(sha2::Sha512),
         Subcommand::Blake3(a) => Box::new(xof_output_hash::<blake3::Hasher, _>(
-            reader, a.length, iter_num,
+            stdin, a.length, iter_num,
         )?),
         Subcommand::Sha3_256 => flh_box!(sha3::Sha3_256),
         Subcommand::Sha3_512 => flh_box!(sha3::Sha3_512),
@@ -39,11 +47,18 @@ fn main() -> anyhow::Result<()> {
         Subcommand::Blake2s256 => flh_box!(blake2::Blake2s256),
     };
 
+    let mut result_writer: Box<dyn Write> = if pipe_input {
+        Box::new(stderr())
+    } else {
+        Box::new(stdout())
+    };
+
     let bytes = (*bytes).as_ref();
     if raw {
-        stdout().write_all(bytes)?;
+        result_writer.write_all(bytes)?;
+        result_writer.flush()?;
     } else {
-        println!("{}", hex::encode(bytes));
+        writeln!(&mut result_writer, "{}", hex::encode(bytes))?;
     };
 
     Ok(())

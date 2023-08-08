@@ -1828,6 +1828,7 @@ name = "hash-tools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bczhc_lib",
  "blake2",
  "blake3",
  "clap 4.3.19",

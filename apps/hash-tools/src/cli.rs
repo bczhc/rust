@@ -1,5 +1,3 @@
-use clap::value_parser;
-
 #[derive(Debug, clap::Parser)]
 #[command(about = "A generic hash tool", author = "bczhc <bczhc0@126.com>")]
 pub struct Args {
@@ -17,9 +15,15 @@ pub struct Args {
         long,
         help = "Iteration count (hash multiple times)",
         default_value = "1",
-        value_parser = value_parser!(u64).range(1..)
+        value_parser = clap::value_parser!(u64).range(1..)
     )]
     pub iter_count: u64,
+    #[arg(
+        short,
+        long,
+        help = "Also duplicate stdin to stdout; hash result will be in stderr"
+    )]
+    pub pipe_input: bool,
 }
 
 #[derive(Debug, clap::Subcommand)]
