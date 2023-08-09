@@ -4,6 +4,7 @@ use std::process::abort;
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
+use lettre::message::header::ContentType;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{SmtpTransport, Transport};
 use send_email::cli::build_cli;
@@ -76,7 +77,10 @@ fn send_email(
     if let Some(ref s) = message.subject {
         email = email.subject(s);
     }
-    let email = email.body(message.body).unwrap();
+    let email = email
+        .header(ContentType::TEXT_PLAIN)
+        .body(message.body)
+        .unwrap();
 
     let creds = account.credentials.clone();
 

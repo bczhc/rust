@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 clap = "4.1.13"
-lettre = "0.10.3"
-toml = "0.5.11"
+lettre = "0.10.4"
+toml = "0.7.6"
