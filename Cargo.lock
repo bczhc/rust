@@ -3907,6 +3907,7 @@ dependencies = [
 name = "send-email"
 version = "1.0.0"
 dependencies = [
+ "anyhow",
  "clap 4.3.19",
  "lettre",
  "toml",
