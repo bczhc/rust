@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::Read;
+use std::io::{stdin, Read};
 use std::process::abort;
 use std::thread::{sleep, spawn};
 use std::time::Duration;
@@ -15,9 +15,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config_file = matches.get_one::<String>("config").unwrap();
     let to = matches.get_one::<String>("to").unwrap();
-    let body = matches.get_one::<String>("message").unwrap();
     let subject = matches.get_one::<String>("subject");
     let timeout = matches.get_one::<u32>("timeout");
+
+    let body = matches.get_one::<String>("message");
+    let body = match body {
+        None => {
+            eprintln!("Read message from stdin...");
+            let mut message = String::new();
+            stdin().read_to_string(&mut message)?;
+            message
+        }
+        Some(b) => b.clone(),
+    };
 
     let mut config = String::new();
     File::open(config_file)
@@ -43,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         from: config.from,
         to: to.into(),
         subject: subject.cloned(),
-        body: body.into(),
+        body,
     };
 
     let send_thread = spawn(move || send_email(message, account));

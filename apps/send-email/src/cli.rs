@@ -17,7 +17,6 @@ pub fn build_cli() -> Command {
                 .long("subject")
                 .required(false),
         )
-        .arg(Arg::new("message").required(true))
         .arg(
             Arg::new("timeout")
                 .short('t')
@@ -25,4 +24,5 @@ pub fn build_cli() -> Command {
                 .help("Timeout for sending email (in milliseconds)")
                 .value_parser(value_parser!(u32)),
         )
+        .arg(Arg::new("message").required(false))
 }
