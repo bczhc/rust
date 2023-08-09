@@ -49,6 +49,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(&timeout) = timeout {
         spawn(move || {
             sleep(Duration::from_millis(timeout as u64));
+            eprintln!("Time out!");
             // force to abort
             abort();
         });
