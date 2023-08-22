@@ -158,7 +158,7 @@ fn collect_file(paths: &Vec<String>, min_size: u64) -> Vec<FileEntry> {
 
     let mut files_vec = Vec::new();
     for path in paths {
-        let files = jwalk::WalkDir::new(path);
+        let files = jwalk::WalkDir::new(path).skip_hidden(false);
         for entry in files {
             let result: io::Result<()> = try {
                 let entry = entry?;
