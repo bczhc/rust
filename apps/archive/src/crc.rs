@@ -70,8 +70,9 @@ pub mod write {
         Wr: Write,
     {
         fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-            self.digest.update(buf);
-            self.writer.write(buf)
+            let write_size = self.writer.write(buf)?;
+            self.digest.update(&buf[..write_size]);
+            Ok(write_size)
         }
 
         fn flush(&mut self) -> std::io::Result<()> {
