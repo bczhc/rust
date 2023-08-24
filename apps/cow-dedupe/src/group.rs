@@ -64,14 +64,14 @@ pub fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> 
 
     let paths = &args.path;
     let entries = collect_file(paths, min_size);
-    println!("{}", format!("File entries: {}", entries.len()).cyan());
+    eprintln!("{}", format!("File entries: {}", entries.len()).cyan());
     eprintln!("{}", "Removing hardlinks...".cyan());
     let mut entries = unique_by_hardlinks(&entries);
-    println!("{}", format!("File entries: {}", entries.len()).cyan());
+    eprintln!("{}", format!("File entries: {}", entries.len()).cyan());
     eprintln!("{}", "Grouping by size...".cyan());
     let mut groups = group_by_size(&mut entries);
     groups.retain(|x| x.len() >= 2);
-    println!(
+    eprintln!(
         "{}",
         format!(
             "File entries: {}",
@@ -114,13 +114,13 @@ where
     eprintln!("{}", "Grouping by file fragments".cyan());
     let groups =
         group_by_hash::<H, FileFragmentsHasher, _, _>(|| files.iter().map(|x| x.as_slice()))?;
-    println!("{}", format!("File entries: {}", groups.len()).cyan());
+    eprintln!("{}", format!("File entries: {}", groups.len()).cyan());
     eprintln!("{}", "Grouping by file content...".cyan());
     let mut groups =
         group_by_hash::<H, FileFullHasher, _, _>(|| groups.iter().map(|x| x.1.as_slice()))?;
-    println!("{}", format!("Group count: {}", groups.len()).cyan());
+    eprintln!("{}", format!("Group count: {}", groups.len()).cyan());
     let duplicated_file_group_count = groups.iter().filter(|x| x.1.len() >= 2).count();
-    println!(
+    eprintln!(
         "{}",
         format!("Duplicated file groups: {}", duplicated_file_group_count).cyan()
     );
