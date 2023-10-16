@@ -1,9 +1,9 @@
-#[cfg(target_os = "linux")]
+#[cfg(feature = "enabled")]
 fn main() {
     x11_event_monitor::linux::main()
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(feature = "enabled"))]
 fn main() {
-    eprintln!("Only support Linux platforms!");
+    eprintln!("Crate is disabled.");
 }

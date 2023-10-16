@@ -2,7 +2,7 @@ use chrono::Utc;
 use serde::Serialize;
 
 pub mod cli;
-#[cfg(target_os = "linux")]
+#[cfg(feature = "enabled")]
 pub mod linux;
 
 #[derive(Serialize)]

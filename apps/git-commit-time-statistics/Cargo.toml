@@ -3,12 +3,13 @@ name = "git-commit-time-stat"
 version = "1.0.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 bczhc_lib = { path = "../../lib", version = "1.0.0" }
 clap = "2.34.0"
 chrono = "0.4.24"
-git2 = "0.13.25"
 ansi_term = "0.12.1"
 terminal_size = "0.1.17"
+git2 = { version = "0.13.25", optional = true }
+
+[features]
+enabled = ["dep:git2"]
