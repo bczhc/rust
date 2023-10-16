@@ -180,9 +180,10 @@ where
 
         let linked_path = if file_type == FileType::Symlink {
             // here it should be a symbolic link
-            let Some(path_bytes) = ({
-                fs::read_link(file_path).unwrap().as_os_str().to_bytes()
-            }) else { panic!("Invalid path name meets") };
+            let Some(path_bytes) = ({ fs::read_link(file_path).unwrap().as_os_str().to_bytes() })
+            else {
+                panic!("Invalid path name meets")
+            };
             path_bytes
         } else {
             vec![]

@@ -59,7 +59,7 @@ fn char_name(c: char) -> Option<String> {
         _ => {
             let guard = UCD_DB.lock().unwrap();
             let Some(json) = guard.query_json(c as u32).unwrap() else {
-                return None
+                return None;
             };
             if json.is_empty() {
                 return None;

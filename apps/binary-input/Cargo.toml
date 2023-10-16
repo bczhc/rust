@@ -8,6 +8,6 @@ quick-error = "2.0.1"
 bczhc_lib = {path = "../../lib"}
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.140"
+libc = "0.2.149"
 termios = "0.3.3"
-console = "0.15.5"
+console = "0.15.7"

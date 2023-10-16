@@ -81,16 +81,16 @@ pub fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> 
     );
 
     let groups = match args.hash_fn {
-        HashFn::B3_128 => generic_group_files_by_hash::<B3_128>(&mut groups),
-        HashFn::B3_160 => generic_group_files_by_hash::<B3_160>(&mut groups),
-        HashFn::B3_256 => generic_group_files_by_hash::<B3_256>(&mut groups),
-        HashFn::B3_512 => generic_group_files_by_hash::<B3_512>(&mut groups),
-        HashFn::B3_1024 => generic_group_files_by_hash::<B3_1024>(&mut groups),
-        HashFn::B3_2048 => generic_group_files_by_hash::<B3_2048>(&mut groups),
-        HashFn::Sha256 => generic_group_files_by_hash::<Sha256>(&mut groups),
-        HashFn::Sha512 => generic_group_files_by_hash::<Sha512>(&mut groups),
-        HashFn::Sha3_256 => generic_group_files_by_hash::<Sha3_256>(&mut groups),
-        HashFn::Sha3_512 => generic_group_files_by_hash::<Sha3_512>(&mut groups),
+        HashFn::B3_128 => generic_group_files_by_hash::<B3_128>(&groups),
+        HashFn::B3_160 => generic_group_files_by_hash::<B3_160>(&groups),
+        HashFn::B3_256 => generic_group_files_by_hash::<B3_256>(&groups),
+        HashFn::B3_512 => generic_group_files_by_hash::<B3_512>(&groups),
+        HashFn::B3_1024 => generic_group_files_by_hash::<B3_1024>(&groups),
+        HashFn::B3_2048 => generic_group_files_by_hash::<B3_2048>(&groups),
+        HashFn::Sha256 => generic_group_files_by_hash::<Sha256>(&groups),
+        HashFn::Sha512 => generic_group_files_by_hash::<Sha512>(&groups),
+        HashFn::Sha3_256 => generic_group_files_by_hash::<Sha3_256>(&groups),
+        HashFn::Sha3_512 => generic_group_files_by_hash::<Sha3_512>(&groups),
     }?;
 
     Ok(groups
@@ -105,7 +105,7 @@ pub fn collect_and_group_files(args: &CommonArgs) -> anyhow::Result<Vec<Group>> 
 
 /// returns a vec of tuples, and each tuple is (hash, duplicated files)
 fn generic_group_files_by_hash<H: FixedDigest>(
-    files: &mut [Vec<FileEntry>],
+    files: &[Vec<FileEntry>],
 ) -> anyhow::Result<Vec<(Vec<u8>, Vec<FileEntry>)>>
 where
     [(); H::OutputSize::USIZE]:,

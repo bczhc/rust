@@ -122,7 +122,7 @@ impl Compress for NoCompressor {
 
 impl NoCompressor {
     pub fn new() -> NoCompressor {
-        NoCompressor::default()
+        NoCompressor
     }
 }
 
@@ -275,6 +275,8 @@ impl<'a> ExternalFilter<'a> {
         Self { cmd }
     }
 
+    // TODO: clippy lint warning
+    #[allow(clippy::needless_pass_by_ref_mut)]
     fn process_filter(args: &Vec<String>, from: &mut dyn Read, to: &mut dyn Write) -> Result<u64> {
         let cmd = args;
         let mut command = Command::new(&cmd[0]);

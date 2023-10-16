@@ -28,7 +28,7 @@ impl ToStringRadix for i32 {
             return Ok(i.to_string());
         }
 
-        let mut buf = vec![0; 33];
+        let mut buf = [0; 33];
         let negative = i < 0;
         let mut char_pos = 32;
 

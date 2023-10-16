@@ -114,13 +114,12 @@ fn start_clipboard_monitor() {
     let clipboard = Clipboard::new().unwrap();
 
     loop {
-        let Ok(val) = clipboard
-            .load_wait(
-                clipboard.setter.atoms.clipboard,
-                clipboard.setter.atoms.string,
-                clipboard.setter.atoms.property,
-            ) else {
-            continue
+        let Ok(val) = clipboard.load_wait(
+            clipboard.setter.atoms.clipboard,
+            clipboard.setter.atoms.string,
+            clipboard.setter.atoms.property,
+        ) else {
+            continue;
         };
 
         let escaped = bczhc_lib::str::escape_utf8_bytes(&val);
@@ -146,7 +145,7 @@ fn start_primary_selection_monitor() {
             clipboard.getter.atoms.utf8_string,
             clipboard.getter.atoms.property,
         ) else {
-            continue
+            continue;
         };
 
         let escaped = bczhc_lib::str::escape_utf8_bytes(&vec);

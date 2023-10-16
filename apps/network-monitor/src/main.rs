@@ -29,9 +29,8 @@ fn main() -> anyhow::Result<()> {
     loop {
         system.refresh_networks();
         let networks = system.networks();
-        let Some(network_data) = networks.iter().find(|x| x.0 == interface).map(|x| x.1)
-            else {
-                return Err(anyhow!("Specified interface not found"));
+        let Some(network_data) = networks.iter().find(|x| x.0 == interface).map(|x| x.1) else {
+            return Err(anyhow!("Specified interface not found"));
         };
 
         println!(

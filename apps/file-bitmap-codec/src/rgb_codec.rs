@@ -10,7 +10,7 @@ pub fn encode(input_path: &str, output_path: &str) -> Result<()> {
     let len = file.metadata()?.len() as u32 + 8;
     let mut input = BufReader::new(file);
 
-    let mut len_byte = vec![0; 6];
+    let mut len_byte = [0; 6];
     (&mut len_byte[0..4]).write_u32::<LittleEndian>(len)?;
 
     let pixel_count = if len % 3 == 0 { len / 3 } else { len / 3 + 1 };

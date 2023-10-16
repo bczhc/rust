@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = { version = "4.3.19", features = ["derive"] }
+clap = { version = "4.4.6", features = ["derive"] }
 digest = "0.10.7"
-md-5 = "0.10.5"
-sha1 = "0.10.5"
-sha2 = "0.10.7"
-blake3 = { version = "1.4.1", features = ["digest", "traits-preview"] }
-anyhow = "1.0.72"
+md-5 = "0.10.6"
+sha1 = "0.10.6"
+sha2 = "0.10.8"
+blake3 = { version = "1.5.0", features = ["digest", "traits-preview"] }
+anyhow = "1.0.75"
 hex = "0.4.3"
 blake2 = "0.10.6"
 sha3 = "0.10.8"

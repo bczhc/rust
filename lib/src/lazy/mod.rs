@@ -68,7 +68,7 @@ where
         unsafe {
             let obj_ptr = *self.ptr;
             drop(Box::from_raw(obj_ptr));
-            drop(Box::from_raw(self.ptr as *mut *mut T));
+            drop(Box::from_raw(self.ptr));
         }
     }
 }

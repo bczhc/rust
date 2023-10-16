@@ -48,7 +48,7 @@ fn main() -> anyhow::Result<()> {
         }
     };
     let Some(config) = config else {
-        return Err(anyhow!("Wrong TOML format"))
+        return Err(anyhow!("Wrong TOML format"));
     };
 
     let credentials = Credentials::new(config.username.clone(), config.password.clone());

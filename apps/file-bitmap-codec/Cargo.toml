@@ -7,9 +7,9 @@ edition = "2021"
 
 [dependencies]
 bmp = "0.5.0"
-image = "0.24.5"
-byteorder = "1.4.3"
+image = "0.24.7"
+byteorder = "1.5.0"
 bczhc_lib = { path = "../../lib", version = "1.0.0" }
-clap = { version = "3.2.23", features = ["derive"] }
+clap = { version = "3.2.25", features = ["derive"] }
 quick-error = "2.0.1"
-euclid = "0.22.8"
+euclid = "0.22.9"

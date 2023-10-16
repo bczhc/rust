@@ -6,7 +6,7 @@ use std::io::{Read, Write};
 
 use digest::generic_array::GenericArray;
 use digest::typenum::Unsigned;
-use digest::{Digest, ExtendableOutput, FixedOutput, HashMarker, OutputSizeUser, Update};
+use digest::{Digest, ExtendableOutput, FixedOutput, OutputSizeUser};
 
 pub mod cli;
 

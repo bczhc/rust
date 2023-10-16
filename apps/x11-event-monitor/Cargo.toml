@@ -4,17 +4,17 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
-libc = "0.2.140"
-chrono = "0.4.24"
+libc = "0.2.149"
+chrono = "0.4.31"
 bczhc_lib = { path = "../../lib" }
-proc-macro2 = "1.0.53"
-serde = { version = "1.0.158", features = ["derive"] }
-serde_json = "1.0.94"
-clap = "4.1.13"
+proc-macro2 = "1.0.69"
+serde = { version = "1.0.189", features = ["derive"] }
+serde_json = "1.0.107"
+clap = "4.4.6"
 
 libxdo-sys = { version = "0.11.0", optional = true }
 x11-clipboard = { version = "0.7.1", optional = true }
-winit = { version = "0.28.3", optional = true }
+winit = { version = "0.28.7", optional = true }
 
 [features]
 enabled = ["dep:libxdo-sys", "dep:x11-clipboard", "dep:winit"]
