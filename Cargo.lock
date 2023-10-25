@@ -822,6 +822,7 @@ name = "char-stat"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
+ "utf8-chars 3.0.1",
 ]
 
 [[package]]
@@ -4968,7 +4969,7 @@ dependencies = [
  "serde_json",
  "unic-ucd",
  "unicode-segmentation",
- "utf8-chars",
+ "utf8-chars 2.1.0",
 ]
 
 [[package]]
@@ -5028,6 +5029,15 @@ name = "utf8-chars"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba5e66f1c5aaffcfab80d6af42d90c096516779b1f80aceb1e38e1e3c3abeaab"
+dependencies = [
+ "arrayvec",
+]
+
+[[package]]
+name = "utf8-chars"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08465e4e09f9ac32d8bc0967565046ec27a9078f82fe738da658ccd689c2c277"
 dependencies = [
  "arrayvec",
 ]
