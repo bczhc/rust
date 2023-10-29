@@ -16,7 +16,7 @@ fn main() -> Result<()> {
         .arg(
             Arg::new("location")
                 .required(false)
-                .help("The location of the files to deploy")
+                .help("Webapp root location")
                 .default_value("."),
         )
         .get_matches();
