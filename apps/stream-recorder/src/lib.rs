@@ -43,6 +43,7 @@ pub fn record(path: &Path, forward: bool) -> anyhow::Result<()> {
         writer.write_u32::<LE>(elapsed)?;
         writer.write_u16::<LE>(size as u16)?;
         writer.write_all(&buf[..size])?;
+        writer.flush()?;
         if forward {
             stdout.write_all(&buf[..size])?;
             stdout.flush()?;
