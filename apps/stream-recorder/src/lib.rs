@@ -4,6 +4,7 @@ use std::path::Path;
 use std::thread::sleep;
 use std::time::{Duration, SystemTime};
 
+use crate::cli::Args;
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 use once_cell::sync::Lazy;
 
@@ -53,8 +54,8 @@ pub fn record(path: &Path, forward: bool) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn replay(path: &Path) -> anyhow::Result<()> {
-    let mut reader = BufReader::new(File::open(path)?);
+pub fn replay(args: &Args) -> anyhow::Result<()> {
+    let mut reader = BufReader::new(File::open(&args.path)?);
 
     let mut buf = [0_u8; BUF_SIZE];
     let start = SystemTime::now();
@@ -77,7 +78,9 @@ pub fn replay(path: &Path) -> anyhow::Result<()> {
         let delay = (start + Duration::from_millis(elapsed as u64))
             .duration_since(SystemTime::now())
             .unwrap_or(Duration::ZERO);
-        sleep(delay);
+        if !args.no_delay {
+            sleep(delay);
+        }
         stdout.write_all(&buf[..size])?;
         stdout.flush()?;
     }

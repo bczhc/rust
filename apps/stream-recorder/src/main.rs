@@ -6,7 +6,7 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     if args.replay {
-        replay(&args.path)?
+        replay(&args)?
     } else {
         record(&args.path, args.forward)?
     };

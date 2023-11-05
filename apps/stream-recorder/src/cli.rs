@@ -7,6 +7,8 @@ pub struct Args {
     pub replay: bool,
     #[arg(short, long, help = "Also forward stdin to stdout")]
     pub forward: bool,
+    #[arg(long, help = "Barely extract data from the file")]
+    pub no_delay: bool,
     #[arg(help = "File path to save or replay")]
     pub path: PathBuf,
 }
