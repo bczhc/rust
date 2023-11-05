@@ -1,9 +1,10 @@
 use std::fs::File;
-use std::io::{stdin, stdout, BufWriter, Read, StdoutLock, Write};
+use std::io::{stdin, stdout, BufReader, BufWriter, ErrorKind, Read, StdoutLock, Write};
 use std::path::Path;
-use std::time::SystemTime;
+use std::thread::sleep;
+use std::time::{Duration, SystemTime};
 
-use byteorder::{WriteBytesExt, LE};
+use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 use once_cell::sync::Lazy;
 
 /// Stream log file format:
@@ -52,5 +53,32 @@ pub fn record(path: &Path, forward: bool) -> anyhow::Result<()> {
 }
 
 pub fn replay(path: &Path) -> anyhow::Result<()> {
+    let mut reader = BufReader::new(File::open(path)?);
+
+    let mut buf = [0_u8; BUF_SIZE];
+    let start = SystemTime::now();
+    let mut stdout = stdout().lock();
+    loop {
+        let elapsed = reader.read_u32::<LE>();
+        let elapsed = match elapsed {
+            Ok(e) => e,
+            Err(e) => {
+                if e.kind() == ErrorKind::UnexpectedEof {
+                    break;
+                } else {
+                    return Err(e.into());
+                }
+            }
+        };
+
+        let size = reader.read_u16::<LE>()? as usize;
+        reader.read_exact(&mut buf[..size])?;
+        let delay = (start + Duration::from_millis(elapsed as u64))
+            .duration_since(SystemTime::now())
+            .unwrap_or(Duration::ZERO);
+        sleep(delay);
+        stdout.write_all(&buf[..size])?;
+        stdout.flush()?;
+    }
     Ok(())
 }
