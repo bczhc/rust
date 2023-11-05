@@ -40,5 +40,6 @@ members = [
     "apps/anybase",
     "apps/image-stegano-bg",
     "apps/btc-tools",
-    "apps/hash-tools"
+    "apps/hash-tools",
+    "apps/stream-recorder",
 ]
