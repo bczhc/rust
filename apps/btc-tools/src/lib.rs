@@ -4,7 +4,7 @@ use bitcoin::secp256k1::SecretKey;
 use bitcoin::{Address, Network, PrivateKey, PublicKey};
 
 pub mod cli;
-pub mod vanity_wallet;
+pub mod vanity_address;
 
 pub type KeyError = bitcoin::key::Error;
 

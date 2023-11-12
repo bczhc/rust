@@ -1,17 +1,30 @@
-use crate::cli::GenerateVanityWalletArgs;
+use std::fs::File;
+use std::io;
+use std::sync::mpsc::channel;
+use std::sync::{Arc, Mutex};
+use std::thread::spawn;
+
 use bitcoin::key::constants::SECRET_KEY_SIZE;
 use bitcoin::secp256k1::{Secp256k1, SecretKey};
 use bitcoin::{Address, Network, PrivateKey};
 use rand::rngs::OsRng;
 use rand::RngCore;
-use std::sync::{Condvar, Mutex};
-use std::thread::spawn;
+
+use crate::cli::GenerateAddressArgs;
 
 const RANDOM_BUF_SIZE: usize = 65536;
 
-pub fn main(args: GenerateVanityWalletArgs) -> anyhow::Result<()> {
+pub fn main(args: GenerateAddressArgs) -> anyhow::Result<()> {
+    let mut address_output_file = match args.address_output_file {
+        None => None,
+        Some(f) => Some(File::create(f)?),
+    };
+
+    let (sender, receiver) = channel();
+    let sender_arc = Arc::new(Mutex::new(sender));
     for _ in 0..num_cpus::get() {
         let substring = args.substring.clone();
+        let sender = Arc::clone(&sender_arc);
         spawn(move || {
             let k1 = Secp256k1::new();
             let mut random_buf = [0_u8; RANDOM_BUF_SIZE];
@@ -25,15 +38,21 @@ pub fn main(args: GenerateVanityWalletArgs) -> anyhow::Result<()> {
                         .unwrap()
                         .to_string();
                     if address.contains(&substring) {
-                        println!("{} {}", private_key, address);
+                        let guard = sender.lock().unwrap();
+                        guard.send((private_key, address)).unwrap();
                     }
                 }
             }
         });
     }
 
-    let mutex = Mutex::new(());
-    let _g = Condvar::new().wait(mutex.lock().unwrap()).unwrap();
+    for (private_key, address) in receiver {
+        println!("{} {}", private_key, address);
+        if let Some(f) = &mut address_output_file {
+            use io::Write;
+            writeln!(f, "{}", address)?;
+        }
+    }
 
     Ok(())
 }

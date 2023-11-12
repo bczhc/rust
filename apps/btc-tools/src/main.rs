@@ -7,7 +7,7 @@ use btc_tools::{ec_to_wif, public_to_address, wif_to_public};
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     match args.command {
-        Subcommands::GenerateVanityWallet(a) => btc_tools::vanity_wallet::main(a)?,
+        Subcommands::GenerateAddress(a) => btc_tools::vanity_address::main(a)?,
         Subcommands::WifToEc(a) => {
             let private_key = PrivateKey::from_wif(&a.wif.wif)?;
             println!("{}", hex::encode(private_key.to_bytes()));

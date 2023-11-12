@@ -1,3 +1,5 @@
+use std::ffi::OsString;
+
 #[derive(Debug, clap::Parser)]
 #[command(
     author = "bczhc <bczhc0@126.com>",
@@ -20,7 +22,7 @@ pub enum Subcommands {
     PublicToAddress(PublicToAddress),
     WifToAddress(WifToAddressArgs),
     EcToAddress(EcToAddressArgs),
-    GenerateVanityWallet(GenerateVanityWalletArgs),
+    GenerateAddress(GenerateAddressArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -51,10 +53,22 @@ pub struct WifToPublic {
     pub wif: WifArg,
 }
 
+/// Generate bitcoin addresses
+///
+/// The output (to stdout) format is `<wif> <address>`
 #[derive(Debug, clap::Args)]
-pub struct GenerateVanityWalletArgs {
-    #[arg(help = "The string to be contained in the public key (p2wpkh)")]
+pub struct GenerateAddressArgs {
+    /// The string to be contained in the address (p2wpkh)
     pub substring: String,
+    /// If this is specified, generated addresses will be appended
+    /// to this file.
+    ///
+    /// An example usage is shown below, and this
+    /// is useful for only getting addresses and hiding the private keys.
+    ///
+    /// `btc-tools generate-address -o btc-addrs | openssl enc -aes-256-cbc --pbkdf2 > btc-keys`
+    #[arg(short = 'o', long)]
+    pub address_output_file: Option<OsString>,
 }
 
 #[derive(Debug, clap::Args)]
