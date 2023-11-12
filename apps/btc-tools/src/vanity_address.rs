@@ -1,5 +1,4 @@
-use std::fs::File;
-use std::io;
+use bip38::EncryptWif;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
@@ -11,13 +10,15 @@ use rand::rngs::OsRng;
 use rand::RngCore;
 
 use crate::cli::GenerateAddressArgs;
+use crate::input_password;
 
 const RANDOM_BUF_SIZE: usize = 65536;
 
 pub fn main(args: GenerateAddressArgs) -> anyhow::Result<()> {
-    let mut address_output_file = match args.address_output_file {
-        None => None,
-        Some(f) => Some(File::create(f)?),
+    let bip38_password = if args.bip38 {
+        Some(input_password()?)
+    } else {
+        None
     };
 
     let (sender, receiver) = channel();
@@ -47,10 +48,14 @@ pub fn main(args: GenerateAddressArgs) -> anyhow::Result<()> {
     }
 
     for (private_key, address) in receiver {
-        println!("{} {}", private_key, address);
-        if let Some(f) = &mut address_output_file {
-            use io::Write;
-            writeln!(f, "{}", address)?;
+        match bip38_password {
+            None => {
+                println!("{} {}", private_key, address);
+            }
+            Some(ref p) => {
+                let encrypted_wif = private_key.to_wif().encrypt_wif(p)?;
+                println!("{} {}", encrypted_wif, address);
+            }
         }
     }
 

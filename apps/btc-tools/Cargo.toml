@@ -10,3 +10,5 @@ clap = { version = "4.4.6", features = ["derive"] }
 anyhow = "1.0.75"
 num_cpus = "1.16.0"
 hex = "0.4.3"
+bip38 = { git = "https://github.com/bczhc/bip38", rev = "33522f5500cd81b6908184deec6bd956bb8adca2" }
+rpassword = "7.2.0"

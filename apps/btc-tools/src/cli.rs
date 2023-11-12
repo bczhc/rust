@@ -1,5 +1,3 @@
-use std::ffi::OsString;
-
 #[derive(Debug, clap::Parser)]
 #[command(
     author = "bczhc <bczhc0@126.com>",
@@ -60,15 +58,9 @@ pub struct WifToPublic {
 pub struct GenerateAddressArgs {
     /// The string to be contained in the address (p2wpkh)
     pub substring: String,
-    /// If this is specified, generated addresses will be appended
-    /// to this file.
-    ///
-    /// An example usage is shown below, and this
-    /// is useful for only getting addresses and hiding the private keys.
-    ///
-    /// `btc-tools generate-address -o btc-addrs | openssl enc -aes-256-cbc --pbkdf2 > btc-keys`
-    #[arg(short = 'o', long)]
-    pub address_output_file: Option<OsString>,
+    /// Use BIP-38
+    #[arg(short, long)]
+    pub bip38: bool,
 }
 
 #[derive(Debug, clap::Args)]

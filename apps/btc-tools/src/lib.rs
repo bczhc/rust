@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use crate::cli::AddressType;
 use bitcoin::key::Secp256k1;
 use bitcoin::secp256k1::SecretKey;
@@ -35,4 +36,12 @@ pub fn ec_to_wif(hex: &str, compressed: bool) -> anyhow::Result<String> {
     }
     .to_wif();
     Ok(wif)
+}
+
+pub fn input_password() -> anyhow::Result<String> {
+    let password = rpassword::prompt_password("Enter password: ")?;
+    if rpassword::prompt_password("Enter again to verify: ")? != password {
+        return Err(anyhow!("Password mismatched"));
+    }
+    Ok(password)
 }
