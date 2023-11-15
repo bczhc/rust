@@ -77,6 +77,9 @@ pub struct ValidateAddressArgs {
     /// Decrypt BIP-38
     #[arg(short, long)]
     pub bip38: bool,
+    /// The amount of parallel workers; defaults to the CPU number
+    #[arg(short, long)]
+    pub jobs: Option<usize>,
 }
 
 #[derive(Debug, clap::Args)]

@@ -1,4 +1,6 @@
-use std::io::{stdin, BufRead};
+use std::io;
+use std::io::{stdin, BufRead, BufReader};
+use std::process::exit;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
@@ -10,6 +12,7 @@ use bitcoin::secp256k1::{Secp256k1, SecretKey};
 use bitcoin::{Address, Network, PrivateKey};
 use rand::rngs::OsRng;
 use rand::RngCore;
+use rayon::prelude::*;
 
 use crate::cli::{AddressType, GenerateAddressArgs, ValidateAddressArgs};
 use crate::{input_password, public_to_address, truncate_sensitive, wif_to_public};
@@ -71,7 +74,7 @@ pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
         None
     };
 
-    for line in stdin().lock().lines() {
+    fn worker(line: io::Result<String>, bip38_password: &Option<String>) -> anyhow::Result<()> {
         let line = line?;
         let mut split = line.split_whitespace();
         let Some((pk, addr)): Option<(_, _)> = (try {
@@ -80,11 +83,11 @@ pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
             (x1, x2)
         }) else {
             eprintln!("WARN: malformed line: {}", line);
-            continue;
+            return Ok(());
         };
 
         let address_type = match addr {
-            _ if addr.starts_with("1") => AddressType::P2pkh,
+            _ if addr.starts_with('1') => AddressType::P2pkh,
             _ if addr.starts_with("bc1q") => AddressType::P2wpkh,
             _ => {
                 return Err(anyhow!("Cannot infer address type: {}", addr));
@@ -108,6 +111,23 @@ pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
                 truncate_sensitive(&wif)
             ));
         }
+        Ok(())
     }
+
+    if let Some(j) = args.jobs {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(j)
+            .build_global()
+            .unwrap();
+    }
+
+    let reader = BufReader::new(stdin());
+    reader.lines().par_bridge().for_each(|line| {
+        let result = worker(line, &bip38_password);
+        if let Err(e) = result {
+            eprintln!("Error: {e}");
+            exit(1);
+        };
+    });
     Ok(())
 }

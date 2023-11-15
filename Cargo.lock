@@ -741,6 +741,7 @@ dependencies = [
  "hex",
  "num_cpus",
  "rand",
+ "rayon",
  "rpassword",
 ]
 
