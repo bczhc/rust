@@ -1,4 +1,6 @@
-use bip38::EncryptWif;
+use anyhow::anyhow;
+use bip38::{Decrypt, EncryptWif};
+use std::io::{stdin, BufRead};
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
@@ -9,8 +11,8 @@ use bitcoin::{Address, Network, PrivateKey};
 use rand::rngs::OsRng;
 use rand::RngCore;
 
-use crate::cli::GenerateAddressArgs;
-use crate::input_password;
+use crate::cli::{GenerateAddressArgs, ValidateAddressArgs};
+use crate::{input_password, public_to_address, truncate_sensitive, wif_to_public};
 
 const RANDOM_BUF_SIZE: usize = 65536;
 
@@ -59,5 +61,45 @@ pub fn main(args: GenerateAddressArgs) -> anyhow::Result<()> {
         }
     }
 
+    Ok(())
+}
+
+pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
+    let bip38_password = if args.bip38 {
+        Some(rpassword::prompt_password("Enter password:")?)
+    } else {
+        None
+    };
+
+    for line in stdin().lock().lines() {
+        let line = line?;
+        let mut split = line.split_whitespace();
+        let Some((pk, addr)): Option<(_, _)> = (try {
+            let x1 = split.next()?;
+            let x2 = split.next()?;
+            (x1, x2)
+        }) else {
+            eprintln!("WARN: malformed line: {}", line);
+            continue;
+        };
+
+        let wif = if let Some(p) = &bip38_password {
+            pk.decrypt_to_wif(p)?
+        } else {
+            String::from(pk)
+        };
+        let public_key = wif_to_public(&wif)?;
+        let derived_addr = public_to_address(&public_key, args.r#type.r#type)?;
+        if derived_addr == addr {
+            println!("Check OK: {}", derived_addr);
+        } else {
+            return Err(anyhow!(
+                "Derived address mismatched! {} vs {}, from {}",
+                addr,
+                derived_addr,
+                truncate_sensitive(&wif)
+            ));
+        }
+    }
     Ok(())
 }

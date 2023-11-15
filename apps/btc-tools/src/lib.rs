@@ -1,5 +1,7 @@
-use anyhow::anyhow;
+#![feature(try_blocks)]
+
 use crate::cli::AddressType;
+use anyhow::anyhow;
 use bitcoin::key::Secp256k1;
 use bitcoin::secp256k1::SecretKey;
 use bitcoin::{Address, Network, PrivateKey, PublicKey};
@@ -44,4 +46,12 @@ pub fn input_password() -> anyhow::Result<String> {
         return Err(anyhow!("Password mismatched"));
     }
     Ok(password)
+}
+
+pub fn truncate_sensitive(s: &str) -> String {
+    let chars = s.chars().collect::<Vec<_>>();
+    if chars.len() <= 20 {
+        unreachable!("Unexpected message length")
+    }
+    String::from_iter(&chars[0..10]) + "..."
 }

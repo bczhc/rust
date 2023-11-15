@@ -21,6 +21,7 @@ pub enum Subcommands {
     WifToAddress(WifToAddressArgs),
     EcToAddress(EcToAddressArgs),
     GenerateAddress(GenerateAddressArgs),
+    ValidateAddress(ValidateAddressArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -53,7 +54,7 @@ pub struct WifToPublic {
 
 /// Generate bitcoin addresses
 ///
-/// The output (to stdout) format is `<wif> <address>`
+/// The output (to stdout) format is `<WIF/BIP-38> <address>`
 #[derive(Debug, clap::Args)]
 pub struct GenerateAddressArgs {
     /// The string to be contained in the address (p2wpkh)
@@ -61,6 +62,23 @@ pub struct GenerateAddressArgs {
     /// Use BIP-38
     #[arg(short, long)]
     pub bip38: bool,
+}
+
+/// Validate the correctness of: private key -> address, to avoid scams
+///
+/// This reads from stdin. Line format: <WIF/BIP-38> <address>
+///
+/// If the address is not the expected one derived from
+/// the private key, or any error occurs,
+/// this program aborts with the reason; otherwise,
+/// all is okay.
+#[derive(Debug, clap::Args)]
+pub struct ValidateAddressArgs {
+    /// Decrypt BIP-38
+    #[arg(short, long)]
+    pub bip38: bool,
+    #[command(flatten)]
+    pub r#type: AddressTypeArg,
 }
 
 #[derive(Debug, clap::Args)]

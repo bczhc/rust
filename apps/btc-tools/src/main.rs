@@ -46,6 +46,7 @@ fn main() -> anyhow::Result<()> {
             let public_key = wif_to_public(&wif)?;
             println!("{}", public_to_address(&public_key, a.type_args.r#type)?);
         }
+        Subcommands::ValidateAddress(a) => btc_tools::vanity_address::validate_address(a)?,
     }
     Ok(())
 }
