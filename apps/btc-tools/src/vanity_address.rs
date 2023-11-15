@@ -108,7 +108,7 @@ pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
                 "Derived address mismatched! {} vs {}, from {}",
                 addr,
                 derived_addr,
-                truncate_sensitive(&wif)
+                truncate_sensitive(pk)
             ));
         }
         Ok(())
