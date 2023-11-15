@@ -77,8 +77,6 @@ pub struct ValidateAddressArgs {
     /// Decrypt BIP-38
     #[arg(short, long)]
     pub bip38: bool,
-    #[command(flatten)]
-    pub r#type: AddressTypeArg,
 }
 
 #[derive(Debug, clap::Args)]

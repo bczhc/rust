@@ -1,17 +1,17 @@
-use anyhow::anyhow;
-use bip38::{Decrypt, EncryptWif};
 use std::io::{stdin, BufRead};
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
 
+use anyhow::anyhow;
+use bip38::{Decrypt, EncryptWif};
 use bitcoin::key::constants::SECRET_KEY_SIZE;
 use bitcoin::secp256k1::{Secp256k1, SecretKey};
 use bitcoin::{Address, Network, PrivateKey};
 use rand::rngs::OsRng;
 use rand::RngCore;
 
-use crate::cli::{GenerateAddressArgs, ValidateAddressArgs};
+use crate::cli::{AddressType, GenerateAddressArgs, ValidateAddressArgs};
 use crate::{input_password, public_to_address, truncate_sensitive, wif_to_public};
 
 const RANDOM_BUF_SIZE: usize = 65536;
@@ -83,13 +83,21 @@ pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
             continue;
         };
 
+        let address_type = match addr {
+            _ if addr.starts_with("1") => AddressType::P2pkh,
+            _ if addr.starts_with("bc1q") => AddressType::P2wpkh,
+            _ => {
+                return Err(anyhow!("Cannot infer address type: {}", addr));
+            }
+        };
+
         let wif = if let Some(p) = &bip38_password {
             pk.decrypt_to_wif(p)?
         } else {
             String::from(pk)
         };
         let public_key = wif_to_public(&wif)?;
-        let derived_addr = public_to_address(&public_key, args.r#type.r#type)?;
+        let derived_addr = public_to_address(&public_key, address_type)?;
         if derived_addr == addr {
             println!("Check OK: {}", derived_addr);
         } else {
