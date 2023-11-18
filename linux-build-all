@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cargo build -F='x11-event-monitor/enabled,git-commit-time-stat/enabled' -r
