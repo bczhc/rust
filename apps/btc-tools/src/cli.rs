@@ -62,6 +62,9 @@ pub struct GenerateAddressArgs {
     /// Use BIP-38
     #[arg(short, long)]
     pub bip38: bool,
+    /// Number of parallel jobs; default is the number of all online processors
+    #[arg(short, long)]
+    pub jobs: Option<usize>,
 }
 
 /// Validate the correctness of: private key -> address, to avoid scams

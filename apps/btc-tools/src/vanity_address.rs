@@ -1,13 +1,12 @@
-use std::io;
 use std::io::{stdin, BufRead, BufReader};
 use std::process::exit;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use std::thread::spawn;
+use std::{io, mem};
 
 use anyhow::anyhow;
 use bip38::{Decrypt, EncryptWif};
-use bitcoin::key::constants::SECRET_KEY_SIZE;
 use bitcoin::secp256k1::{Secp256k1, SecretKey};
 use bitcoin::{Address, Network, PrivateKey};
 use rand::rngs::OsRng;
@@ -16,8 +15,6 @@ use rayon::prelude::*;
 
 use crate::cli::{AddressType, GenerateAddressArgs, ValidateAddressArgs};
 use crate::{input_password, public_to_address, truncate_sensitive, wif_to_public};
-
-const RANDOM_BUF_SIZE: usize = 65536;
 
 pub fn main(args: GenerateAddressArgs) -> anyhow::Result<()> {
     let bip38_password = if args.bip38 {
@@ -28,16 +25,22 @@ pub fn main(args: GenerateAddressArgs) -> anyhow::Result<()> {
 
     let (sender, receiver) = channel();
     let sender_arc = Arc::new(Mutex::new(sender));
-    for _ in 0..num_cpus::get() {
+    for _ in 0..args.jobs.unwrap_or_else(num_cpus::get) {
         let substring = args.substring.clone();
         let sender = Arc::clone(&sender_arc);
         spawn(move || {
+            let mut ec = [0_u8; 32];
             let k1 = Secp256k1::new();
-            let mut random_buf = [0_u8; RANDOM_BUF_SIZE];
+
             loop {
-                OsRng.fill_bytes(&mut random_buf);
-                for sk_bytes in random_buf.windows(SECRET_KEY_SIZE) {
-                    let secret_key = SecretKey::from_slice(sk_bytes).unwrap();
+                // fill the first 28 bytes with random
+                OsRng.fill_bytes(&mut ec[..(32 - 4)]);
+                for inc_num in 0..u32::MAX {
+                    // and then fill the last 4 bytes with an incremental number
+                    // in order to reduce RNG calls
+                    ec[(32 - 4)..]
+                        .copy_from_slice(unsafe { mem::transmute::<_, &[u8; 4]>(&inc_num) });
+                    let secret_key = SecretKey::from_slice(&ec).unwrap();
                     let private_key = PrivateKey::new(secret_key, Network::Bitcoin);
                     let public_key = private_key.public_key(&k1);
                     let address = Address::p2wpkh(&public_key, Network::Bitcoin)

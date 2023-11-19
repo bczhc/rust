@@ -17,6 +17,11 @@ use wav_fourier_series::{
 };
 
 fn main() {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(192)
+        .build_global()
+        .unwrap();
+
     let matches = build_cli().get_matches();
 
     let config = Config {
