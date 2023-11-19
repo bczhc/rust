@@ -7,7 +7,7 @@ use std::{io, mem};
 
 use anyhow::anyhow;
 use bip38::{Decrypt, EncryptWif};
-use bitcoin::secp256k1::{Secp256k1, SecretKey};
+use bitcoin::secp256k1::Secp256k1;
 use bitcoin::{Address, Network, PrivateKey};
 use rand::rngs::OsRng;
 use rand::RngCore;
@@ -35,18 +35,26 @@ pub fn main(args: GenerateAddressArgs) -> anyhow::Result<()> {
             loop {
                 // fill the first 28 bytes with random
                 OsRng.fill_bytes(&mut ec[..(32 - 4)]);
+                let mut address_string_buf =
+                    [0_u8; 42 /* p2wpkh addresses should be 42 characters */];
                 for inc_num in 0..u32::MAX {
                     // and then fill the last 4 bytes with an incremental number
                     // in order to reduce RNG calls
                     ec[(32 - 4)..]
                         .copy_from_slice(unsafe { mem::transmute::<_, &[u8; 4]>(&inc_num) });
-                    let secret_key = SecretKey::from_slice(&ec).unwrap();
-                    let private_key = PrivateKey::new(secret_key, Network::Bitcoin);
+                    let private_key = PrivateKey::from_slice(&ec, Network::Bitcoin).unwrap();
                     let public_key = private_key.public_key(&k1);
-                    let address = Address::p2wpkh(&public_key, Network::Bitcoin)
-                        .unwrap()
-                        .to_string();
-                    if address.contains(&substring) {
+                    let address = Address::p2wpkh(&public_key, Network::Bitcoin).unwrap();
+                    unsafe {
+                        use io::Write;
+                        write!(&mut address_string_buf.as_mut_slice(), "{address}")
+                            .unwrap_unchecked();
+                    }
+
+                    if address_string_buf
+                        .windows(substring.len())
+                        .any(|c| c == substring.as_bytes())
+                    {
                         let guard = sender.lock().unwrap();
                         guard.send((private_key, address)).unwrap();
                     }
