@@ -86,7 +86,11 @@ pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
         None
     };
 
-    fn worker(line: io::Result<String>, bip38_password: &Option<String>) -> anyhow::Result<()> {
+    fn worker(
+        line: io::Result<String>,
+        bip38_password: &Option<String>,
+        args: &ValidateAddressArgs,
+    ) -> anyhow::Result<()> {
         let line = line?;
         let mut split = line.split_whitespace();
         let Some((pk, addr)): Option<(_, _)> = (try {
@@ -114,7 +118,11 @@ pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
         let public_key = wif_to_public(&wif)?;
         let derived_addr = public_to_address(&public_key, address_type)?;
         if derived_addr == addr {
-            println!("Check OK: {}", derived_addr);
+            if args.decode {
+                println!("{wif} {addr}");
+            } else {
+                println!("Check OK: {}", derived_addr);
+            }
         } else {
             return Err(anyhow!(
                 "Derived address mismatched! {} vs {}, from {}",
@@ -135,7 +143,7 @@ pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
 
     let reader = BufReader::new(stdin());
     reader.lines().par_bridge().for_each(|line| {
-        let result = worker(line, &bip38_password);
+        let result = worker(line, &bip38_password, &args);
         if let Err(e) = result {
             eprintln!("Error: {e}");
             exit(1);

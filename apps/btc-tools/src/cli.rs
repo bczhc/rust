@@ -83,6 +83,9 @@ pub struct ValidateAddressArgs {
     /// The amount of parallel workers; defaults to the CPU number
     #[arg(short, long)]
     pub jobs: Option<usize>,
+    /// Decode BIP38. NOTE: this will print secret keys (in WIF) out
+    #[arg(long)]
+    pub decode: bool,
 }
 
 #[derive(Debug, clap::Args)]
