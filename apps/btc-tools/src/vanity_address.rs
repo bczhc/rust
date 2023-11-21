@@ -42,7 +42,8 @@ pub fn main(args: GenerateAddressArgs) -> anyhow::Result<()> {
                     // in order to reduce RNG calls
                     ec[(32 - 4)..]
                         .copy_from_slice(unsafe { mem::transmute::<_, &[u8; 4]>(&inc_num) });
-                    let private_key = PrivateKey::from_slice(&ec, Network::Bitcoin).unwrap();
+                    let private_key =
+                        PrivateKey::from_slice/* compressed */(&ec, Network::Bitcoin).unwrap();
                     let public_key = private_key.public_key(&k1);
                     let address = Address::p2wpkh(&public_key, Network::Bitcoin).unwrap();
                     unsafe {
