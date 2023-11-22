@@ -116,7 +116,7 @@ pub fn validate_address(args: ValidateAddressArgs) -> anyhow::Result<()> {
             String::from(pk)
         };
         let public_key = wif_to_public(&wif)?;
-        let derived_addr = public_to_address(&public_key, address_type)?;
+        let derived_addr = public_to_address(&public_key, address_type)?.to_string();
         if derived_addr == addr {
             if args.decode {
                 println!("{wif} {addr}");

@@ -6,6 +6,7 @@ use bitcoin::key::Secp256k1;
 use bitcoin::secp256k1::SecretKey;
 use bitcoin::{Address, Network, PrivateKey, PublicKey};
 
+pub mod brain_wallet;
 pub mod cli;
 pub mod vanity_address;
 
@@ -14,10 +15,10 @@ pub type KeyError = bitcoin::key::Error;
 pub fn public_to_address(
     k: &PublicKey,
     address_type: AddressType,
-) -> Result<String, bitcoin::address::Error> {
+) -> Result<Address, bitcoin::address::Error> {
     let address = match address_type {
-        AddressType::P2pkh => Address::p2pkh(k, Network::Bitcoin).to_string(),
-        AddressType::P2wpkh => Address::p2wpkh(k, Network::Bitcoin)?.to_string(),
+        AddressType::P2pkh => Address::p2pkh(k, Network::Bitcoin),
+        AddressType::P2wpkh => Address::p2wpkh(k, Network::Bitcoin)?,
     };
     Ok(address)
 }
@@ -29,8 +30,17 @@ pub fn wif_to_public(wif: &str) -> Result<PublicKey, KeyError> {
     Ok(public_key)
 }
 
-pub fn ec_to_wif(hex: &str, compressed: bool) -> anyhow::Result<String> {
-    let secret_key = SecretKey::from_slice(&hex::decode(hex)?)?;
+pub fn wif_to_address(wif: &str, addr_type: AddressType) -> anyhow::Result<Address> {
+    let puk = wif_to_public(wif)?;
+    Ok(public_to_address(&puk, addr_type)?)
+}
+
+pub fn ec_hex_to_wif(hex: &str, compressed: bool) -> anyhow::Result<String> {
+    ec_to_wif(&hex::decode(hex)?, compressed)
+}
+
+pub fn ec_to_wif(ec: &[u8], compressed: bool) -> anyhow::Result<String> {
+    let secret_key = SecretKey::from_slice(ec)?;
     let wif = if compressed {
         PrivateKey::new(secret_key, Network::Bitcoin)
     } else {

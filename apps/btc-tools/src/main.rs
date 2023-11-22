@@ -2,7 +2,7 @@ use bitcoin::{base58, PrivateKey, PublicKey};
 use clap::Parser;
 
 use btc_tools::cli::{Args, Subcommands};
-use btc_tools::{ec_to_wif, public_to_address, wif_to_public};
+use btc_tools::{ec_hex_to_wif, public_to_address, wif_to_public};
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
@@ -13,7 +13,7 @@ fn main() -> anyhow::Result<()> {
             println!("{}", hex::encode(private_key.to_bytes()));
         }
         Subcommands::EcToWif(a) => {
-            let wif = ec_to_wif(&a.hex, a.compressed)?;
+            let wif = ec_hex_to_wif(&a.hex, a.compressed)?;
             println!("{}", wif);
         }
         Subcommands::WifToPublic(a) => {
@@ -42,11 +42,12 @@ fn main() -> anyhow::Result<()> {
         }
         Subcommands::EcToAddress(a) => {
             let wif_args = a.ec_to_wif_args;
-            let wif = ec_to_wif(&wif_args.hex, wif_args.compressed)?;
+            let wif = ec_hex_to_wif(&wif_args.hex, wif_args.compressed)?;
             let public_key = wif_to_public(&wif)?;
             println!("{}", public_to_address(&public_key, a.type_args.r#type)?);
         }
         Subcommands::ValidateAddress(a) => btc_tools::vanity_address::validate_address(a)?,
+        Subcommands::BrainWallet(a) => btc_tools::brain_wallet::main(a)?,
     }
     Ok(())
 }

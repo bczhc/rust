@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 #[derive(Debug, clap::Parser)]
 #[command(
     author = "bczhc <bczhc0@126.com>",
@@ -22,6 +24,7 @@ pub enum Subcommands {
     EcToAddress(EcToAddressArgs),
     GenerateAddress(GenerateAddressArgs),
     ValidateAddress(ValidateAddressArgs),
+    BrainWallet(BrainWalletArgs),
 }
 
 #[derive(Debug, clap::Args)]
@@ -86,6 +89,28 @@ pub struct ValidateAddressArgs {
     /// Decode BIP38. NOTE: this will print secret keys (in WIF) out
     #[arg(long)]
     pub decode: bool,
+}
+
+/// Brain-wallet derivation
+///
+/// For detailed algorithm and implementation, please refer to the
+/// source code :).
+#[derive(Debug, clap::Args)]
+pub struct BrainWalletArgs {
+    /// Iteration number
+    ///
+    /// This is to make a deliberately-slow hash function
+    #[arg(short, long, default_value = "10000")]
+    pub iter_num: usize,
+    #[command(flatten)]
+    pub r#type: AddressTypeArg,
+    #[arg(short, long)]
+    pub compressed: bool,
+    /// Read passphrase from file
+    ///
+    /// This reads the first line of the given file.
+    #[arg(short = 'f', long)]
+    pub pass_file: Option<PathBuf>,
 }
 
 #[derive(Debug, clap::Args)]
