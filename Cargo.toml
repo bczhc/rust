@@ -42,4 +42,5 @@ members = [
     "apps/btc-tools",
     "apps/hash-tools",
     "apps/stream-recorder",
+    "apps/binary-find",
 ]
