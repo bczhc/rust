@@ -1,5 +1,6 @@
 use std::fs::File;
-use std::io::{stdin, stdout, BufReader, BufWriter, ErrorKind, Read, StdoutLock, Write};
+use std::io;
+use std::io::{sink, stdin, stdout, BufReader, BufWriter, ErrorKind, Read, StdoutLock, Write};
 use std::path::Path;
 use std::thread::sleep;
 use std::time::{Duration, SystemTime};
@@ -56,10 +57,12 @@ pub fn record(path: &Path, forward: bool) -> anyhow::Result<()> {
 
 pub fn replay(args: &Args) -> anyhow::Result<()> {
     let mut reader = BufReader::new(File::open(&args.path)?);
+    let skip = args.skip.unwrap_or(0);
 
     let mut buf = [0_u8; BUF_SIZE];
     let start = SystemTime::now();
     let mut stdout = stdout().lock();
+    let mut last_elapsed = 0_u32;
     loop {
         let elapsed = reader.read_u32::<LE>();
         let elapsed = match elapsed {
@@ -72,10 +75,16 @@ pub fn replay(args: &Args) -> anyhow::Result<()> {
                 }
             }
         };
+        if (elapsed as u64) < skip {
+            let size = reader.read_u16::<LE>()?;
+            io::copy(&mut reader.by_ref().take(size as u64), &mut sink())?;
+            last_elapsed = elapsed;
+            continue;
+        }
 
         let size = reader.read_u16::<LE>()? as usize;
         reader.read_exact(&mut buf[..size])?;
-        let delay = (start + Duration::from_millis(elapsed as u64))
+        let delay = (start + Duration::from_millis((elapsed - last_elapsed) as u64))
             .duration_since(SystemTime::now())
             .unwrap_or(Duration::ZERO);
         if !args.no_delay {
