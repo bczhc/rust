@@ -2,7 +2,7 @@ use bitcoin::{base58, PrivateKey, PublicKey};
 use clap::Parser;
 
 use btc_tools::cli::{Args, Subcommands};
-use btc_tools::{ec_hex_to_wif, public_to_address, wif_to_public};
+use btc_tools::{ec_hex_to_wif, hash160, public_to_address, wif_to_public};
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
@@ -48,6 +48,11 @@ fn main() -> anyhow::Result<()> {
         }
         Subcommands::ValidateAddress(a) => btc_tools::vanity_address::validate_address(a)?,
         Subcommands::BrainWallet(a) => btc_tools::brain_wallet::main(a)?,
+        Subcommands::Hash160(a) => {
+            // do ripemd160(sha256(data))
+            let hash160 = hash160(&hex::decode(a.data)?);
+            println!("{}", hex::encode(hash160));
+        }
     }
     Ok(())
 }

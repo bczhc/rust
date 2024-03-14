@@ -25,6 +25,7 @@ pub enum Subcommands {
     GenerateAddress(GenerateAddressArgs),
     ValidateAddress(ValidateAddressArgs),
     BrainWallet(BrainWalletArgs),
+    Hash160(Hash160Args),
 }
 
 #[derive(Debug, clap::Args)]
@@ -157,4 +158,10 @@ pub struct WifToAddressArgs {
 pub enum AddressType {
     P2pkh,
     P2wpkh,
+}
+
+#[derive(Debug, clap::Args)]
+pub struct Hash160Args {
+    #[arg(help = "Hex-encoded bytes")]
+    pub data: String,
 }

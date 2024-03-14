@@ -60,3 +60,44 @@ where
 
     Ok(hash)
 }
+
+pub fn fixed_output_hash_bytes<H>(data: &[u8], iter_num: u64) -> [u8; H::OutputSize::USIZE]
+where
+    H: Digest + FixedOutput + OutputSizeUser + Write,
+    [(); H::OutputSize::USIZE]:,
+    GenericArray<u8, H::OutputSize>: From<[u8; H::OutputSize::USIZE]>,
+    GenericArray<u8, H::OutputSize>: Into<[u8; H::OutputSize::USIZE]>,
+{
+    fixed_output_hash::<H, _>(&mut &*data, iter_num).unwrap()
+}
+
+#[macro_export]
+macro_rules! hash {
+    ($t:ty, $data:expr, $iter:expr) => {
+        $crate::fixed_output_hash_bytes::<$t>($data, $iter)
+    };
+    ($t:ty, $data:expr) => {
+        $crate::hash!($t, $data, 1)
+    };
+}
+
+pub fn sha256(data: &[u8]) -> [u8; 256 / 8] {
+    hash!(sha2::Sha256, data)
+}
+
+#[cfg(test)]
+mod test {
+    use hex_literal::hex;
+
+    #[test]
+    fn test() {
+        assert_eq!(
+            hash!(ripemd::Ripemd160, b"hello"),
+            hex!("108f07b8382412612c048d07d13f814118445acd")
+        );
+        assert_eq!(
+            hash!(ripemd::Ripemd160, b"hello", 100),
+            hex!("a1c6aa5b9ec15af182eb06dc63ddfd2153c947b8")
+        );
+    }
+}

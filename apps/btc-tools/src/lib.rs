@@ -5,6 +5,7 @@ use anyhow::anyhow;
 use bitcoin::key::Secp256k1;
 use bitcoin::secp256k1::SecretKey;
 use bitcoin::{Address, Network, PrivateKey, PublicKey};
+use hash_tools::{hash, sha256};
 
 pub mod brain_wallet;
 pub mod cli;
@@ -64,4 +65,8 @@ pub fn truncate_sensitive(s: &str) -> String {
         unreachable!("Unexpected message length")
     }
     String::from_iter(&chars[0..10]) + "..."
+}
+
+pub fn hash160(data: &[u8]) -> [u8; 20] {
+    hash!(ripemd::Ripemd160, &sha256(data))
 }
