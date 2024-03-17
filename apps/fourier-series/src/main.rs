@@ -1,5 +1,7 @@
+use std::alloc::System;
 use std::fs::File;
 use std::io::Read;
+use std::time::{Instant, SystemTime};
 
 use bczhc_lib::complex::integral::{self, Integrate};
 
@@ -24,6 +26,7 @@ fn main() {
     let integral_segments = *matches.get_one::<u32>("integral-segments").unwrap();
     let input_data_file = matches.get_one::<String>("data");
     let integrator = *matches.get_one::<cli::Integrator>("integrator").unwrap();
+    let benchmark_mode = *matches.get_one::<bool>("benchmark").unwrap();
 
     let mut vec = Vec::new();
 
@@ -57,6 +60,8 @@ fn main() {
         thread_pool,
     };
 
+    let start = Instant::now();
+
     match integrator {
         cli::Integrator::Trapezoid => params.calc_and_print::<integral::Trapezoid>(),
         cli::Integrator::LeftRectangle => params.calc_and_print::<integral::LeftRectangle>(),
@@ -64,6 +69,10 @@ fn main() {
         cli::Integrator::Simpson => params.calc_and_print::<integral::Simpson>(),
         cli::Integrator::Simpson38 => params.calc_and_print::<integral::Simpson38>(),
         cli::Integrator::Boole => params.calc_and_print::<integral::Boole>(),
+    }
+
+    if benchmark_mode {
+        println!("{:?}", start.elapsed());
     }
 }
 
@@ -112,6 +121,5 @@ where
             })
             .collect::<Vec<_>>()
         });
-        println!("{:?}", epicycles);
     }
 }
