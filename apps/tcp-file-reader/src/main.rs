@@ -4,7 +4,7 @@ use std::io;
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
 use std::thread::spawn;
-use tcp_file_copier::cli::Args;
+use tcp_file_reader::cli::Args;
 
 fn main() {
     let args = Args::parse();
