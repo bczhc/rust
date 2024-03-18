@@ -4675,6 +4675,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "tcp-file-reader"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap 4.4.8",
+]
+
+[[package]]
 name = "tempfile"
 version = "3.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

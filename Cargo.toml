@@ -43,4 +43,5 @@ members = [
     "apps/hash-tools",
     "apps/stream-recorder",
     "apps/binary-find",
+    "apps/tcp-file-reader",
 ]
