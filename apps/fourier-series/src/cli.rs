@@ -43,13 +43,6 @@ pub fn build_cli() -> Command {
                 .help("Input data set file (if not provided, use a built-in test data set)")
                 .value_hint(ValueHint::FilePath),
         )
-        .arg(
-            Arg::new("benchmark")
-                .short('b')
-                .long("benchmark")
-                .help("Print the elapsed time after the calculation")
-                .action(ArgAction::SetTrue),
-        )
 }
 
 #[derive(Clone, clap::ValueEnum, Copy)]

@@ -26,7 +26,6 @@ fn main() {
     let integral_segments = *matches.get_one::<u32>("integral-segments").unwrap();
     let input_data_file = matches.get_one::<String>("data");
     let integrator = *matches.get_one::<cli::Integrator>("integrator").unwrap();
-    let benchmark_mode = *matches.get_one::<bool>("benchmark").unwrap();
 
     let mut vec = Vec::new();
 
@@ -71,9 +70,7 @@ fn main() {
         cli::Integrator::Boole => params.calc_and_print::<integral::Boole>(),
     }
 
-    if benchmark_mode {
-        println!("{:?}", start.elapsed());
-    }
+    println!("{:?}", start.elapsed());
 }
 
 struct Params<E>
