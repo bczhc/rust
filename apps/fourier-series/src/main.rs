@@ -1,19 +1,16 @@
-use std::alloc::System;
 use std::fs::File;
-use std::io::Read;
-use std::time::{Instant, SystemTime};
+use std::io::{stdout, Read, Write};
+use std::time::Instant;
+
+use num_complex::Complex64;
+use rayon::ThreadPool;
 
 use bczhc_lib::complex::integral::{self, Integrate};
-
+use bczhc_lib::fourier_series::{compute_iter, EvaluatePath, LinearPath};
 use fourier_series::cli::build_cli;
 use fourier_series::{cli, TEST_INPUT_DATA};
-use num_complex::Complex64;
 
 type ComplexValueF64 = Complex64;
-
-use bczhc_lib::fourier_series::{compute_iter, EvaluatePath, LinearPath};
-
-use rayon::ThreadPool;
 
 type PointF64 = bczhc_lib::fourier_series::euclid::Point2D<f64, ()>;
 
@@ -71,6 +68,18 @@ fn main() {
     }
 
     println!("{:?}", start.elapsed());
+
+    // Expect the user to run the process by double clicking it directly
+    // so add a pause here
+    #[cfg(windows)]
+    wait_for_enter();
+}
+
+#[cfg(windows)]
+fn wait_for_enter() {
+    print!("Press enter to continue...");
+    stdout().flush().unwrap();
+    std::io::stdin().read_line(&mut String::new()).unwrap();
 }
 
 struct Params<E>
@@ -100,7 +109,7 @@ where
 
         let period = self.period;
 
-        let epicycles = self.thread_pool.install(|| {
+        let _epicycles = self.thread_pool.install(|| {
             compute_iter::<I, _, _>(
                 n_from,
                 n_to,
@@ -112,9 +121,8 @@ where
                     ComplexValueF64::new(point.x, point.y)
                 },
             )
-            .map(|e| {
+            .inspect(|e| {
                 println!("{:?}", e);
-                e
             })
             .collect::<Vec<_>>()
         });
