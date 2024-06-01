@@ -13,6 +13,9 @@ fn main() -> anyhow::Result<()> {
 
     let mut patterns = args.pattern.iter().map(|x| hex::decode(x).map_err(|_|
         anyhow!("Invalid hex string: {}", x))).collect::<Result<Vec<_>, _>>()?;
+    if patterns.is_empty() {
+        return Err(anyhow!("Please supply at least one pattern"));
+    }
     patterns.sort();
     patterns.dedup();
 
