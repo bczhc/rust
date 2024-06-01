@@ -8,6 +8,8 @@ use clap::Parser;
 
 use bin_find::Args;
 
+
+/// Somehow, its performance is not ideal sadly.
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
