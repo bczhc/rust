@@ -2,9 +2,13 @@ use std::fs::File;
 use std::io;
 use std::io::{BufReader, Read, stdin};
 use std::process::exit;
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::sync_channel;
+use std::thread::spawn;
 
 use anyhow::anyhow;
 use clap::Parser;
+use rayon::prelude::*;
 
 use bczhc_lib::io::TryReadExact;
 use bin_find::Args;
@@ -36,9 +40,30 @@ fn main() -> anyhow::Result<()> {
 
 fn search<R: Read>(mut reader: R, patterns: &[Vec<u8>]) -> io::Result<bool> {
     assert_ne!(patterns.len(), 0);
+
+    let (tx, rx) = sync_channel(1024);
+    let found_print = |pattern: &[u8], offset: usize| {
+        println!("{}: {}", hex::encode(pattern), offset);
+    };
+
     let mut patterns = patterns.to_vec();
     // sort by pattern length
     patterns.sort_by_key(|x| x.len());
+    let patterns = Arc::new(patterns);
+    let found = Arc::new(Mutex::new(false));
+
+    let thread_patterns = Arc::clone(&patterns);
+    let thread_found = Arc::clone(&found);
+    spawn(move || {
+        rx.into_iter().par_bridge().for_each(|x: (Vec<u8>, usize)| {
+            for p in &*thread_patterns {
+                if x.0.starts_with(p) {
+                    found_print(p, x.1);
+                    *thread_found.lock().unwrap() = true;
+                }
+            }
+        })
+    });
 
     // allocate the longest possible buffer
     let longest_size = patterns.last().unwrap().len();
@@ -54,12 +79,6 @@ fn search<R: Read>(mut reader: R, patterns: &[Vec<u8>]) -> io::Result<bool> {
     const BYTE_READER_BUFFER_SIZE: usize = WINDOW_BUFFER_SIZE;
     let mut byte_reader = ByteReader::<_, BYTE_READER_BUFFER_SIZE>::new(reader);
 
-    let mut found = false;
-    let mut found_print = |pattern: &[u8], offset: usize| {
-        found = true;
-        println!("{}: {}", hex::encode(pattern), offset);
-    };
-
     let mut offset = 0_usize;
     loop {
         // read one byte and fill the last item
@@ -72,9 +91,10 @@ fn search<R: Read>(mut reader: R, patterns: &[Vec<u8>]) -> io::Result<bool> {
                 assert_eq!(remain.len(), longest_size - 1);
                 let saved_offset = offset;
                 for i in (0..remain.len()).rev() {
-                    for p in &patterns {
+                    for p in &*patterns {
                         if remain[i..].starts_with(p) {
                             found_print(p, saved_offset + i);
+                            *found.lock().unwrap() = true;
                         }
                     }
                 }
@@ -84,14 +104,10 @@ fn search<R: Read>(mut reader: R, patterns: &[Vec<u8>]) -> io::Result<bool> {
         };
         window_buffer.push_one(byte);
         // matching
-        for p in &patterns {
-            if window_buffer.window().starts_with(p) {
-                found_print(p, offset);
-            }
-        }
+        tx.send((window_buffer.window().to_vec(), offset)).unwrap();
         offset += 1;
     }
-    Ok(found)
+    Ok(Arc::into_inner(found).unwrap().into_inner().unwrap())
 }
 
 pub struct WindowBuffer {
