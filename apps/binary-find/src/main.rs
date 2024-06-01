@@ -21,7 +21,7 @@ fn main() -> anyhow::Result<()> {
     patterns.dedup();
 
     let found = match args.file {
-        None => search(stdin().lock(), &patterns)?,
+        None => search(BufReader::new(stdin().lock()), &patterns)?,
         Some(path) => {
             let reader = BufReader::new(File::open(path)?);
             search(reader, &patterns)?
