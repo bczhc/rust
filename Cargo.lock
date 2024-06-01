@@ -518,6 +518,7 @@ name = "bin-find"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bczhc_lib",
  "clap 4.4.8",
  "hex",
 ]

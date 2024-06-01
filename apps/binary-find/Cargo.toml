@@ -7,3 +7,4 @@ edition = "2021"
 clap = { version = "4.4.8", features = ["derive"] }
 hex = "0.4.3"
 anyhow = "1.0.75"
+bczhc_lib = { path = "../../lib" }
