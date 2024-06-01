@@ -7,5 +7,6 @@ pub struct Args {
     /// Patterns in hex string
     pub pattern: Vec<String>,
     /// Search in this file. If no file is given, stdin will be used
+    #[arg(short, long)]
     pub file: Option<PathBuf>,
 }
