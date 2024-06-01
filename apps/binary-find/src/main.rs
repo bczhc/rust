@@ -6,6 +6,7 @@ use std::process::exit;
 use anyhow::anyhow;
 use clap::Parser;
 
+use bczhc_lib::io::TryReadExact;
 use bin_find::Args;
 
 fn main() -> anyhow::Result<()> {
@@ -41,7 +42,7 @@ fn search<R: Read>(mut reader: R, patterns: &[Vec<u8>]) -> io::Result<bool> {
 
     // allocate the longest possible buffer
     let longest_size = patterns.last().unwrap().len();
-    const WINDOW_BUFFER_SIZE: usize = 1048576 /* 1MiB */;
+    const WINDOW_BUFFER_SIZE: usize = 1048576 / 4 /* 1MiB/4 */;
     let mut window_buffer = WindowBuffer::new(WINDOW_BUFFER_SIZE, longest_size);
     // The initial read. If an extra one byte is read and append to this, a full window will be
     // made.
@@ -50,6 +51,9 @@ fn search<R: Read>(mut reader: R, patterns: &[Vec<u8>]) -> io::Result<bool> {
     reader.read_exact(&mut initial_read_buf).unwrap();
     window_buffer.push_initial(&initial_read_buf);
 
+    const BYTE_READER_BUFFER_SIZE: usize = WINDOW_BUFFER_SIZE;
+    let mut byte_reader = ByteReader::<_, BYTE_READER_BUFFER_SIZE>::new(reader);
+
     let mut found = false;
     let mut found_print = |pattern: &[u8], offset: usize| {
         found = true;
@@ -57,26 +61,28 @@ fn search<R: Read>(mut reader: R, patterns: &[Vec<u8>]) -> io::Result<bool> {
     };
 
     let mut offset = 0_usize;
-    let mut byte_buf = [0_u8; 1];
     loop {
         // read one byte and fill the last item
-        let read_size = reader.read(&mut byte_buf)?;
-        if read_size == 0 {
-            // reaches the EOF; do extra searches for those patterns
-            // whose size is less than the longest one.
-            let remain = &window_buffer.window()[1..];
-            assert_eq!(remain.len(), longest_size - 1);
-            let saved_offset = offset;
-            for i in (0..remain.len()).rev() {
-                for p in &patterns {
-                    if remain[i..].starts_with(p) {
-                        found_print(p, saved_offset + i);
+        let byte = byte_reader.read()?;
+        let byte = match byte {
+            None => {
+                // reaches the EOF; do extra searches for those patterns
+                // whose size is less than the longest one.
+                let remain = &window_buffer.window()[1..];
+                assert_eq!(remain.len(), longest_size - 1);
+                let saved_offset = offset;
+                for i in (0..remain.len()).rev() {
+                    for p in &patterns {
+                        if remain[i..].starts_with(p) {
+                            found_print(p, saved_offset + i);
+                        }
                     }
                 }
+                break
             }
-            break;
-        }
-        window_buffer.push_one(byte_buf[0]);
+            Some(b) => b
+        };
+        window_buffer.push_one(byte);
         // matching
         for p in &patterns {
             if window_buffer.window().starts_with(p) {
@@ -129,11 +135,53 @@ impl WindowBuffer {
     }
 }
 
+/// A more efficient reader when reading only one byte each call.
+/// 
+/// Faster than barely using `BufReader`
+pub struct ByteReader<R, const BUF_SIZE: usize> where R: Read {
+    pub inner: R,
+    pub buf: [u8; BUF_SIZE],
+    pub pos: usize,
+    pub end: Option<usize>,
+}
+
+impl<R, const BUF_SIZE: usize> ByteReader<R, BUF_SIZE> where R: Read {
+    pub fn new(reader: R) -> ByteReader<R, BUF_SIZE> {
+        Self {
+            inner: reader,
+            buf: [0_u8; BUF_SIZE],
+            // this initial value can make an initial `inner.read` call
+            pos: BUF_SIZE,
+            end: None,
+        }
+    }
+
+    #[inline]
+    pub fn read(&mut self) -> io::Result<Option<u8>> {
+        if self.pos == BUF_SIZE {
+            // fill the buffer
+            let read_size = self.inner.try_read_exact(&mut self.buf)?;
+            if read_size < BUF_SIZE {
+                // reaches the EOF
+                self.end = Some(read_size);
+            }
+            self.pos = 0;
+        }
+        if self.end == Some(self.pos) {
+            // EOF
+            return Ok(None);
+        }
+        let result = self.buf[self.pos];
+        self.pos += 1;
+        Ok(Some(result))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::io::Cursor;
 
-    use crate::{search, WindowBuffer};
+    use crate::{ByteReader, search, WindowBuffer};
 
     #[test]
     fn test() {
@@ -168,5 +216,23 @@ mod test {
             result2.push(window.to_vec());
         }
         assert_eq!(result1, result2)
+    }
+
+    #[test]
+    fn byte_reader() {
+        let data = (0..100).collect::<Vec<_>>();
+        let reader = Cursor::new(&data);
+        let mut br = ByteReader::<_, 1024>::new(reader);
+        let mut result = Vec::new();
+        loop {
+            let option = br.read().unwrap();
+            match option {
+                None => { break }
+                Some(b) => {
+                    result.push(b);
+                }
+            }
+        }
+        assert_eq!(result, data);
     }
 }
