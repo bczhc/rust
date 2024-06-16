@@ -18,7 +18,7 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer
           chmod +x installer
           ./installer -y
-          rustup default nightly
+          rustup default nightly-2023-10-02
           rustc --version
       - name: Install dependencies
         run: |
@@ -83,7 +83,7 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer
           chmod +x installer
           ./installer --default-host x86_64-pc-windows-gnu -y
-          rustup default nightly
+          rustup default nightly-2023-10-02
           rustc --version
       - name: Add build requirements
         run: |
@@ -107,7 +107,7 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer
           chmod +x installer
           ./installer -y
-          rustup default nightly
+          rustup default nightly-2023-10-02
           rustc --version
       - name: Build
         run: cargo build --workspace
