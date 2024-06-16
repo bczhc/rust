@@ -11,7 +11,8 @@ RUN apt update && \
 # Install Rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > installer && \
     chmod +x installer && \
-    ./installer -y --default-toolchain nightly && \
+    ./installer -y --default-toolchain nightly-2023-10-02 \
+    && \
     . ~/.cargo/env && \
     rustc --version
 
