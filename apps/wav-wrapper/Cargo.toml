@@ -8,3 +8,4 @@ clap = { version = "4.5.9", features = ["derive"] }
 hound = "3.5.1"
 byteorder = "1.5.0"
 anyhow = "1.0.86"
+stream-num-reader = { path = "../../libs/stream-num-reader" }
