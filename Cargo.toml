@@ -44,4 +44,5 @@ members = [
     "apps/stream-recorder",
     "apps/binary-find",
     "apps/tcp-file-reader",
+    "apps/wav-wrapper",
 ]

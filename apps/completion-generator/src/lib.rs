@@ -41,6 +41,7 @@ cli_builders![
     btc_tools::cli::Args::command,
     anybase::cli::CliConfig::command,
     image_stegano_bg::cli::CliArgs::command,
+    wav_wrapper::Args::command,
 ];
 
 const CLI_BUILDERS_LEN: usize = CLI_BUILDERS.len();
