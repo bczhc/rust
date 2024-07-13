@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 /// Represents stdin in wav format
-#[derive(clap::Parser)]
+#[derive(clap::Parser, Default, Clone)]
 pub struct Args {
     /// Output sample rate
     #[arg(short = 'r', long)]
@@ -17,6 +17,7 @@ pub struct Args {
     /// Output format
     ///
     /// Available formats are: s8, s16, s32, f32
+    #[arg(short, long, default_value = "s16")]
     pub output_format: String,
     /// Output path
     pub output_file: PathBuf,

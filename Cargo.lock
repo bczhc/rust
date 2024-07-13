@@ -5709,7 +5709,9 @@ dependencies = [
  "byteorder",
  "clap 4.5.9",
  "hound",
+ "once_cell",
  "stream-num-reader",
+ "yeet-ops",
 ]
 
 [[package]]
@@ -6321,6 +6323,12 @@ checksum = "388c44dc09d76f1536602ead6d325eb532f5c122f17782bd57fb47baeeb767e2"
 dependencies = [
  "lzma-sys",
 ]
+
+[[package]]
+name = "yeet-ops"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c90a74b94f44d3bc3642755bf17269717583129578d5d82c7f66d69e2d477267"
 
 [[package]]
 name = "yoke"
