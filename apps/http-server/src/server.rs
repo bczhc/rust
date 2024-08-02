@@ -1,29 +1,28 @@
 use std::fs::File;
 use std::io;
 use std::io::{BufReader, Read, Write};
-use std::net::{SocketAddrV4, TcpListener, TcpStream};
+use std::net::{IpAddr, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 use std::thread::spawn;
 
+use http::{HeaderMap, Response, StatusCode, Version};
 use http::header::CONTENT_TYPE;
 use http::response::Builder;
-use http::{HeaderMap, Response, StatusCode, Version};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
 use bczhc_lib::{rw_read, rw_write};
 
-use crate::errors::*;
 use crate::{CapitalizeHeader, HttpVersionAsStr};
+use crate::errors::*;
 
 static ROOT_LOCATION: Lazy<RwLock<Option<String>>> = Lazy::new(|| RwLock::new(None));
 
-pub fn run(port: u16, location: &str) -> Result<()> {
+pub fn run(port: u16, location: &str, ip: &str) -> Result<()> {
     rw_write!(ROOT_LOCATION).replace(String::from(location));
 
-    let addr = SocketAddrV4::new("0.0.0.0".parse().unwrap(), port);
-    let listener = TcpListener::bind(addr)?;
+    let listener = TcpListener::bind(SocketAddr::new(ip.parse::<IpAddr>().unwrap(), port))?;
 
     loop {
         let (mut stream, client_addr) = listener.accept()?;
