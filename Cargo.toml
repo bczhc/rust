@@ -46,4 +46,5 @@ members = [
     "apps/tcp-file-reader",
     "apps/wav-wrapper",
     "libs/stream-num-reader",
+    "apps/kaprekar",
 ]

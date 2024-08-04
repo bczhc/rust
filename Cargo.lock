@@ -209,7 +209,7 @@ name = "anybase"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 4.5.9",
+ "clap 4.5.13",
  "num 0.4.3",
 ]
 
@@ -232,7 +232,7 @@ dependencies = [
  "bzip3",
  "cfg-if",
  "chrono",
- "clap 4.5.9",
+ "clap 4.5.13",
  "clap_complete",
  "console",
  "crc",
@@ -514,7 +514,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bczhc_lib",
- "clap 4.5.9",
+ "clap 4.5.13",
  "hex",
 ]
 
@@ -754,7 +754,7 @@ dependencies = [
  "bip38",
  "bitcoin",
  "blake3",
- "clap 4.5.9",
+ "clap 4.5.13",
  "digest 0.10.7",
  "hash-tools",
  "hex",
@@ -883,7 +883,7 @@ name = "char-count"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 4.5.9",
+ "clap 4.5.13",
  "unicode-segmentation",
 ]
 
@@ -979,19 +979,19 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.9"
+version = "4.5.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64acc1846d54c1fe936a78dc189c34e28d3f5afc348403f28ecf53660b9b8462"
+checksum = "0fbb260a053428790f3de475e304ff84cdbc4face759ea7a3e64c1edd938a7fc"
 dependencies = [
  "clap_builder",
- "clap_derive 4.5.8",
+ "clap_derive 4.5.13",
 ]
 
 [[package]]
 name = "clap_builder"
-version = "4.5.9"
+version = "4.5.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fb8393d67ba2e7bfaf28a23458e4e2b543cc73a99595511eb207fdb8aede942"
+checksum = "64b17d7ea74e9f833c7dbf2cbe4fb12ff26783eda4782a8975b72f895c9b4d99"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1005,7 +1005,7 @@ version = "4.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2020fa13af48afc65a9a87335bda648309ab3d154cd03c7ff95b378c7ed39c4"
 dependencies = [
- "clap 4.5.9",
+ "clap 4.5.13",
 ]
 
 [[package]]
@@ -1023,9 +1023,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "4.5.8"
+version = "4.5.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bac35c6dafb060fd4d275d9a4ffae97917c13a6327903a8be2153cd964f7085"
+checksum = "501d359d5f3dcaf6ecdeee48833ae73ec6e42723a1e52419c79abf9507eec0a0"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -1077,7 +1077,7 @@ dependencies = [
  "anybase",
  "archive",
  "btc-tools",
- "clap 4.5.9",
+ "clap 4.5.13",
  "clap_complete",
  "cow-dedupe",
  "enc",
@@ -1178,7 +1178,7 @@ dependencies = [
  "bytesize",
  "cfg-if",
  "chrono",
- "clap 4.5.9",
+ "clap 4.5.13",
  "colored",
  "digest 0.10.7",
  "hex",
@@ -1476,7 +1476,7 @@ dependencies = [
  "argon2",
  "bczhc_lib",
  "cipher 0.4.4",
- "clap 4.5.9",
+ "clap 4.5.13",
  "rand",
  "rpassword",
  "thiserror",
@@ -1758,7 +1758,7 @@ name = "fourier-series"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 4.5.9",
+ "clap 4.5.13",
  "num-complex 0.4.6",
  "num-traits",
  "num_cpus",
@@ -1981,7 +1981,7 @@ dependencies = [
  "bczhc_lib",
  "blake2",
  "blake3",
- "clap 4.5.9",
+ "clap 4.5.13",
  "digest 0.10.7",
  "hex",
  "hex-literal",
@@ -2372,7 +2372,7 @@ name = "image-stegano-bg"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 4.5.9",
+ "clap 4.5.13",
  "float-cmp",
  "image",
 ]
@@ -2556,6 +2556,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2735847566356cd2179a2a38264839308f7079fa96e6bd5a42d740460e003c56"
 dependencies = [
  "crossbeam",
+ "rayon",
+]
+
+[[package]]
+name = "kaprekar"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap 4.5.13",
+ "num-bigint",
  "rayon",
 ]
 
@@ -2979,7 +2989,7 @@ name = "network-monitor"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 4.5.9",
+ "clap 4.5.13",
  "interfaces",
  "sysinfo 0.28.4",
 ]
@@ -3114,9 +3124,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.4.5"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c165a9ab64cf766f73521c0dd2cfdff64f488b8f0b3e621face3462d3db536d7"
+checksum = "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
 dependencies = [
  "num-integer",
  "num-traits",
@@ -4068,7 +4078,7 @@ name = "reverse"
 version = "1.0.0"
 dependencies = [
  "bczhc_lib",
- "clap 4.5.9",
+ "clap 4.5.13",
  "unicode-segmentation",
 ]
 
@@ -4342,7 +4352,7 @@ name = "send-email"
 version = "1.0.0"
 dependencies = [
  "anyhow",
- "clap 4.5.9",
+ "clap 4.5.13",
  "lettre",
  "toml",
 ]
@@ -4673,7 +4683,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "byteorder",
- "clap 4.5.9",
+ "clap 4.5.13",
  "once_cell",
 ]
 
@@ -4813,7 +4823,7 @@ name = "task-notify"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 4.5.9",
+ "clap 4.5.13",
  "notify-rust",
  "sysinfo 0.27.8",
 ]
@@ -4835,7 +4845,7 @@ version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "blake3",
- "clap 4.5.9",
+ "clap 4.5.13",
  "once_cell",
  "polling 2.8.0",
  "rpassword",
@@ -4847,7 +4857,7 @@ name = "tcp-file-reader"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 4.5.9",
+ "clap 4.5.13",
 ]
 
 [[package]]
@@ -5200,7 +5210,7 @@ name = "ucd-parser"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 4.5.9",
+ "clap 4.5.13",
  "futures-util",
  "mktemp",
  "pbr",
@@ -5447,7 +5457,7 @@ name = "unicode-name"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 4.5.9",
+ "clap 4.5.13",
  "once_cell",
  "prettytable-rs",
  "rusqlite",
@@ -5693,7 +5703,7 @@ name = "wav-fourier-series"
 version = "0.1.0"
 dependencies = [
  "bczhc_lib",
- "clap 4.5.9",
+ "clap 4.5.13",
  "hound",
  "num 0.4.3",
  "num_cpus",
@@ -5707,7 +5717,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "byteorder",
- "clap 4.5.9",
+ "clap 4.5.13",
  "hound",
  "once_cell",
  "stream-num-reader",
@@ -6250,7 +6260,7 @@ version = "1.0.0"
 dependencies = [
  "bczhc_lib",
  "chrono",
- "clap 4.5.9",
+ "clap 4.5.13",
  "libc",
  "libxdo-sys",
  "proc-macro2",
